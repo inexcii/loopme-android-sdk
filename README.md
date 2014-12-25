@@ -132,4 +132,4 @@ Check out our `loopme-example` project as an example of `loopme-android-sdk` int
 
 ## License ##
 
-see [License](license.md)
+see [License](LICENSE.md)
