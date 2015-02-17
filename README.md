@@ -5,6 +5,7 @@
 ## Overview ##
 
 LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen video and rich media ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
+`loopme-android-sdk` is distributed as a `jar` and provides facilities to retrieve, display ads in your application.
 
 If you have questions please contact us at support@loopmemedia.com.
 
