@@ -61,6 +61,9 @@ android:hardwareAccelerated="true"/>
 android:hardwareAccelerated="true"/>
 ```
 ## Full screen interstitial ads ##
+
+The `LoopMenterstitial` class provides the facilities to display a full-screen ad during natural transition points in your application.
+
 * Create `LoopMeInterstitial` instance and retrieve ads
 ```java
 public class YourActivity extends Activity implements LoopMeInterstitial.Listener {
