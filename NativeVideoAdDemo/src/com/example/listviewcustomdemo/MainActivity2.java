@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 import com.loopme.LoopMeAdHolder;
-import com.loopme.LoopMeAdapter;
 import com.loopme.LoopMeError;
 import com.loopme.LoopMeNativeVideoAd;
 
@@ -35,6 +34,7 @@ OnScrollListener {
 		
 		setContentView(R.layout.main_layout);
 
+		// Attempt to fetch existing ad object from adHolder with specified appKey
 		if (LoopMeAdHolder.getAd(Constants.APP_KEY) != null) {
 			mVideoAd = (LoopMeNativeVideoAd) LoopMeAdHolder.getAd(Constants.APP_KEY);
 			mVideoAd.addListener(this);
@@ -44,12 +44,14 @@ OnScrollListener {
 		
 		mCustomAdapter.addImageItem("image1");
 		mCustomAdapter.addItem("Hello");
+		// Advertisement
+		mCustomAdapter.addVideoAd(Constants.APP_KEY);
+		//
 		mCustomAdapter.addItem("Welcome");
 		mCustomAdapter.addItem("to");
 		mCustomAdapter.addItem("LoopMe");
 		mCustomAdapter.addItem("Demo");
 		mCustomAdapter.addImageItem("image2");
-		mCustomAdapter.addVideoAd(Constants.APP_KEY);
 		mCustomAdapter.addImageItem("image1");
 		mCustomAdapter.addItem("Hello");
 		mCustomAdapter.addItem("Welcome");
@@ -66,6 +68,7 @@ OnScrollListener {
 	@Override
 	protected void onPause() {
 		if (mVideoAd != null) {
+			// Pausing any activities happening on ad (whether it's video or HTML)
 			mVideoAd.pause();
 		}
 		super.onPause();
@@ -74,7 +77,14 @@ OnScrollListener {
 	@Override
 	protected void onResume() {
 		if (mVideoAd != null) {
-			mVideoAd.resume(mListView, mCustomAdapter);
+			int first = mListView.getFirstVisiblePosition(); 
+			int last = mListView.getLastVisiblePosition();
+			for (int i = first; i <= last; i++) {
+				if (mCustomAdapter.isAd(i)) {
+					// Resuming any activities happening on ad (whether it's video or HTML)
+					mVideoAd.resume();
+				}
+			}
 		}
 		super.onResume();
 	}
@@ -82,12 +92,16 @@ OnScrollListener {
 	@Override
 	protected void onDestroy() {
 		if (mVideoAd != null) {
-			mVideoAd.destroy();
+			if (mVideoAd.isReady()) {
+				mVideoAd.destroy();
+			} else {
+				mVideoAd.removeListener();
+			}
 		}
 		super.onDestroy();
 	}
 	
-	private class CustomAdapter extends BaseAdapter implements LoopMeAdapter {
+	private class CustomAdapter extends BaseAdapter {
 		
 		static final int TYPE_ITEM = 0;
 		static final int TYPE_SEPARATOR = 1;
@@ -132,7 +146,6 @@ OnScrollListener {
 			return TYPE_ITEM;
         }
 		
-		@Override
 		public boolean isAd(int position) {
 			return mBannerSet.contains(position);
 		}
@@ -231,7 +244,7 @@ OnScrollListener {
 	@Override
 	public void onLoopMeVideoAdLoadSuccess(LoopMeNativeVideoAd arg0) {
 		toast("onLoopMeVideoAdLoadSuccess");
-		arg0.showAdIfItVisible(mCustomAdapter, mListView);
+		showAdIfItVisible(mCustomAdapter);
 	}
 
 	@Override
@@ -257,9 +270,24 @@ OnScrollListener {
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
 		
-		if (mVideoAd != null) {
-			mVideoAd.showAdIfItVisible(mCustomAdapter, mListView);
-		}
+		showAdIfItVisible(mCustomAdapter);
 	}
 	
+	private void showAdIfItVisible(CustomAdapter adapter) {
+		if (mVideoAd == null) {
+			return;
+		}
+		boolean isAmongVisibleElements = false;
+		int first = mListView.getFirstVisiblePosition();
+		int last = mListView.getLastVisiblePosition();
+		for (int i = first; i <= last; i++) {
+			if (adapter.isAd(i)) {
+				mVideoAd.show();
+				isAmongVisibleElements = true;
+			}
+		}
+		if (!isAmongVisibleElements) {
+			mVideoAd.pause();
+		}
+	}
 }

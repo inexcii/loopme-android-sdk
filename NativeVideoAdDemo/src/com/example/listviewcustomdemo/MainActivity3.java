@@ -26,6 +26,7 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_layout3);
 		
+		// Attempt to fetch existing ad object from adHolder with specified appKey
 		if (LoopMeAdHolder.getAd(Constants.APP_KEY) != null) {
 			mVideoAd = (LoopMeNativeVideoAd) LoopMeAdHolder.getAd(Constants.APP_KEY);
 			mVideoAd.addListener(this);
@@ -38,16 +39,13 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 			
 			@Override
 			public void onScrollChanged() {
-//				if (mVideoAd == null) {
-//					return;
-//				}
-//				if (checkVisibilityOnScreen()) {
-//					mVideoAd.show();
-//				} else {
-//					mVideoAd.pause();
-//				}
-				if (mVideoAd != null) {
-					mVideoAd.showAdIfItVisible(mScrollView);
+				if (mVideoAd == null) {
+					return;
+				}
+				if (checkVisibilityOnScreen()) {
+					mVideoAd.show();
+				} else {
+					mVideoAd.pause();
 				}
 			}
 		});
@@ -57,15 +55,15 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 		}
 	}
 	
-//	private boolean checkVisibilityOnScreen() {
-//		Rect scrollBounds = new Rect();
-//		mScrollView.getHitRect(scrollBounds);
-//		if (mAdSpace.getLocalVisibleRect(scrollBounds)) {
-//		    return true;
-//		} else {
-//		    return false;
-//		}
-//	}
+	private boolean checkVisibilityOnScreen() {
+		Rect scrollBounds = new Rect();
+		mScrollView.getHitRect(scrollBounds);
+		if (mAdSpace.getLocalVisibleRect(scrollBounds)) {
+		    return true;
+		} else {
+		    return false;
+		}
+	}
 	
 	@Override
 	protected void onPause() {
@@ -77,13 +75,10 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 	
 	@Override
 	protected void onResume() {
-//		if (checkVisibilityOnScreen()) {
-//			if (mVideoAd != null) {
-//				mVideoAd.resume();
-//			}
-//		}
-		if (mVideoAd != null) {
-			mVideoAd.resume(mScrollView);
+		if (checkVisibilityOnScreen()) {
+			if (mVideoAd != null) {
+				mVideoAd.resume();
+			}
 		}
 		super.onResume();
 	}
@@ -91,7 +86,11 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 	@Override
 	protected void onDestroy() {
 		if (mVideoAd != null) {
-			mVideoAd.destroy();
+			if (mVideoAd.isReady()) {
+				mVideoAd.destroy();
+			} else {
+				mVideoAd.removeListener();
+			}
 		}
 		super.onDestroy();
 	}
@@ -135,11 +134,8 @@ public class MainActivity3 extends Activity implements LoopMeNativeVideoAd.Liste
 		observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 			@Override
 			public void onGlobalLayout() {
-//				if (checkVisibilityOnScreen()) {
-//					mVideoAd.show();
-//				}
-				if (mVideoAd != null) {
-					mVideoAd.showAdIfItVisible(mScrollView);
+				if (checkVisibilityOnScreen()) {
+					mVideoAd.show();
 				}
 				observer.removeGlobalOnLayoutListener(this);
 			}
