@@ -15,7 +15,8 @@
 
 LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen video and rich media ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
 
-`loopme-android-sdk` is distributed as a `jar` file and provides facilities to retrieve, display ads in your application.
+`loopme-android-sdk` is distributed as a source code and provides facilities to retrieve, display ads in your application.
+
 
 If you have questions please contact us at support@loopmemedia.com.
 
@@ -35,7 +36,7 @@ Requires `Android` 4.0 and up
 
 ## SDK Integration ##
 
-* Download latest version of `loopme-sdk` (Note: after import `loopme-sdk` project update `Java Build Path` (replace `loopme-sdk/src` to `loopme-sdk/src/main/java`)
+* Download latest version of loopme-sdk. Note: after import `loopme-sdk` project update Java Build Path (replace `loopme-sdk/src` to `loopme-sdk/src/main/java`)
 * Add dependency to loopme-sdk project
 * Update `AndroidManifest.xml` with perfmissions:
 ```xml
@@ -50,7 +51,7 @@ Requires `Android` 4.0 and up
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.VIBRATE" />
 ```
-* Declare activities in `manifest.xml`
+and activities:
 ```xml
 <activity android:name="com.loopme.AdActivity" 
             android:theme="@android:style/Theme.Translucent"
@@ -207,16 +208,16 @@ Trigger destroy() method to clean up resources when ad no need anymore. It can b
 mVideoAd.destroy();
 ```
 
-* Native video ad notifications:
+* `LoopMeBanner` notifications:
 
 Implement `LoopMeBanner.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
- * `-onLoopMeBannerLoadSuccess`: triggered when native video has been loaded the ad content
- * `-onLoopMeBannerLoadFail`: triggered when native video failed to load the ad content
- * `-onLoopMeBannerShow`: triggered when native video ad appeared on the screen
- * `-onLoopMeBannerHide`: triggered when native video ad disappeared from the screen
- * `-onLoopMeBannerVideoDidReachEnd`: triggered when native video video ad has been completely watched
- * `-onLoopMeBannerClicked`: triggered when native video ad was clicked
- * `-onLoopMeBannerExpired`: triggered when native video ad is expired, it is recommended to re-load
+ * `-onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
+ * `-onLoopMeBannerLoadFail`: triggered when banner failed to load the ad content
+ * `-onLoopMeBannerShow`: triggered when banner appeared on the screen
+ * `-onLoopMeBannerHide`: triggered when banner disappeared from the screen
+ * `-onLoopMeBannerVideoDidReachEnd`: triggered when video in banner has been completely watched
+ * `-onLoopMeBannerClicked`: triggered when banner was clicked
+ * `-onLoopMeBannerExpired`: triggered when banner is expired, it is recommended to re-load
  * `-onLoopMeBannerLeaveApp`: triggered if SDK initiated app switching. E.g after click on ad user is redirected to market (or any other native app)
 
 ## Sample projects ##
