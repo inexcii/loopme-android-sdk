@@ -222,7 +222,7 @@ OnScrollListener {
             	if (mBanner != null) {
             		// Binding banner view
         			mBanner.bindView(holder.videoAd);
-        		}огр
+        		}
             }
             if (holder.textView != null) {
             	holder.textView.setText(mData.get(position));
