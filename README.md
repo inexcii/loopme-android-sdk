@@ -35,7 +35,7 @@ Requires `Android` 4.0 and up
 
 ## SDK Integration ##
 
-* Download latest version of loopme-sdk (Note: after import 'loopme-sdk' project update Java Build Path (replace loopme-sdk/src to loopme-sdk/src/main/java)
+* Download latest version of `loopme-sdk` (Note: after import `loopme-sdk` project update `Java Build Path` (replace `loopme-sdk/src` to `loopme-sdk/src/main/java`)
 * Add dependency to loopme-sdk project
 * Update `AndroidManifest.xml` with perfmissions:
 ```xml
