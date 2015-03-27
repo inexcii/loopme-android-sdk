@@ -34,13 +34,23 @@ public class LoopMeExampleActivity extends Activity implements LoopMeInterstitia
     public void onLoadClicked(View view){
         mProgressDialog.show();
 
+        // Create interstitial object
         mInterstitial = new LoopMeInterstitial(this, VIDEO_INTERSTITIAL_APP_KEY);
-        mInterstitial.addListener(this);
+        
+        /*
+		 * Adding listener to receive SDK notifications during the
+		 * loading/displaying ad processes
+		 */
+        mInterstitial.setListener(this);
+        
+        // Start loading immediately
         mInterstitial.load();
     }
 
     public void onShowClicked(View view){
-        if (mInterstitial != null && mInterstitial.isReady()) {
+        // Checks wether ad ready to be shown
+    	if (mInterstitial != null && mInterstitial.isReady()) {
+        	// Show ad
         	mInterstitial.show();
         } else {
         	Toast.makeText(getApplicationContext(), "Interstitial is not ready", Toast.LENGTH_SHORT).show();
@@ -61,6 +71,7 @@ public class LoopMeExampleActivity extends Activity implements LoopMeInterstitia
             mProgressDialog.cancel();
         }
         if (mInterstitial != null) {
+        	// Clean up resources
         	mInterstitial.destroy();
         }
         super.onDestroy();
