@@ -84,7 +84,7 @@ public class LoopMeExampleActivity extends Activity implements LoopMeInterstitia
 
 	@Override
 	public void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial,
-			LoopMeError error) {
+			int error) {
 		mProgressDialog.dismiss();
 	}
 

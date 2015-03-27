@@ -29,11 +29,6 @@
             android:hardwareAccelerated="true" />
         
         <activity android:name="com.loopme.AdBrowserActivity" />
-        
-        <activity
-            android:name="com.loopme.PlayerActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:hardwareAccelerated="true" />
 </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
