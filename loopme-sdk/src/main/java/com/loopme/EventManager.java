@@ -12,8 +12,6 @@ import android.net.Uri;
 
 import java.net.URL;
 
-import android.util.Log;
-
 public class EventManager {
 
 	private static final String URL = "loopme.me/api/v2/events";
@@ -42,7 +40,6 @@ public class EventManager {
 		.appendQueryParameter(ID, token)
 		.build();
 		
-		Log.d("debug", "url event: " + builder.toString());
 		return builder.toString();
 	}
 	

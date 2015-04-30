@@ -3,6 +3,8 @@ package com.loopme;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ScrollView;
@@ -31,6 +33,8 @@ public class LoopMeBanner extends BaseAd {
 	
 	private volatile LoopMeBannerView mBannerView;
 	
+	private boolean mIsVideoFinished;
+	
 	public interface Listener {
 		
 		void onLoopMeBannerLoadSuccess(LoopMeBanner banner);
@@ -58,7 +62,7 @@ public class LoopMeBanner extends BaseAd {
 	 * 
 	 * @throws IllegalArgumentException if any of parameters is null
 	 */
-	public LoopMeBanner(Context context, String appKey) {
+	LoopMeBanner(Context context, String appKey) {
 		super(context, appKey);
 		Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey, LogLevel.INFO);
 
@@ -66,6 +70,15 @@ public class LoopMeBanner extends BaseAd {
 		
 		Utils.init(context);
         Logging.init(context);
+	}
+
+    /**
+     * Getting already initialized ad object or create new one with specified appKey
+     * @param appKey - your app key
+     * @param context - Activity context
+     */
+	public static LoopMeBanner getInstance(String appKey, Context context) {
+		return LoopMeAdHolder.getBanner(appKey, context);
 	}
 	
 	private void ensureAdIsVisible() {
@@ -82,6 +95,12 @@ public class LoopMeBanner extends BaseAd {
 		super.destroy();
 	}
 	
+	private void destroyShrinkView() {//TODO
+		if (mViewController != null) {
+			mViewController.destroyMinimizedView();// should be in UI thread
+		}
+	}
+	
 	private void destroyAdContainer() {
 		mHandler.post(new Runnable() {
 
@@ -91,6 +110,8 @@ public class LoopMeBanner extends BaseAd {
 					mBannerView.removeAllViews();// should be in UI thread
 					mBannerView = null;
 				}
+				
+				destroyShrinkView(); 
 			}
 		});
 	}
@@ -103,6 +124,16 @@ public class LoopMeBanner extends BaseAd {
 	 */
 	public void bindView(LoopMeBannerView viewGroup) {
 		mBannerView = viewGroup;
+	}
+	
+	public void setMinimizedMode(MinimizedMode mode) {
+		if (mViewController != null && mode != null) {
+			mViewController.setMinimizedMode(mode);
+		}
+	}
+	
+	LoopMeBannerView getBannerView() {
+		return mBannerView;
 	}
 	
 	/**
@@ -121,11 +152,10 @@ public class LoopMeBanner extends BaseAd {
 	 */
 	public void pause() {
 		if (mViewController != null && 
-				mViewController.getCurrentViewState() != WebviewState.HIDDEN && 
 				mViewController.getCurrentVideoState() == VideoState.PLAYING) {
 
 			Logging.out(LOG_TAG, "pause Ad", LogLevel.DEBUG);
-			mViewController.onAdHidden();
+            mViewController.setWebViewState(WebviewState.HIDDEN);
 		}
 	}
 	
@@ -144,23 +174,9 @@ public class LoopMeBanner extends BaseAd {
 	}
 	
 	/**
-	 * Resumes video ad inside non-scrollable content
-	 * Needs to be triggered on appropriate Activity lifycicle method "onResume()".
-	**/
-	public void resume() {
-		if (mViewController != null && 
-				mViewController.getCurrentVideoState() == VideoState.PAUSED &&
-				mViewController.isAdVisibleEnough(mBannerView)) {
-
-			Logging.out(LOG_TAG, "resume Ad", LogLevel.DEBUG);
-			mViewController.onAdAppear();
-		} 
-	}
-	
-	/**
-	 * Shows banner. 
-	 * This method intended to be used for displaying ad if your ad not inserted in scrollable content
-	 * Otherwise see "showAdIfVisible()" methods 
+	 * Shows banner ad. 
+	 * This method intended to be used for displaying ad not in scrollable content
+	 * Otherwise see "showAdIfItVisible()" methods 
 	 *
 	 * As a result you'll receive onLoopMeBannerShow() callback
 	 */
@@ -209,12 +225,30 @@ public class LoopMeBanner extends BaseAd {
 		int last = listview.getLastVisiblePosition();
 		for (int i = first; i <= last; i++) {
 			if (adapter.isAd(i)) {
+				switchToNormalMode();
 				show();
 				isAmongVisibleElements = true;
 			}
 		}
 		if (!isAmongVisibleElements) {
-			pause();
+			switchToMinimizedMode();
+		}
+	}
+	
+	private void switchToMinimizedMode() {
+		if (mAdState == AdState.SHOWING && mViewController != null
+				&& mViewController.isMinimizedModeEnable() && !mIsVideoFinished) {
+            mViewController.switchToMinimizedMode();
+		}
+	}
+
+	void playbackFinishedWithError() {
+		mIsVideoFinished = true;
+	}
+	
+	private void switchToNormalMode() {
+		if (mAdState == AdState.SHOWING && mViewController != null) {
+			mViewController.switchToNormalMode();
 		}
 	}
 	
@@ -228,41 +262,10 @@ public class LoopMeBanner extends BaseAd {
 	 */
 	public void showAdIfItVisible(ScrollView scrollview) {
 		if (checkVisibilityOnScreen(scrollview)) {
+			switchToNormalMode();
 			show();
 		} else {
-			pause();
-		}
-	}
-	
-	/**
-	 * Resumes video ad inside "ListView"
-	 * Needs to be triggered on appropriate Activity lifycicle method "onResume()".
-	 * 
-	 * @param listview - listview in which native video ad is displayed
-	 * @param adapter - custom adapter which implements LoopMeAdapter interface.
-	 */
-	public void resume(ListView listview, LoopMeAdapter adapter) {
-		if (listview == null || adapter == null) {
-			return;
-		}
-		int first = listview.getFirstVisiblePosition(); 
-		int last = listview.getLastVisiblePosition();
-		for (int i = first; i <= last; i++) {
-			if (adapter.isAd(i)) {
-				resume();
-			}
-		}
-	}
-	
-	/**
-	 * Resumes video ad inside "ScrollView"
-	 * Needs to be triggered on appropriate Activity lifycicle method "onResume()".
-	 * 
-	 * @param scrollview - scrollview in which native video ad is displayed.
-	 */
-	public void resume(ScrollView scrollview) {
-		if (checkVisibilityOnScreen(scrollview)) {
-			resume();
+			switchToMinimizedMode();
 		}
 	}
 	
@@ -286,10 +289,11 @@ public class LoopMeBanner extends BaseAd {
 	 * After it banner ad requires "loading process" to be ready for displaying
 	 * 
 	 * As a result you'll receive onLoopMeBannerHide() notification
+	 * 
 	 */
 	public void dismiss() {
 		Logging.out(LOG_TAG, "Banner will be dismissed", LogLevel.DEBUG);
-		if (mBannerView != null && mBannerView.getVisibility() == View.VISIBLE) {
+		if (mAdState == AdState.SHOWING) {
 			((Activity) getContext()).runOnUiThread(new Runnable() {
 				
 				@Override
@@ -299,11 +303,12 @@ public class LoopMeBanner extends BaseAd {
 						mBannerView.removeAllViews();// should be in UI thread
 					}
 					if (mViewController != null) {
-						mViewController.onAdDisappear();
+						mViewController.destroyMinimizedView();
+                        mViewController.setWebViewState(WebviewState.CLOSED);
 					}
 				}
 			});
-			LoopMeAdHolder.removeAd(getAppKey());
+			
 			onLoopMeBannerHide(this);
 		} else {
 			Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying", LogLevel.DEBUG);
@@ -353,6 +358,7 @@ public class LoopMeBanner extends BaseAd {
 	 */
 	void onLoopMeBannerShow(LoopMeBanner banner) {
 		Logging.out(LOG_TAG, "Ad appeared on screen", LogLevel.INFO);
+		mIsVideoFinished = false;
 		if(mAdListener != null) {
 			mAdListener.onLoopMeBannerShow(this);
 		}
@@ -408,6 +414,19 @@ public class LoopMeBanner extends BaseAd {
 	 */
 	void onLoopMeBannerVideoDidReachEnd(LoopMeBanner banner) {
 		Logging.out(LOG_TAG, "Video did reach end", LogLevel.INFO);
+		mIsVideoFinished = true;
+		Runnable runnable = new Runnable() {
+
+			@Override
+			public void run() {
+				if (mViewController != null) {
+					mViewController.switchToNormalMode();
+				}
+			}
+		};
+		Handler handler = new Handler(Looper.getMainLooper());
+		handler.postDelayed(runnable, StaticParams.SHRINK_MODE_KEEP_AFTER_FINISH_TIME);
+
 		if (mAdListener != null) {
 			mAdListener.onLoopMeBannerVideoDidReachEnd(this);
 		}
@@ -464,12 +483,18 @@ public class LoopMeBanner extends BaseAd {
 
 	@Override
 	int detectWidth() {
+		if (mBannerView == null) {
+			return 0;
+		}
 		android.view.ViewGroup.LayoutParams params = mBannerView.getLayoutParams();
 		return params.width;
 	}
 
 	@Override
 	int detectHeight() {
+		if (mBannerView == null) {
+			return 0;
+		}
 		android.view.ViewGroup.LayoutParams params = mBannerView.getLayoutParams();
 		return params.height;
 	}

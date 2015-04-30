@@ -1,6 +1,7 @@
 package com.loopme;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.text.TextUtils;
@@ -64,7 +65,7 @@ public class Bridge extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
     	Logging.out(LOG_TAG, "shouldOverrideUrlLoading " + url, LogLevel.DEBUG);
-    	
+
     	if (TextUtils.isEmpty(url) ) {
     		return false;
     	}
@@ -136,7 +137,15 @@ public class Bridge extends WebViewClient {
     	if (str == null || mListener == null) {
     		return;
     	}
-    	Uri uri=Uri.parse(url);
+    	Uri uri = null;
+    	try {
+    		uri = Uri.parse(url);
+    	} catch (NullPointerException e) {
+    		e.printStackTrace();
+    	}
+    	if (uri == null) {
+    		return;
+    	}
     	
     	if (str.equalsIgnoreCase(VIDEO_LOAD)) {
     		String videoUrl = uri.getQueryParameter(QUERY_PARAM_SRC);
@@ -174,8 +183,14 @@ public class Bridge extends WebViewClient {
     @Override
     public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
         super.onReceivedError(view, errorCode, description, failingUrl);
-        if (mListener != null) {
+		if (mListener != null) {
         	mListener.onJsLoadFail("onReceivedError " + description);
         }
     }
+
+	@Override
+	public void onPageStarted(WebView view, String url, Bitmap favicon) {
+		Logging.out(LOG_TAG, "onPageStarted", LogLevel.DEBUG);
+		super.onPageStarted(view, url, favicon);
+	}
 }

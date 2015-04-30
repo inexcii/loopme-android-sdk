@@ -1,6 +1,7 @@
 package com.loopme;
 
 import android.content.Context;
+import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -19,9 +20,10 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 	
 	private Bridge.Listener mBridgeListener;
 	private volatile Bridge mBridge;
-	private VideoState mCurrentVideoState;
+
+	private VideoState mCurrentVideoState = VideoState.BROKEN;
 	private WebviewState mViewState = WebviewState.CLOSED;
-	
+
 	public AdView(Context context) {
 		super(context);
 		init();
@@ -30,7 +32,7 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 	enum WebviewState {
 		VISIBLE,
 		HIDDEN,
-		CLOSED;
+		CLOSED
 	}
 	
 	/**
@@ -50,8 +52,11 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 		setHorizontalScrollBarEnabled(false);
 
 		webSettings.setSupportZoom(false);
-		setWebChromeClient(new WebChromeClient());
-		
+//        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+//        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+		setWebChromeClient(new AdViewChromeClient());
+
 		mBridge = new Bridge(this);
 		setWebViewClient(mBridge);
 	}
@@ -60,40 +65,28 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 		return mCurrentVideoState;
 	}
 	
-	public WebviewState getCurrentViewState() {
+    @Override
+    public void setWebViewState(WebviewState state) {
+        if (mViewState != state) {
+            mViewState = state;
+            Logging.out(LOG_TAG, "WEBVIEW : " + state.toString(), LogLevel.DEBUG);
+            String command = new BridgeCommandBuilder().webviewState(mViewState);
+            loadUrl(command);
+        }
+    }
+
+	WebviewState getCurrentWebViewState() {
 		return mViewState;
 	}
 
 	@Override
-	public void onAppear() {
-		mViewState = WebviewState.VISIBLE;
-		Logging.out(LOG_TAG, "WEBVIEW : VISIBLE", LogLevel.DEBUG);
-		String command = new BridgeCommandBuilder().webviewState(mViewState);
-		loadUrl(command);
-	}
-
-	@Override
-	public void onDisappear() {
-		mViewState = WebviewState.CLOSED;
-		Logging.out(LOG_TAG, "WEBVIEW : CLOSED", LogLevel.DEBUG);
-		String command = new BridgeCommandBuilder().webviewState(mViewState);
-		loadUrl(command);
-	}
-	
-	@Override
-	public void onHidden() {
-		mViewState = WebviewState.HIDDEN;
-		Logging.out(LOG_TAG, "WEBVIEW : HIDDEN", LogLevel.DEBUG);
-		String command = new BridgeCommandBuilder().webviewState(mViewState);
-		loadUrl(command);
-	}
-
-	@Override
 	public void setVideoState(VideoState state) {
-		mCurrentVideoState = state;
-		Logging.out(LOG_TAG, "VIDEO : " + state.toString(), LogLevel.DEBUG);
-		String command = new BridgeCommandBuilder().videoState(state);
-		loadUrl(command);
+		if (mCurrentVideoState != state) {
+            mCurrentVideoState = state;
+            Logging.out(LOG_TAG, "VIDEO : " + state.toString(), LogLevel.DEBUG);
+            String command = new BridgeCommandBuilder().videoState(state);
+            loadUrl(command);
+        }
 	}
 
 	@Override

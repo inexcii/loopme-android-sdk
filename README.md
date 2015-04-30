@@ -15,9 +15,6 @@
 
 LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen video and rich media ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
 
-`loopme-android-sdk` is distributed as a source code and provides facilities to retrieve, display ads in your application.
-
-
 If you have questions please contact us at support@loopmemedia.com.
 
 ## Features ##
@@ -26,6 +23,7 @@ If you have questions please contact us at support@loopmemedia.com.
 * Full-screen rich media interstitials
 * Preloaded video ads
 * Banner ads
+* Minimized video mode
 * In-app ad reward notifications, including video view completed
 
 ## Requirements ##
@@ -75,7 +73,7 @@ public class YourActivity extends Activity implements LoopMeInterstitial.Listene
  	 * using the unique appKey you received when registering your app via the LoopMe Dashboard.
  	 * For test purposes you can use test appKeys constants defined in LoopMeInterstitial.java
  	*/
-	mInterstitial = new LoopMeInterstitial(this, YOUR_APPKEY);
+	mInterstitial = LoopMeInterstitial.getInstance(YOUR_APPKEY, this);
 	mInterstitial.setListener(this);
 	
 	/**
@@ -126,17 +124,9 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 
 * Creating `LoopMeBanner` and retrieving ads
 
-Video is rendered in `SurfaceView` dynamically, in order to avoid "flash screen" effect add zero-height `SurfaceView` in activity layout:
-```xml
-<SurfaceView 
-	android:id="@+id/surf"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"/>
-```
-
 ```java
 public class YourActivity extends Activity implements LoopMeBanner.Listener {
-  private LoopMeBanner mVideoAd;
+  private LoopMeBanner mBanner;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -147,9 +137,18 @@ public class YourActivity extends Activity implements LoopMeBanner.Listener {
 	 * using the unique appKey you received when registering your app via the LoopMe Dashboard.
 	 * For test purposes you can use test appKeys constants defined in LoopMeBanner.java    
 	*/
-	mVideoAd = new LoopMeBanner(this, YOUR_APPKEY);
-	mVideoAd.setListener(this);
-	mVideoAd.load();
+	mBanner = LoopMeBanner.getInstance(YOUR_APPKEY, this);
+
+    /*
+    * If you want to display minimized video when original ad is out of viewport:
+    * you need to define `MinimzedMode` and pass it in `setMinimizedMode` method.
+    * Note: you can change minimized mode size and margins.
+    */
+    MinimizedMode mode = new MinimizedMode(root); // root is parent layout where `MinimizedVideo` will be displayed
+    mBanner.setMinimizedMode(mode);
+
+	mBanner.setListener(this);
+	mBanner.load();
   }
 }
 ```
@@ -175,7 +174,7 @@ It manages the ad visibility inside the scrollable content and automatically cal
 ```java
 @Override
 public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-	mVideoAd.showAdIfItVisible(mCustomAdapter, mListView);
+	mBanner.showAdIfItVisible(mCustomAdapter, mListView);
 }
 
 @Override
@@ -184,19 +183,19 @@ public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCoun
  }
 ```
 
-Trigger `LoopMeBanner`'s `pause()` and `resume()` method in appropriate activity lifecycle methods
+Trigger `LoopMeBanner`'s `pause()` and `showAdIfItVisible` method in appropriate activity lifecycle methods
 It allows to pause/resume any actions currently happening inside banner ad (f.e to pause video playback)
 ```java
 	@Override
 	protected void onPause() {
-		mVideoAd.pause();
+		mBanner.pause();
 		super.onPause();
 	}
 	
 
 	@Override
 	protected void onResume() {
-		mVideoAd.resume(mListView, mCustomAdapter);
+		mBanner.showAdIfItVisible(mCustomAdapter, mListView);
 		super.onResume();
 	}
 ```
@@ -205,7 +204,7 @@ It allows to pause/resume any actions currently happening inside banner ad (f.e 
 
 Trigger destroy() method to clean up resources when ad no need anymore. It can be done in Activity onDestroy() method.
 ```java
-mVideoAd.destroy();
+mBanner.destroy();
 ```
 
 * `LoopMeBanner` notifications:
@@ -223,16 +222,20 @@ Implement `LoopMeBanner.Listener` in order to receive notifications during the l
 ## Sample projects ##
 
 Check out our project samples:
-- `NativeVideoAdDemo` as an example of `LoopMeBanner` integration within `ListView` and `ScrollView`
-- `InterstitialDemo` as an example of `LoopMeInterstitial` integration
+- `banner-sample` as an example of `LoopMeBanner` integration within `ListView` and `ScrollView`
+- `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**v4.1.0**
+**Version 4.2.0 (30 of April, 2015)**
 
-* Improved ad loading process by caching video
-* Ability to pass custom params as part of ad request
-* Small bug fixes
+- Displaying `minimized video` when original `banner` ad is out of viewport, with configurable size and margins.
+- `Swipe-to-remove` for `minimized video`.
+- `LoopMeAdHolder` class is deprecated, use `LoopMeBanner.getInstance(appkey, this);` which returns existing ad object or creates new one for a given appKey.
+- `LoopMeBanner.resume()` method is deprecated, use `LoopMeBanner.showAdIfVisible`
+- `SurfaceView` is replaced with `TextureView`, you don't have to create zero-height UI element in layout'
+
+See [Changelog](CHANGELOG.md)
 
 ## License ##
 
-see [License](LICENSE.md)
+See [License](LICENSE.md)

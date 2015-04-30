@@ -8,8 +8,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import android.util.Log;
-
 import com.loopme.Logging.LogLevel;
 
 public class ResponseParser {
@@ -61,13 +59,13 @@ public class ResponseParser {
 			}
 
 		} catch (JSONException e) {
-			Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+			e.printStackTrace();
 			if (mListener != null) {
 				mListener.onParseError("Exception during json parse");
 			}
 			return null;
 		} catch (ClassCastException ex) {
-			Logging.out(LOG_TAG, ex.getMessage(), LogLevel.ERROR);
+			ex.printStackTrace();
 			if (mListener != null) {
 				mListener.onParseError("Exception during json parse");
 			}

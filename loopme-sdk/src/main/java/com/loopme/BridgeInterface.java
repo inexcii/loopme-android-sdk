@@ -3,9 +3,7 @@ package com.loopme;
 public interface BridgeInterface {
 
 	//webview commands
-	void onAppear();
-	void onDisappear();
-	void onHidden();
+    void setWebViewState(AdView.WebviewState state);
 	
 	//video commands
 	void setVideoState(VideoState state);

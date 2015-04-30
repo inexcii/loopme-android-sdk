@@ -9,6 +9,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -52,7 +53,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 			mAccel = mAccel * 0.9f + delta;
 			
 			if (delta > 5) {
-				mViewController.onAdShake();
+				if (mViewController != null) {
+					mViewController.onAdShake();
+				}
 			}
 		}
 		
@@ -65,7 +68,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         super.onCreate(savedInstanceState);
         
         String appKey = getIntent().getStringExtra(APPKEY);
-        if (appKey == null) {
+        if (TextUtils.isEmpty(appKey)) {
         	Logging.out(LOG_TAG, "Empty app key", LogLevel.ERROR);
         }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -74,9 +77,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         
         Logging.out(LOG_TAG, "onCreate", LogLevel.DEBUG);
         
-        mInterstitial = (LoopMeInterstitial) LoopMeAdHolder.getAd(appKey);
+        mInterstitial = LoopMeAdHolder.getInterstitial(appKey, null);
         
-        if (mInterstitial == null) {
+        if (mInterstitial == null || mInterstitial.getViewController() == null) {
         	Logging.out(LOG_TAG, "No ads with app key " + appKey, LogLevel.ERROR);
 			finish();
         } else {
@@ -104,10 +107,12 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     private FrameLayout buildLayout() {
 		mLayout = new FrameLayout(this);
 
-		if (isVideoPresented()) {
-			mViewController.buildVideoAdView(mLayout);
-		} else {
-			mViewController.buildStaticAdView(mLayout);
+		if (mViewController != null) {
+			if (isVideoPresented()) {
+				mViewController.buildVideoAdView(mLayout);
+			} else {
+				mViewController.buildStaticAdView(mLayout);
+			}
 		}
 		return mLayout;
 	}
@@ -115,7 +120,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     private boolean isVideoPresented() {
     	VideoController videoController = mViewController.getVideoController(); 
     	return videoController != null
-    			&& videoController.getPlayer() != null;
+    			&& videoController.isMediaPlayerValid(); 
     }
     
     private void initDestroyReceiver() {
@@ -162,7 +167,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 			mSensorManager.unregisterListener(mSensorListener);
 		}
     	if (!mKeepAlive) {
-    		mViewController.onAdDisappear();
+    		if (mViewController != null) {
+                mViewController.setWebViewState(AdView.WebviewState.CLOSED);
+    		}
     		finish();
     	}
     }
@@ -172,7 +179,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     	super.onResume();
     	Logging.out(LOG_TAG, "onResume", LogLevel.DEBUG);
         mKeepAlive = false;
-        mViewController.onAdAppear();
+        if (mViewController != null) {
+            mViewController.setWebViewState(AdView.WebviewState.VISIBLE);
+        }
         
         if (mSensorManager != null) {
 			mSensorManager.registerListener(mSensorListener, mSensorManager.getDefaultSensor(

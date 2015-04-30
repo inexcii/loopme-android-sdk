@@ -1,0 +1,13 @@
+.DS_Store
+
+proguard-project.txt
+.classpath
+.project
+bin/
+gen/
+
+target/
+.idea/
+*.iml
+.settings/
+out/

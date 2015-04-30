@@ -132,10 +132,15 @@ public abstract class BaseAd implements AdTargeting {
 		stopFetcherTimer();
 		mAdState = AdState.NONE;
 		getAdTargetingData().clear();
-		AdRequestParametersProvider.getInstance(mContext).reset();
+		AdRequestParametersProvider.getInstance().reset();
 		releaseViewController(false);
 		
-		LoopMeAdHolder.removeAd(getAppKey());
+		if (getAdFormat() == AdFormat.INTERSTITIAL) {
+			LoopMeAdHolder.removeInterstitial(mAppKey);
+		} else {
+			LoopMeAdHolder.removeBanner(mAppKey);
+		}
+		
 		if (mFuture != null) {
 			mFuture.cancel(true);
 		}
@@ -218,6 +223,7 @@ public abstract class BaseAd implements AdTargeting {
 			@Override
 			public void onComplete(final AdParams params,
 					final int error) {
+
 				if (params != null && !params.getPackageIds().isEmpty()) {
 					
 					boolean b = Utils.isPackageInstalled(params.getPackageIds());
@@ -238,15 +244,16 @@ public abstract class BaseAd implements AdTargeting {
 	}
 	
 	private void completeRequest(final AdParams params, final int error) {
+
 		mHandler.post(new Runnable() {
 			
 			@Override
 			public void run() {
-				if (params == null) {
+                if (params == null) {
 					if (error >= 0) {
 						onAdLoadFail(error);
 					} else {
-						onAdLoadFail(LoopMeError.RESPONSE_PROCESSING);
+						onAdLoadFail(LoopMeError.REQUEST_TIMEOUT);
 					}
 				} else {
 					fetchAdComplete(params);
@@ -256,7 +263,7 @@ public abstract class BaseAd implements AdTargeting {
 	}
 	
 	private void proceedLoad() {
-		if (AdRequestParametersProvider.getInstance(mContext).getGoogleAdvertisingId() == null) {
+		if (AdRequestParametersProvider.getInstance().getGoogleAdvertisingId() == null) {
 			Logging.out(LOG_TAG, "Start initialization google adv id", LogLevel.DEBUG);
 			
 			detectGoogleAdvertisingId();
@@ -271,7 +278,7 @@ public abstract class BaseAd implements AdTargeting {
 			
 			@Override
 			public void onComplete(String advId) {
-				AdRequestParametersProvider.getInstance(mContext).setGoogleAdvertisingId(advId);
+				AdRequestParametersProvider.getInstance().setGoogleAdvertisingId(advId);
 				fetchAd();
 			}
 		});
@@ -348,7 +355,7 @@ public abstract class BaseAd implements AdTargeting {
     	}
 		
     	mAdFetcherListener = initAdFetcherListener();
-    	AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, mAppKey);
+    	AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, getAdFormat());
 		mFuture = ExecutorHelper.getExecutor().submit(fetcher);
     }
 	

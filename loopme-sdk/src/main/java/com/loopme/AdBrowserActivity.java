@@ -22,6 +22,7 @@ public final class AdBrowserActivity extends Activity {
 	private static final String LOG_TAG = AdBrowserActivity.class.getSimpleName();
 	
 	private static final String KEY_APPKEY = "appkey";
+	private static final String KEY_FORMAT = "format";
 	private static final String KEY_URL = "url";
 	
 	private BrowserWebView mAdBrowserWebview;
@@ -70,11 +71,16 @@ public final class AdBrowserActivity extends Activity {
     
     private boolean isValidExtras() {
     	String appKey = getIntent().getStringExtra(KEY_APPKEY);
+    	String format = getIntent().getStringExtra(KEY_FORMAT);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mUrl = extras.getString(KEY_URL);
 		}
-		mBaseAd = LoopMeAdHolder.getAd(appKey);
+		if (format.equalsIgnoreCase("banner")) {
+			mBaseAd = LoopMeAdHolder.getBanner(appKey, null);
+		} else {
+			mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
+		}
 		return (mBaseAd != null) && !TextUtils.isEmpty(mUrl);
     }
     
@@ -84,7 +90,15 @@ public final class AdBrowserActivity extends Activity {
 		Logging.out(LOG_TAG, "onPause", LogLevel.DEBUG);
 		mAdBrowserWebview.onPause();
 	}
-	
+
+	@Override
+	protected void onDestroy() {
+		Logging.out(LOG_TAG, " onDestroy", LogLevel.DEBUG);
+		mAdBrowserWebview.clearCache(true);
+		mAdBrowserWebview.destroy();
+		super.onDestroy();
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -100,6 +114,7 @@ public final class AdBrowserActivity extends Activity {
     	mWebClientListener = initAdBrowserClientListener();
     	AdBrowserWebViewClient client = new AdBrowserWebViewClient(mWebClientListener);
 		webView.setWebViewClient(client);
+		webView.getSettings().setBuiltInZoomControls(false);
     }
     
     private AdBrowserWebViewClient.Listener initAdBrowserClientListener() {

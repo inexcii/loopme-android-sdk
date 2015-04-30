@@ -16,7 +16,7 @@ public interface AdTargeting {
 	
 	/**
 	 * Sets targeting user's year of birth
-	 * @param yob - like "1985"
+	 * @param year - like "1985"
 	 */
 	void setYearOfBirth(int year);
 	

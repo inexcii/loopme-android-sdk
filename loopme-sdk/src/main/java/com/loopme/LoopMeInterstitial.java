@@ -58,7 +58,7 @@ public final class LoopMeInterstitial extends BaseAd {
 	 * 
 	 * @throws IllegalArgumentException if any of parameters is null
 	 */
-	public LoopMeInterstitial(Context context, String appKey) {
+	LoopMeInterstitial(Context context, String appKey) {
 		super(context, appKey);
 		Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey, LogLevel.INFO);
 		
@@ -66,6 +66,15 @@ public final class LoopMeInterstitial extends BaseAd {
 		
 		Utils.init(context);
         Logging.init(context);
+	}
+
+    /**
+     * Getting already initialized ad object or create new one with specified appKey
+     * @param appKey - your app key
+     * @param context - Activity context
+     */
+    public static LoopMeInterstitial getInstance(String appKey, Context context) {
+		return LoopMeAdHolder.getInterstitial(appKey, context);
 	}
 	
 	@Override
@@ -88,7 +97,6 @@ public final class LoopMeInterstitial extends BaseAd {
 			Logging.out(LOG_TAG, "Dismiss ad", LogLevel.INFO);
 			broadcastDestroyIntent();
 			stopExpirationTimer();
-			LoopMeAdHolder.removeAd(getAppKey());
 			if (mHandler != null) {
 				mHandler.removeCallbacksAndMessages(null);
 			}
@@ -126,10 +134,10 @@ public final class LoopMeInterstitial extends BaseAd {
 	public void show() {
 		Logging.out(LOG_TAG, "Interstitial will present fullscreen ad", LogLevel.INFO);
         if(isReady()){
-        	if (mAdState != AdState.SHOWING) {
-        		mAdState = AdState.SHOWING;
-        		stopExpirationTimer();
-        		startAdActivity();
+			if (mAdState != AdState.SHOWING) {
+				mAdState = AdState.SHOWING;
+				stopExpirationTimer();
+				startAdActivity();
         	} else {
         		Logging.out(LOG_TAG, "Interstitial is already presented on the screen", LogLevel.INFO);
         	}
@@ -310,6 +318,9 @@ public final class LoopMeInterstitial extends BaseAd {
 	@Override
 	int detectWidth() {
 		WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+		if (wm == null) {
+			return 0;
+		}
 		Display display = wm.getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
@@ -319,6 +330,9 @@ public final class LoopMeInterstitial extends BaseAd {
 	@Override
 	int detectHeight() {
 		WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+		if (wm == null) {
+			return 0;
+		}
 		Display display = wm.getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);

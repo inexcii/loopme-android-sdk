@@ -30,6 +30,4 @@ public class AdFetcherTimer extends CountDownTimer {
 			mListener.onTimeout();
 		}
 	}
-
-	
 }

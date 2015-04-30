@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -80,7 +81,7 @@ public class VideoTask implements Runnable {
 	                if ((creationTime + StaticParams.CACHED_VIDEO_LIFE_TIME < currentTime) ||
 	                		(f.length() == 0)) {
 	                	f.delete();
-	                	Logging.out(LOG_TAG, "Deleted invalid file: " + file.getAbsolutePath(), LogLevel.DEBUG);
+	                	Logging.out(LOG_TAG, "Deleted cached file: " + file.getAbsolutePath(), LogLevel.DEBUG);
 	                }
 	            }
 	        }
@@ -109,6 +110,10 @@ public class VideoTask implements Runnable {
 		deleteInvalidVideoFiles();
 
 		mVideoFileName = detectFileName(mVideoUrl);
+        if (mVideoFileName == null) {
+            complete(null);
+            return;
+        }
 		File f = checkFileNotExists(mVideoFileName);
 		if (f != null) {
 			Logging.out(LOG_TAG, "Video file already exists", LogLevel.DEBUG);
@@ -147,7 +152,7 @@ public class VideoTask implements Runnable {
 		if (stream == null || !mVideoFile.exists()) {
 			return null;
 		}
-		Logging.out(LOG_TAG, "Write InputStream to file", LogLevel.DEBUG);
+		Logging.out(LOG_TAG, "Write to file", LogLevel.DEBUG);
 		
 		String filePath = null;
 		try {
@@ -162,14 +167,13 @@ public class VideoTask implements Runnable {
 			
 		} catch (IOException e) {
 			e.printStackTrace();
-			Logging.out(LOG_TAG, e.getMessage(), LogLevel.DEBUG);
 			mVideoFile.delete();
 		}
 		return filePath;
 	}
 	
 	private InputStream getVideoInputStream() {
-		Logging.out(LOG_TAG, "Download video InputStream", LogLevel.DEBUG);
+		Logging.out(LOG_TAG, "Download video", LogLevel.DEBUG);
 		InputStream inputStream = null;
 		try {
 			URL url = new URL(mVideoUrl);
@@ -179,11 +183,9 @@ public class VideoTask implements Runnable {
 			inputStream = new BufferedInputStream(urlConnection.getInputStream());
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-			Logging.out(LOG_TAG, e.getMessage(), LogLevel.DEBUG);
 		} catch (IOException e) {
 			e.printStackTrace();
-			Logging.out(LOG_TAG, e.getMessage(), LogLevel.DEBUG);
-		}
+		} 
 		return inputStream;
 	}
 

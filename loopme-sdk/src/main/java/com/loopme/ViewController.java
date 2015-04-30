@@ -4,24 +4,28 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Paint.Style;
 import android.graphics.Rect;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.ViewGroup;
+import android.graphics.SurfaceTexture;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
+import android.view.*;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
+import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 import com.loopme.AdView.WebviewState;
 import com.loopme.Logging.LogLevel;
 
-class ViewController implements UserIteractionListener, Callback {
+class ViewController implements TextureView.SurfaceTextureListener {
 	
 	private static final String LOG_TAG = ViewController.class.getSimpleName();
 	
 	private static final String EXTRA_URL = "url";
 	private static final String EXTRA_APPKEY = "appkey";
+	private static final String EXTRA_FORMAT = "format";
 
 	private AdView mAdView;
 	private volatile Bridge.Listener mBridgeListener;
@@ -32,13 +36,23 @@ class ViewController implements UserIteractionListener, Callback {
 	
 	private BaseAd mAd;
 	
-	private SurfaceView mSurfaceView;
-	
+	private TextureView mTextureView;
+
+    private DisplayMode mDisplayMode;
+	private MinimizedMode mMinimizedMode;
+	private LoopMeBannerView mMinimizedView;
+
 	public ViewController(BaseAd ad) {
 		mAd = ad;
 		mAdView = new AdView(mAd.getContext());
 		mBridgeListener = initBridgeListener();
 		mAdView.addBridgeListener(mBridgeListener);
+        mAdView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return (event.getAction() == MotionEvent.ACTION_MOVE);
+            }
+        });
 	}
 	
 	void destroy(boolean interruptFile) {
@@ -60,37 +74,19 @@ class ViewController implements UserIteractionListener, Callback {
 				}
 			}
 		});
+		mMinimizedMode = null;
 	}
-	
-	void onAdAppear() {
-		if (mAdView != null) {
-			mAdView.onAppear();
-		}
-	}
-	
-	void onAdDisappear() {
-		if (mAdView != null) {
-			mAdView.onDisappear();
-		}
-	}
-	
-	void onAdHidden() {
-		if (mAdView != null) {
-			mAdView.onHidden();
-		}
-	}
-	
+
+    void setWebViewState(WebviewState state) {
+        if (mAdView != null) {
+            mAdView.setWebViewState(state);
+        }
+    }
+
 	void onAdShake() {
 		if (mAdView != null) {
 			mAdView.shake();
 		}
-	}
-	
-	WebviewState getCurrentViewState() {
-		if (mAdView != null) {
-			return mAdView.getCurrentViewState();
-		}
-		return null;
 	}
 	
 	VideoState getCurrentVideoState() {
@@ -101,19 +97,41 @@ class ViewController implements UserIteractionListener, Callback {
 	}
 	
 	void buildStaticAdView(ViewGroup bannerView) {
+		if (bannerView == null || mAdView == null) {
+			return;
+		}
 		mAdView.setBackgroundColor(Color.BLACK);
 		bannerView.addView(mAdView);
 	}
 	
 	void buildVideoAdView(ViewGroup bannerView) {
-		mSurfaceView = new SurfaceView(mAd.getContext());
-		SurfaceHolder holder = mSurfaceView.getHolder();
-		holder.addCallback(this);
+		mTextureView = new TextureView(mAd.getContext());
+		mTextureView.setBackgroundColor(Color.TRANSPARENT);
+		mTextureView.setSurfaceTextureListener(this);
 		
 		mAdView.setBackgroundColor(Color.TRANSPARENT);
 		mAdView.setLayerType(WebView.LAYER_TYPE_SOFTWARE, null);
 		bannerView.setBackgroundColor(Color.BLACK);
-		bannerView.addView(mSurfaceView, 0);
+        bannerView.addView(mTextureView, 0);
+		if (mAdView.getParent() != null) {
+			((ViewGroup) mAdView.getParent()).removeView(mAdView);
+		}
+		bannerView.addView(mAdView, 1);
+	}
+	
+	void rebuildView(ViewGroup bannerView) {
+		if (bannerView == null || mAdView == null || mTextureView == null) {
+			return;
+		}
+		bannerView.setBackgroundColor(Color.BLACK);
+		if (mTextureView.getParent() != null) {
+			((ViewGroup) mTextureView.getParent()).removeView(mTextureView);
+		}
+		if (mAdView.getParent() != null) {
+			((ViewGroup) mAdView.getParent()).removeView(mAdView);
+		}
+		
+		bannerView.addView(mTextureView, 0);
 		bannerView.addView(mAdView, 1);
 	}
 	
@@ -124,44 +142,127 @@ class ViewController implements UserIteractionListener, Callback {
 		
 		Rect rect = new Rect();
 		boolean b = view.getGlobalVisibleRect(rect);
-		
+
 		int halfOfView = view.getHeight() / 2;
-		if (rect.height() == 0) {
+		int rectHeight = rect.height();
+
+		if (b) {
+
+			if (rectHeight < halfOfView) {
+				setWebViewState(WebviewState.HIDDEN);
+			}
+			else if (rectHeight >= halfOfView) {
+				setWebViewState(WebviewState.VISIBLE);
+			}
+		}
+	}
+	
+	void switchToMinimizedMode() {
+		if (mDisplayMode == DisplayMode.MINIMIZED) {
+			if (getCurrentVideoState() == VideoState.PAUSED) {
+                setWebViewState(WebviewState.VISIBLE);
+			} 
 			return;
-		} 
-		if (rect.height() < halfOfView) {
-			if (mAdView.getCurrentViewState() != WebviewState.HIDDEN) {
-				Logging.out(LOG_TAG, "visibility less then 50%", LogLevel.DEBUG);
-				mAdView.onHidden();
-			}
-		} 
-		else if (rect.height() >= halfOfView) {
-			if (mAdView.getCurrentViewState() != WebviewState.VISIBLE) {
-				Logging.out(LOG_TAG, "visibility more then 50%", LogLevel.DEBUG);
-				mAdView.onAppear();
-			}
+		}
+        Logging.out(LOG_TAG, "switchToMinimizedMode", LogLevel.DEBUG);
+        mDisplayMode = DisplayMode.MINIMIZED;
+
+		int width = mMinimizedMode.getWidth();
+		int height = mMinimizedMode.getHeight();
+		mMinimizedView = new LoopMeBannerView(mAdView.getContext(), width, height);
+		
+        rebuildView(mMinimizedView);
+		addBordersToView(mMinimizedView);
+
+        if (mAdView.getCurrentWebViewState() == WebviewState.HIDDEN) {
+			mMinimizedView.setAlpha(0);
+		}
+		
+		mMinimizedMode.getRootView().addView(mMinimizedView);
+		configMinimizedViewLayoutParams(mMinimizedView);
+
+        setWebViewState(WebviewState.VISIBLE);
+
+		mAdView.setOnTouchListener(new SwipeListener(width,
+				new SwipeListener.Listener() {
+					@Override
+					public void onSwipe(boolean toRight) {
+						mAdView.setWebViewState(WebviewState.HIDDEN);
+
+						Animation anim = AnimationUtils.makeOutAnimation(mAd.getContext(),
+								toRight);
+						anim.setDuration(200);
+						mMinimizedView.startAnimation(anim);
+
+						switchToNormalMode();
+						mMinimizedMode = null;
+					}
+				}));
+	}
+	
+	private void configMinimizedViewLayoutParams(LoopMeBannerView bannerView) {
+		LayoutParams lp = (LayoutParams) bannerView.getLayoutParams();
+		lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+		lp.bottomMargin = mMinimizedMode.getMarginBottom();
+		lp.rightMargin = mMinimizedMode.getMarginRight();
+		bannerView.setLayoutParams(lp);
+	}
+	
+	private void addBordersToView(LoopMeBannerView bannerView) {
+		ShapeDrawable drawable = new ShapeDrawable(new RectShape());
+		drawable.getPaint().setColor(Color.BLACK);
+		drawable.getPaint().setStyle(Style.FILL_AND_STROKE);
+		drawable.getPaint().setAntiAlias(true);
+		
+		bannerView.setPadding(2, 2, 2, 2);
+		bannerView.setBackground(drawable);
+	}
+	
+	void switchToNormalMode() {
+		if (mDisplayMode == DisplayMode.NORMAL) {
+			return;
+		}
+        Logging.out(LOG_TAG, "switchToNormalMode", LogLevel.DEBUG);
+        mDisplayMode = DisplayMode.NORMAL;
+
+        LoopMeBannerView initialView = ((LoopMeBanner) mAd).getBannerView();
+        initialView.setVisibility(View.VISIBLE);
+
+		if (mMinimizedView != null && mMinimizedView.getParent() != null) {
+			((ViewGroup) mMinimizedView.getParent()).removeView(mMinimizedView);
+			rebuildView(initialView);
+			mMinimizedView.removeAllViews();
+		}
+
+		mAdView.setOnTouchListener(null);
+	}
+	
+	void setMinimizedMode(MinimizedMode mode) {
+		mMinimizedMode = mode;
+	}
+	
+	boolean isMinimizedModeEnable() {
+		return mMinimizedMode != null && mMinimizedMode.getRootView() != null;
+	}
+	
+	void destroyMinimizedView() {
+		if (mMinimizedView != null) {
+            if (mMinimizedView.getParent() != null) {
+                ((ViewGroup) mMinimizedView.getParent()).removeView(mMinimizedView);
+            }
+			mMinimizedView.removeAllViews();
+			mMinimizedView = null;
 		}
 	}
 	
 	void preloadHtml(String html) {
 		if (mAdView != null) {
+            Logging.out(LOG_TAG, "loadDataWithBaseURL", LogLevel.DEBUG);
 			mAdView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
-		}
-	}
-	
-	boolean isAdVisibleEnough(View view) {
-		if (mAdView == null || view == null) {
-			return false;
-		}
-		Rect rect = new Rect();
-		boolean b = view.getGlobalVisibleRect(rect);
-		int halfOfView = view.getHeight() / 2;
-		if (rect.height() < halfOfView) {
-			return false;
-		} 
-		else {
-			return true;
-		}
+		} else {
+            mAd.onAdLoadFail(LoopMeError.HTML_LOADING);
+        }
 	}
 	
 	public boolean isVideoPresented() {
@@ -177,7 +278,7 @@ class ViewController implements UserIteractionListener, Callback {
 			}
 			
 			@Override
-			public void onJsVideoPause(int time) {
+			public void onJsVideoPause(final int time) {
 				onAdVideoPause(time);
 			}
 			
@@ -222,11 +323,6 @@ class ViewController implements UserIteractionListener, Callback {
 		return mVideoController;
 	}
 	
-	boolean isValidMediaPlayer() {
-		return (mVideoController != null) && 
-				(mVideoController.getPlayer() != null);
-	}
-	
 	private void loadFail(BaseAd baseAd, int error) {
 		baseAd.onAdLoadFail(error);
 	}
@@ -246,15 +342,9 @@ class ViewController implements UserIteractionListener, Callback {
 		Logging.out(LOG_TAG, "JS command: load video " + videoUrl, LogLevel.DEBUG);
 		
 		mIsVideoPresented = true;
-		
-		mVideoController = new VideoController(mAd.getAppKey(), mAdView);
-		mVideoController.loadVideoFile(videoUrl, mAd.getContext(), new VideoController.Listener() {
-			
-			@Override
-			public void onError(String mess) {
-				loadFail(mAd, LoopMeError.VIDEO_LOADING);
-			}
-		});
+
+		mVideoController = new VideoController(mAd.getAppKey(), mAdView, mAd.getAdFormat());
+		mVideoController.loadVideoFile(videoUrl, mAd.getContext());
 	}
 	
 	private void onAdVideoMute(boolean mute) {
@@ -265,19 +355,28 @@ class ViewController implements UserIteractionListener, Callback {
 		}
 	}
 	
-	private void onAdVideoPlay(int time) {
+	private void onAdVideoPlay(final int time) {
 		Logging.out(LOG_TAG, "JS command: play video " + time, LogLevel.DEBUG);
-		onPlayCommand(time);
+
+		if (mVideoController != null) {
+			mVideoController.playVideo(time);
+		}
+
+        if (mDisplayMode == DisplayMode.MINIMIZED) {
+            Utils.animateAppear(mMinimizedView);
+        }
 	}
 	
 	private void onAdVideoPause(int time) {
 		Logging.out(LOG_TAG, "JS command: pause video " + time, LogLevel.DEBUG);
-		onPauseCommand(time);
+        if (mVideoController != null) {
+        	mVideoController.pauseVideo(time);
+        }
 	}
 	
 	private void onAdClose() {
 		Logging.out(LOG_TAG, "JS command: close", LogLevel.DEBUG);
-		onCloseButtonPressed();
+        mAd.dismiss();
 	}
 	
 	private void onAdVideoStretch(boolean b) {
@@ -298,10 +397,11 @@ class ViewController implements UserIteractionListener, Callback {
 			Intent intent = new Intent(context, AdBrowserActivity.class);
 			intent.putExtra(EXTRA_URL, url);
 			intent.putExtra(EXTRA_APPKEY, mAd.getAppKey());
+			intent.putExtra(EXTRA_FORMAT, mAd.getAdFormat().toString());
 			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
 			mAd.onAdClicked();
-			mAdView.onHidden();
+            setWebViewState(WebviewState.HIDDEN);
 			broadcastAdClickedIntent();
 			
 			context.startActivity(intent);
@@ -317,52 +417,42 @@ class ViewController implements UserIteractionListener, Callback {
 	}
 	
 	@Override
-	public void onCloseButtonPressed() {
-		mAd.dismiss();
+	public void onSurfaceTextureAvailable(SurfaceTexture surface, int width,
+			int height) {
+
+        Logging.out(LOG_TAG, "onSurfaceTextureAvailable", LogLevel.DEBUG);
+
+		int viewWidth;
+        int viewHeight;
+
+        if (mDisplayMode == DisplayMode.MINIMIZED && mMinimizedMode != null) {
+
+            viewWidth = mMinimizedMode.getWidth();
+            viewHeight = mMinimizedMode.getHeight();
+
+        } else {
+            viewWidth = mAd.detectWidth();
+            viewHeight = mAd.detectHeight();
+        }
+
+        if (mVideoController != null) {
+			mVideoController.setSurface(mTextureView);
+            mVideoController.resizeVideo(mTextureView, viewWidth, viewHeight);
+        }
 	}
 
 	@Override
-	public void onPlayCommand(int time) {
-		if (mVideoController != null) {
-			mVideoController.playVideo(time);
-		}
-	}
-
-	@Override
-	public void onPauseCommand(int time) {
-		if (mVideoController != null) {
-			mVideoController.pauseVideo(time);
-		}
-	}
-	
-	private void resizeVideo(SurfaceView surfaceView, SurfaceHolder holder, int viewWidth, int viewHeight) {
-		if (mVideoController != null) {
-			mVideoController.resizeVideo(surfaceView, holder, viewWidth, viewHeight);
-		}
-	}
-
-	@Override
-	public void surfaceCreated(SurfaceHolder holder) {
-		final Surface surface = holder.getSurface();
-
-	    //in android 4.0-4.1 surfaceCreated can return invalid surface
-		//http://stackoverflow.com/questions/18451854/the-surface-has-been-released-inside-surfacecreated
-		if (surface == null || !surface.isValid()) {
-	    	return;
-	    }
-
-		int viewWidth = mAd.detectWidth();
-		int viewHeight = mAd.detectHeight();
-		resizeVideo(mSurfaceView, holder, viewWidth, viewHeight);
-
-	}
-
-	@Override
-	public void surfaceChanged(SurfaceHolder holder, int format, int width,
+	public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width,
 			int height) {
 	}
 
 	@Override
-	public void surfaceDestroyed(SurfaceHolder holder) {
+	public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+		Logging.out(LOG_TAG, "onSurfaceTextureDestroyed", LogLevel.DEBUG);
+		return false;
+	}
+
+	@Override
+	public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 	}
 }

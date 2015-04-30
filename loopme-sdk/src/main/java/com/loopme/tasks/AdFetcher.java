@@ -7,6 +7,7 @@ import java.net.SocketTimeoutException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ConnectTimeoutException;
@@ -16,8 +17,8 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
+import com.loopme.AdFormat;
 import com.loopme.AdParams;
-import com.loopme.LoopMeAdHolder;
 import com.loopme.Logging;
 import com.loopme.LoopMeError;
 import com.loopme.ResponseParser;
@@ -31,7 +32,7 @@ public class AdFetcher implements Runnable {
 	private final String mRequestUrl;
 	private Listener mListener;
 	
-	private String mAppKey;
+	private AdFormat mFormat;
 	
 	//timeout for response from server 20 seconds
 	private static final int TIMEOUT = 20000;
@@ -41,10 +42,10 @@ public class AdFetcher implements Runnable {
 		void onComplete(AdParams params, int error);
 	}
 	
-	public AdFetcher(String requestUrl, Listener listener, String appkey) {
+	public AdFetcher(String requestUrl, Listener listener, AdFormat format) {
 		mRequestUrl = requestUrl;
 		mListener = listener;
-		mAppKey = appkey;
+		mFormat = format;
 	}
 	
 	@Override
@@ -60,7 +61,7 @@ public class AdFetcher implements Runnable {
 				public void onParseError(String message) {
 					complete(null, LoopMeError.RESPONSE_PARSING);
 				}
-			}, LoopMeAdHolder.getAd(mAppKey).getAdFormat());
+			}, mFormat);
 			AdParams adParams = parser.getAdParams(result);
 			if (adParams != null) {
 				complete(adParams, -1);
@@ -86,13 +87,20 @@ public class AdFetcher implements Runnable {
 			httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, System.getProperty("http.agent"));
 			HttpGet httpGet = new HttpGet(url);
 
-			String type = LoopMeAdHolder.getAd(mAppKey).getAdFormat().toString();
+			String type = mFormat.toString();
 			Logging.out(LOG_TAG, type + " loads ad with URL: " + url, LogLevel.DEBUG);
 			
 			HttpResponse responce = httpClient.execute(httpGet);
 			HttpEntity entity = responce.getEntity();
 			
-			int statusCode = responce.getStatusLine().getStatusCode();
+			if (entity == null) {
+				return null;
+			}
+			StatusLine statusLine = responce.getStatusLine();
+			if (statusLine == null) {
+				return null;
+			}
+			int statusCode = statusLine.getStatusCode();
 			
 			switch (statusCode) {
 			case HttpURLConnection.HTTP_NO_CONTENT:
@@ -105,7 +113,11 @@ public class AdFetcher implements Runnable {
 
 			case HttpURLConnection.HTTP_OK:
 				InputStream is = entity.getContent();
-				result = Utils.getStringFromStream(is);
+				try {
+					result = Utils.getStringFromStream(is);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 
 			default:
@@ -114,12 +126,14 @@ public class AdFetcher implements Runnable {
 			}
 			
 		} catch (ConnectTimeoutException ex) {
-			mLoopMeError = LoopMeError.RESPONSE_PROCESSING;
+			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
 		} catch (SocketTimeoutException ex) {
-			mLoopMeError = LoopMeError.RESPONSE_PROCESSING;
+			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
 		} catch (IOException ex) {
-			mLoopMeError = LoopMeError.RESPONSE_PROCESSING;
-		}
+			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
+		} catch (IllegalArgumentException ex) {
+			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
+		} 
 		return result;
 	}
 }

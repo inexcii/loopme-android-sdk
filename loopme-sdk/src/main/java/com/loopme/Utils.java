@@ -6,10 +6,16 @@ import java.util.List;
 
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import com.loopme.Logging.LogLevel;
 
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -30,12 +36,16 @@ public class Utils {
 			final ConnectivityManager conMgr = (ConnectivityManager) context
 					.getSystemService(Context.CONNECTIVITY_SERVICE);
 			
+			if (conMgr == null) {
+				return false;
+			}
+			
 			final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
 			
 			return activeNetwork != null && activeNetwork.isConnected() 
 					&& activeNetwork.isAvailable();
 		} catch(Exception e) {
-			Logging.out(LOG_TAG, e.toString(), LogLevel.ERROR);
+			e.printStackTrace();
 			isOnline = false;
 		}
 		return isOnline;
@@ -65,12 +75,13 @@ public class Utils {
     public static Location getLastKnownLocation() {
         Location result = null;
 
-        LocationManager locationManager = (LocationManager) sContext
-        		.getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) sContext.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager == null) {
+        	return null;
+        }
         Location gpsLocation = null;
         try {
-            gpsLocation = locationManager.getLastKnownLocation(
-            		LocationManager.GPS_PROVIDER);
+            gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         } catch (SecurityException e) {
         	Logging.out(LOG_TAG, "Failed to retrieve GPS location: access appears to be disabled.", LogLevel.DEBUG);
         } catch (IllegalArgumentException e) {
@@ -79,8 +90,7 @@ public class Utils {
 
         Location networkLocation = null;
         try {
-            networkLocation = locationManager.getLastKnownLocation(
-            		LocationManager.NETWORK_PROVIDER);
+            networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         } catch (SecurityException e) {
         	Logging.out(LOG_TAG, "Failed to retrieve network location: access appears to be disabled.", LogLevel.DEBUG);
         } catch (IllegalArgumentException e) {
@@ -109,6 +119,9 @@ public class Utils {
     public static DisplayMetrics getDisplayMetrics(Context context) {
     	DisplayMetrics displayMetrics = new DisplayMetrics();
     	WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    	if (windowManager == null) {
+    		return displayMetrics;
+    	}
     	windowManager.getDefaultDisplay().getMetrics(displayMetrics);
     	return displayMetrics;
     }
@@ -128,5 +141,11 @@ public class Utils {
 			}
 		}
 		return false;
+    }
+    
+    public static void animateAppear(View view) {
+        view.animate()
+		    .setDuration(500)
+		    .alpha(1.0f);
     }
 }

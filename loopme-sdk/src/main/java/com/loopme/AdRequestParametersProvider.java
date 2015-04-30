@@ -9,6 +9,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
@@ -17,7 +18,6 @@ public class AdRequestParametersProvider {
 	private static final String LOG_TAG = AdRequestParametersProvider.class.getSimpleName();
 	
 	private static AdRequestParametersProvider sProvider;
-	private Context mContext;
 	
     private volatile String mAdvertisingId;
     private String mLoopMeId;
@@ -28,17 +28,12 @@ public class AdRequestParametersProvider {
 	private String mCarrier;
 	private boolean mCarrierInited;
 	
-	private AdRequestParametersProvider(Context context) throws NullPointerException {
-		if (context == null) {
-			Logging.out(LOG_TAG, "Context should not be null", LogLevel.ERROR);
-			throw new NullPointerException();
-		}
-		mContext = context;
+	private AdRequestParametersProvider() {
 	}
 
-	public static AdRequestParametersProvider getInstance(Context context) {
+	public static AdRequestParametersProvider getInstance() {
 		if (sProvider == null) {
-			sProvider = new AdRequestParametersProvider(context);
+			sProvider = new AdRequestParametersProvider();
 		} 
 		return sProvider; 
 	}
@@ -56,20 +51,35 @@ public class AdRequestParametersProvider {
 		return mAdvertisingId;
 	}
 	
-	public int getConnectionType() {
-		ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+	public int getConnectionType(Context context) {
+		if (context == null) {
+			return ConnectionType.UNKNOWN;
+		}
+		
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		if (cm == null) {
 			return ConnectionType.UNKNOWN;
 		}
-		int type = cm.getActiveNetworkInfo().getType();
+		
+		NetworkInfo ni = cm.getActiveNetworkInfo();
+		if (ni == null) {
+			return ConnectionType.UNKNOWN;
+		}
+		
+		int type = ni.getType();
+		
 		if (type == ConnectivityManager.TYPE_WIFI) {
 			return ConnectionType.WIFI;
 		} else if (type == ConnectivityManager.TYPE_ETHERNET) {
 			return ConnectionType.ETHERNET;
 		} else if (type == ConnectivityManager.TYPE_MOBILE) {
 
-			TelephonyManager mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-			int networkType = mTelephonyManager.getNetworkType();
+			TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			if (telephonyManager == null) {
+				return ConnectionType.UNKNOWN;
+			}
+			
+			int networkType = telephonyManager.getNetworkType();
 			switch (networkType) {
 			case TelephonyManager.NETWORK_TYPE_GPRS:
 			case TelephonyManager.NETWORK_TYPE_EDGE:
@@ -100,49 +110,25 @@ public class AdRequestParametersProvider {
 		}
 	}
 	
-	public String getNetworkClass(Context context) {
-	    TelephonyManager mTelephonyManager = (TelephonyManager)
-	            context.getSystemService(Context.TELEPHONY_SERVICE);
-	    int networkType = mTelephonyManager.getNetworkType();
-	    switch (networkType) {
-	        case TelephonyManager.NETWORK_TYPE_GPRS:
-	        case TelephonyManager.NETWORK_TYPE_EDGE:
-	        case TelephonyManager.NETWORK_TYPE_CDMA:
-	        case TelephonyManager.NETWORK_TYPE_1xRTT:
-	        case TelephonyManager.NETWORK_TYPE_IDEN:
-	            return "2G";
-	        case TelephonyManager.NETWORK_TYPE_UMTS:
-	        case TelephonyManager.NETWORK_TYPE_EVDO_0:
-	        case TelephonyManager.NETWORK_TYPE_EVDO_A:
-	        case TelephonyManager.NETWORK_TYPE_HSDPA:
-	        case TelephonyManager.NETWORK_TYPE_HSUPA:
-	        case TelephonyManager.NETWORK_TYPE_HSPA:
-	        case TelephonyManager.NETWORK_TYPE_EVDO_B:
-	        case TelephonyManager.NETWORK_TYPE_EHRPD:
-	        case TelephonyManager.NETWORK_TYPE_HSPAP:
-	            return "3G";
-	        case TelephonyManager.NETWORK_TYPE_LTE:
-	            return "4G";
-	        default:
-	            return "Unknown";
-	    }
-	}
-	
 	public String getLanguage() {
 		return Locale.getDefault().getLanguage();
 	}
 	
-	public String getAppVersion() {
+	public String getAppVersion(Context context) {
 		if (mAppVersion == null) {
-			initAppVersion();
+			initAppVersion(context);
 		}
 		return mAppVersion;
 	}
 	
-	private void initAppVersion() {
+	private void initAppVersion(Context context) {
+		if (context == null) {
+			mAppVersion = "0.0";
+			return;
+		}
 		try {
-			mAppVersion = mContext.getPackageManager()
-				    .getPackageInfo(mContext.getPackageName(), 0).versionName;
+			mAppVersion = context.getPackageManager()
+				    .getPackageInfo(context.getPackageName(), 0).versionName;
 		} catch (NameNotFoundException e) {
 			Logging.out(LOG_TAG, "Can't get app version. Exception: " + e.getMessage(), 
 					LogLevel.ERROR);
@@ -166,8 +152,11 @@ public class AdRequestParametersProvider {
         }
     }
 	
-	public String getOrientation() {
-		int orientation = mContext.getResources().getConfiguration().orientation; 
+	public String getOrientation(Context context) {
+		if (context == null) {
+			return "";
+		}
+		int orientation = context.getResources().getConfiguration().orientation; 
 	    if (Configuration.ORIENTATION_LANDSCAPE == orientation) { 
 	    	return "l";
 	    } else { 
@@ -208,17 +197,25 @@ public class AdRequestParametersProvider {
 		}
 	}
 	
-	public String getCarrier() {
+	public String getCarrier(Context context) {
 		if (!mCarrierInited) {
-			initCarrier();
+			initCarrier(context);
 		}
 		return mCarrier;
 	}
 	
-	private void initCarrier() {
+	private void initCarrier(Context context) {
+		if (context == null) {
+			mCarrierInited = true;
+			return;
+		}
 		TelephonyManager telephonyManager =
-                (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
+		if (telephonyManager == null) {
+			mCarrierInited = true;
+			return;
+		}
 		mCarrier = telephonyManager.getNetworkOperator();
 		if (mCarrier.isEmpty()) {
 			mCarrier = null;

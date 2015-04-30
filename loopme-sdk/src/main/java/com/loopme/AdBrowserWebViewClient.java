@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -48,10 +49,22 @@ class AdBrowserWebViewClient extends WebViewClient {
 		Logging.out(LOG_TAG, "shouldOverrideUrlLoading url=" + url, LogLevel.DEBUG);
 		Context context = view.getContext();
 
-		Uri uri = Uri.parse(url);
+		Uri uri = null;
+		try {
+			uri = Uri.parse(url);
+		} catch (NullPointerException ex) {
+			ex.printStackTrace();
+		}
+		if (uri == null) {
+			return false;
+		}
 
 		String scheme = uri.getScheme();
 		String host = uri.getHost();
+		
+		if (TextUtils.isEmpty(scheme) || TextUtils.isEmpty(host)) {
+			return false;
+		}
 		
 		if (scheme.equalsIgnoreCase(TEL_SCHEME)) {
 			context.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse(url)));

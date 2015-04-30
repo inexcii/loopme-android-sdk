@@ -3,6 +3,7 @@ package com.loopme;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
+import android.graphics.SurfaceTexture;
 import com.loopme.Logging.LogLevel;
 import com.loopme.tasks.VideoTask;
 
@@ -16,13 +17,13 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.Surface;
+import android.view.TextureView;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 class VideoController implements OnBufferingUpdateListener,
-OnPreparedListener, OnErrorListener, OnCompletionListener {
+OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoListener, MediaPlayer.OnVideoSizeChangedListener {
 
 	private static final String LOG_TAG = VideoController.class.getSimpleName();
 	
@@ -39,25 +40,42 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 	private Future mFuture;
 	private VideoTask mVideoTask;
 	
+	private AdFormat mFormat;
+
+	private boolean mWasError;
+	private boolean mIsPlayerPrepared;
+
+	private int mVideoWidth;
+	private int mVideoHeight;
+
+	@Override
+	public boolean onInfo(MediaPlayer mp, int what, int extra) {
+		Logging.out(LOG_TAG, "onInfo: " + what + " " + extra, LogLevel.DEBUG);
+		return false;
+	}
+
+	@Override
+	public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+		mVideoWidth = width;
+		mVideoHeight = height;
+	}
+
 	public enum StretchOption {
 		NONE,
 		STRECH,
-		NO_STRETCH;
+		NO_STRETCH
 	}
 	
-	public interface Listener {
-		void onError(String mess);
-	}
-	
-	public VideoController(String appKey, AdView adview) {
+	public VideoController(String appKey, AdView adview, AdFormat format) {
 		mAppKey = appKey;
 		mAdView = adview;
+		mFormat = format;
 		mHandler = new Handler(Looper.getMainLooper());
 		
 		initRunnable();
 	}
 	
-	public void loadVideoFile(String videoUrl, Context context, final Listener listener) {
+	public void loadVideoFile(String videoUrl, Context context) {
 		mVideoTask = new VideoTask(videoUrl, context, 
 				new VideoTask.Listener() {
 					
@@ -66,9 +84,13 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 						if (filePath != null) {
 							preparePlayer(filePath);
 						} else {
-							if (listener != null) {
-								listener.onError("Exception during video file loading/creation");
-							}
+                            BaseAd ad;
+                            if (mFormat == AdFormat.INTERSTITIAL) {
+                                ad = LoopMeAdHolder.getInterstitial(mAppKey, null);
+                            } else {
+                                ad = LoopMeAdHolder.getBanner(mAppKey, null);
+                            }
+							ad.onAdLoadFail(LoopMeError.VIDEO_LOADING);
 						}
 					}
 				});
@@ -82,32 +104,54 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 	}
 	
 	void pauseVideo(int time) {
-		if (mPlayer != null && mAdView != null) {
-			if (mPlayer.isPlaying()) {
-				mPlayer.pause();
-				mAdView.setVideoState(VideoState.PAUSED);
+		if (mPlayer != null && mAdView != null && !mWasError) {
+			try {
+				if (mPlayer.isPlaying()) {
+					Logging.out(LOG_TAG, "Pause video", LogLevel.DEBUG);
+					mHandler.removeCallbacks(mRunnable);
+					mPlayer.pause();
+					mAdView.setVideoState(VideoState.PAUSED);
+				}
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+				Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
 			}
 		}
 	}
-	
-	void playVideo(int time) {
-		if (mPlayer != null && mAdView != null) {
-			if (time > 0) {
-				mPlayer.seekTo(time);
+
+    void playVideo(int time) {
+        if (mPlayer != null && mAdView != null && !mWasError) {
+			try {
+				if (mPlayer.isPlaying()) {
+					return;
+				}
+				Logging.out(LOG_TAG, "Play video", LogLevel.DEBUG);
+				if (time > 0) {
+					mPlayer.seekTo(time);
+				}
+
+				mPlayer.start();
+				mAdView.setVideoState(VideoState.PLAYING);
+
+				mHandler.postDelayed(mRunnable, 200);
+
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+				Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
 			}
-			mPlayer.start();
-			mAdView.setVideoState(VideoState.PLAYING);
-			mHandler.postDelayed(mRunnable, 200);
-		}
-	}
+        }
+    }
 	
 	private void initRunnable() {
 		mRunnable = new Runnable() {
 			
 			@Override
 			public void run() {
-				int position = mPlayer.getCurrentPosition();
-				mAdView.setVideoCurrentTime(position);
+				if (mPlayer == null || mAdView == null) {
+					return;
+				}
+                int position = mPlayer.getCurrentPosition();
+                mAdView.setVideoCurrentTime(position);
 				if (position < mVideoDuration) {
 					mHandler.postDelayed(mRunnable, 200);
 				} 
@@ -119,10 +163,6 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 		mStretch = option;
 	}
 	
-	StretchOption getStreachVideoParameter() {
-		return mStretch;
-	}
-
 	void destroy(boolean interruptFile) {
 		Logging.out(LOG_TAG, "Destroy VideoController", LogLevel.DEBUG);
 		if (mHandler != null) {
@@ -130,8 +170,6 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 		}
 		mRunnable = null;
 		if (mPlayer != null) {
-			mPlayer.setOnPreparedListener(null);
-			mPlayer.setOnCompletionListener(null);
 			mPlayer.release();
 			mPlayer = null;
 		}
@@ -147,11 +185,14 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 	
 	private void preparePlayer(String filePath) {
 		mPlayer = new MediaPlayer();
+		mPlayer.setLooping(false);
 		mPlayer.setOnBufferingUpdateListener(this);
 		mPlayer.setOnPreparedListener(this);
 		mPlayer.setOnErrorListener(this);
 		mPlayer.setOnCompletionListener(this);
-		
+		mPlayer.setOnInfoListener(this);
+		mPlayer.setOnVideoSizeChangedListener(this);
+
 		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		try {
 			mPlayer.setDataSource(filePath);
@@ -174,13 +215,14 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 		}
 	}
 	
-	MediaPlayer getPlayer() {
-		return mPlayer;
+	boolean isMediaPlayerValid() {
+		return mAdView != null && mAdView.getCurrentVideoState() == VideoState.READY;
 	}
 	
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		Logging.out(LOG_TAG, "onPrepared", LogLevel.DEBUG);
+		mIsPlayerPrepared = true;
 		setVideoState(VideoState.READY);
 		
 		mVideoDuration = mPlayer.getDuration();
@@ -195,6 +237,55 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		switch (extra) {
+			case MediaPlayer.MEDIA_ERROR_IO:
+				Logging.out(LOG_TAG, "onError: MediaPlayer.MEDIA_ERROR_IO", LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_MALFORMED:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_MALFORMED", LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK",
+						LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_SERVER_DIED", LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_UNKNOWN", LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_TIMED_OUT", LogLevel.ERROR);
+				break;
+
+			case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_UNSUPPORTED", LogLevel.ERROR);
+				break;
+
+			default:
+				Logging.out(LOG_TAG, "onError: " + extra, LogLevel.ERROR);
+				break;
+		}
+
+		mHandler.removeCallbacks(mRunnable);
+		mAdView.setWebViewState(AdView.WebviewState.HIDDEN);
+		mAdView.setVideoState(VideoState.PAUSED);
+
+		if (mFormat == AdFormat.BANNER) {
+			LoopMeBanner banner = LoopMeAdHolder.getBanner(mAppKey, null);
+			banner.playbackFinishedWithError();
+		}
+		mp.setOnErrorListener(null);
+		mp.setOnCompletionListener(null);
+
+		mPlayer.reset();
+
+		mWasError = true;
 		return true;
 	}
 
@@ -202,45 +293,49 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 	public void onCompletion(MediaPlayer mp) {
 		if (mAdView.getCurrentVideoState() != VideoState.COMPLETE) {
 			mHandler.removeCallbacks(mRunnable);
-			int duration = mp.getDuration();
-			mAdView.setVideoCurrentTime(duration);
+			mAdView.setVideoCurrentTime(mVideoDuration);
 			mAdView.setVideoState(VideoState.COMPLETE);
 			sendVideoReachEndNotification();
 		}
 	}
 	
 	private void sendVideoReachEndNotification() {
-		if (LoopMeAdHolder.getAd(mAppKey) != null) {
-			LoopMeAdHolder.getAd(mAppKey).onAdVideoDidReachEnd();
+		BaseAd base;
+		if (mFormat == AdFormat.BANNER) {
+			base = LoopMeAdHolder.getBanner(mAppKey, null);
+		} else {
+			base = LoopMeAdHolder.getInterstitial(mAppKey, null);
+		}
+		if (base != null) {
+			base.onAdVideoDidReachEnd();
 		}
 	}
 	
-	void resizeVideo(SurfaceView surfaceView, SurfaceHolder holder, int viewWidth, int viewHeight) {
+	void resizeVideo(final TextureView texture, int viewWidth, int viewHeight) {
     	
 		if (mPlayer == null) {
 			return;
 		}
 		
-		mPlayer.setDisplay(holder);
-		
-		int videoWidth = mPlayer.getVideoWidth();
-	    int videoHeight = mPlayer.getVideoHeight();
+		if (mVideoHeight == 0 || mVideoWidth == 0) {
+			return;
+		}
 
-	    FrameLayout.LayoutParams lp = (LayoutParams) surfaceView.getLayoutParams();
+	    FrameLayout.LayoutParams lp = (LayoutParams) texture.getLayoutParams();
 	    lp.gravity = Gravity.CENTER;
 
-	    int blackLines =0;
-	    float percent = 0;
+	    int blackLines;
+	    float percent;
 	    
-	    if (videoWidth > videoHeight) {
+	    if (mVideoWidth > mVideoHeight) {
 	    	lp.width = viewWidth;
-	    	lp.height = (int) (((float)videoHeight / (float)videoWidth) * (float)viewWidth);
+	    	lp.height = (int) (((float)mVideoHeight / (float)mVideoWidth) * (float)viewWidth);
 
 	    	blackLines = viewHeight - lp.height;
 	    	percent = blackLines * 100 / lp.height; 
 	    } else {
 	    	lp.height = viewHeight;
-	    	lp.width = (int) (((float)videoWidth / (float)videoHeight) * (float)viewHeight);
+	    	lp.width = (int) (((float)mVideoWidth / (float)mVideoHeight) * (float)viewHeight);
 	    	
 	    	blackLines = viewWidth - lp.width;
 	    	percent = blackLines * 100 / lp.width;
@@ -264,7 +359,24 @@ OnPreparedListener, OnErrorListener, OnCompletionListener {
 	    	//
 	    	break;
 	    }
-	    surfaceView.setLayoutParams(lp);
+	    texture.setLayoutParams(lp);
 	}
 
+	void setSurface(final TextureView textureView) {
+		ExecutorHelper.getExecutor().submit(new Runnable() {
+
+			@Override
+			public void run() {
+				if (textureView != null && textureView.isAvailable()) {
+					SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+					Surface surface = new Surface(surfaceTexture);
+					Logging.out(LOG_TAG, "mPlayer.setSurface()", LogLevel.DEBUG);
+					mPlayer.setSurface(surface);
+
+				} else {
+					Logging.out(LOG_TAG, "textureView not Available ", LogLevel.DEBUG);
+				}
+			}
+		});
+	}
 }

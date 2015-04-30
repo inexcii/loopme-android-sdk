@@ -1,7 +1,7 @@
 package com.loopme;
 
 /**
- * Used in @link LoopMeNativeVideoAd. 
+ * Used when @link LoopMeBanner integrated in ListView/GridView
  * For correct work, ListView/GridView custom adaptor should implement
  * this interface.
  */

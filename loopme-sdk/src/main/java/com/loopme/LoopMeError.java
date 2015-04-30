@@ -1,7 +1,5 @@
 package com.loopme;
 
-import com.loopme.Logging.LogLevel;
-
 public class LoopMeError {
 	
 	/**
@@ -70,9 +68,9 @@ public class LoopMeError {
 	public static final int UNKNOWN_SERVER_CODE = 12;
 	
 	/**
-	 * Unable to process response
+	 * Request timeout
 	 */
-	public static final int RESPONSE_PROCESSING = 13;
+	public static final int REQUEST_TIMEOUT = 13;
 	
 	/**
 	 * Unable to parse response
@@ -145,8 +143,8 @@ public class LoopMeError {
 			errorMessage = "Unknown status code from server";
 			break;
 			
-		case RESPONSE_PROCESSING:
-			errorMessage = "Unable to process response";
+		case REQUEST_TIMEOUT:
+			errorMessage = "Request timeout";
 			break;
 			
 		case RESPONSE_PARSING:

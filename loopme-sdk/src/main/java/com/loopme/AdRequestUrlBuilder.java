@@ -51,7 +51,7 @@ public class AdRequestUrlBuilder {
 		if (mContext == null) {
 			return null;
 		}
-		AdRequestParametersProvider provider = AdRequestParametersProvider.getInstance(mContext);
+		AdRequestParametersProvider provider = AdRequestParametersProvider.getInstance();
 		
 		String str = StaticParams.BASE_URL;
 		List<String> list = Arrays.asList(str.split("/"));
@@ -68,12 +68,12 @@ public class AdRequestUrlBuilder {
 		}
 		
 		builder.appendQueryParameter(PARAM_APPKEY, appKey)
-		.appendQueryParameter(PARAM_CONNECTION_TYPE, String.valueOf(provider.getConnectionType()))
+		.appendQueryParameter(PARAM_CONNECTION_TYPE, String.valueOf(provider.getConnectionType(mContext)))
 		.appendQueryParameter(PARAM_LANGUAGE, provider.getLanguage())
 		.appendQueryParameter(PARAM_SDK_VERSION, StaticParams.SDK_VERSION)
-		.appendQueryParameter(PARAM_APP_VERSION, provider.getAppVersion())
+		.appendQueryParameter(PARAM_APP_VERSION, provider.getAppVersion(mContext))
 		.appendQueryParameter(PARAM_MRAID, provider.getMraidSupport())
-		.appendQueryParameter(PARAM_ORIENTATION, provider.getOrientation())
+		.appendQueryParameter(PARAM_ORIENTATION, provider.getOrientation(mContext))
 		.appendQueryParameter(PARAM_VIEWER_TOKEN, provider.getViewerToken());
 		
 		String latitude = provider.getLatitude(); 
@@ -86,7 +86,7 @@ public class AdRequestUrlBuilder {
 			builder.appendQueryParameter(PARAM_LONGITUDE, longitude);
 		}
 		
-		String carrier = provider.getCarrier(); 
+		String carrier = provider.getCarrier(mContext); 
 		if (carrier != null) {
 			builder.appendQueryParameter(PARAM_CARRIER, carrier);
 		}
