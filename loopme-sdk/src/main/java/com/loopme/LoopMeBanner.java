@@ -3,6 +3,7 @@ package com.loopme;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
@@ -74,11 +75,18 @@ public class LoopMeBanner extends BaseAd {
 
     /**
      * Getting already initialized ad object or create new one with specified appKey
+	 * Note: Returns null if Android version under 4.0
      * @param appKey - your app key
      * @param context - Activity context
      */
 	public static LoopMeBanner getInstance(String appKey, Context context) {
-		return LoopMeAdHolder.getBanner(appKey, context);
+		if (Build.VERSION.SDK_INT >= 14) {
+			return LoopMeAdHolder.getBanner(appKey, context);
+		} else {
+			Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+",
+					LogLevel.DEBUG);
+			return null;
+		}
 	}
 	
 	private void ensureAdIsVisible() {
@@ -295,7 +303,7 @@ public class LoopMeBanner extends BaseAd {
 		Logging.out(LOG_TAG, "Banner will be dismissed", LogLevel.DEBUG);
 		if (mAdState == AdState.SHOWING) {
 			((Activity) getContext()).runOnUiThread(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					if (mBannerView != null) {
@@ -304,7 +312,7 @@ public class LoopMeBanner extends BaseAd {
 					}
 					if (mViewController != null) {
 						mViewController.destroyMinimizedView();
-                        mViewController.setWebViewState(WebviewState.CLOSED);
+						mViewController.setWebViewState(WebviewState.CLOSED);
 					}
 				}
 			});

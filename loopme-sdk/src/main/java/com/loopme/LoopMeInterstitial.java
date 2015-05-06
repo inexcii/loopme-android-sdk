@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.os.Build;
 import com.loopme.Logging.LogLevel;
 
 import android.content.Context;
@@ -70,11 +71,18 @@ public final class LoopMeInterstitial extends BaseAd {
 
     /**
      * Getting already initialized ad object or create new one with specified appKey
+	 * Note: Returns null if Android version under 4.0
      * @param appKey - your app key
      * @param context - Activity context
      */
     public static LoopMeInterstitial getInstance(String appKey, Context context) {
-		return LoopMeAdHolder.getInterstitial(appKey, context);
+		if (Build.VERSION.SDK_INT >= 14) {
+			return LoopMeAdHolder.getInterstitial(appKey, context);
+		} else {
+			Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+",
+					LogLevel.DEBUG);
+			return null;
+		}
 	}
 	
 	@Override
