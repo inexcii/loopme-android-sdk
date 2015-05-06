@@ -226,6 +226,10 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
+**Version 4.2.1 (06 of May, 2015)**
+
+- Do not display ads if `Android` version under 4.0
+
 **Version 4.2.0 (30 of April, 2015)**
 
 - Displaying `minimized video` when original `banner` ad is out of viewport, with configurable size and margins.
