@@ -19,7 +19,7 @@ public class StaticParams {
 	static final String DESTROY_INTENT = "com.loopme.DESTROY_INTENT";
 	static final String CLICK_INTENT = "com.loopme.CLICK_INTENT";
 	
-	public static long CACHED_VIDEO_LIFE_TIME = 1000 * 60 * 60 * 8;//8 hours
+	public static long CACHED_VIDEO_LIFE_TIME = 1000 * 60 * 60 * 32;//32 hours
 	
 	static final long FETCH_TIMEOUT = 1000 * 60 * 3;//3 minutes
 	
