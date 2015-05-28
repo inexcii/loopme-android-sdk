@@ -118,6 +118,11 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 <b>Note:</b> Integration instructions to display banner ads inside scrollable content.
 `LoopMeSDK` doesn't override `ListView`/`GridView` adapter. 
 
+* Update `AndroidManifest.xml`:
+```xml
+<activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
+```
+
 * Create xml layout for ad
 
 * If you use `ListView` or `GridView` in your custom adapter implement `LoopMeAdapter` interface. 
