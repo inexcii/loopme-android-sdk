@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
+import android.os.Build;
 import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -48,11 +49,12 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		mBridgeListener = initBridgeListener();
 		mAdView.addBridgeListener(mBridgeListener);
         mAdView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return (event.getAction() == MotionEvent.ACTION_MOVE);
-            }
-        });
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return (event.getAction() == MotionEvent.ACTION_MOVE);
+			}
+		});
+		mVideoController = new VideoController(mAd.getAppKey(), mAdView, mAd.getAdFormat());
 	}
 	
 	void destroy(boolean interruptFile) {
@@ -216,7 +218,11 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		drawable.getPaint().setAntiAlias(true);
 		
 		bannerView.setPadding(2, 2, 2, 2);
-		bannerView.setBackground(drawable);
+		if (Build.VERSION.SDK_INT < 16) {
+			bannerView.setBackgroundDrawable(drawable);
+		} else {
+			bannerView.setBackground(drawable);
+		}
 	}
 	
 	void switchToNormalMode() {
@@ -342,8 +348,6 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		Logging.out(LOG_TAG, "JS command: load video " + videoUrl, LogLevel.DEBUG);
 		
 		mIsVideoPresented = true;
-
-		mVideoController = new VideoController(mAd.getAppKey(), mAdView, mAd.getAdFormat());
 		mVideoController.loadVideoFile(videoUrl, mAd.getContext());
 	}
 	

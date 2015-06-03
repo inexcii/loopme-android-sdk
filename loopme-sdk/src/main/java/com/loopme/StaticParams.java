@@ -4,7 +4,7 @@ public class StaticParams {
 	
 	private StaticParams() {}
 	
-	public static final String SDK_VERSION = "4.2.1";
+	public static final String SDK_VERSION = "4.2.2";
 	public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 	
 	static boolean DEBUG_MODE = true;
@@ -24,4 +24,6 @@ public class StaticParams {
 	static final long FETCH_TIMEOUT = 1000 * 60 * 3;//3 minutes
 	
 	static final int SHRINK_MODE_KEEP_AFTER_FINISH_TIME = 1000;
+
+	public static boolean USE_MOBILE_NETWORK_FOR_CACHING = false;
 }

@@ -1,6 +1,6 @@
 package com.loopme;
 
-class ConnectionType {
+public class ConnectionType {
 
 	public static final int UNKNOWN = 0;
 	public static final int ETHERNET = 1;

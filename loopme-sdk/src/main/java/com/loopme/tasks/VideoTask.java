@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.loopme.AdRequestParametersProvider;
+import com.loopme.ConnectionType;
 import com.loopme.Logging;
 import com.loopme.Logging.LogLevel;
 import com.loopme.StaticParams;
@@ -120,14 +122,30 @@ public class VideoTask implements Runnable {
 			complete(f.getAbsolutePath());
 			return;
 		}
-		
+
+		int connectiontype = AdRequestParametersProvider.getInstance().getConnectionType(mContext);
+		if (connectiontype == ConnectionType.WIFI) {
+			downloadVideoToNewFile();
+		} else {
+			if (StaticParams.USE_MOBILE_NETWORK_FOR_CACHING) {
+				downloadVideoToNewFile();
+			} else {
+				Logging.out(LOG_TAG, "Mobile network. Video will not be cached", LogLevel.DEBUG);
+				complete(null);
+			}
+		}
+	}
+
+	private void downloadVideoToNewFile() {
 		createNewFile(mVideoFileName);
 
 		if (mVideoFile != null) {
 			InputStream stream = getVideoInputStream();
-			
+
 			String filePath = writeStreamToFile(stream);
 			complete(filePath);
+		} else {
+			complete(null);
 		}
 	}
 	

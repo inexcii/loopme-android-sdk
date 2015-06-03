@@ -304,8 +304,13 @@ public final class LoopMeInterstitial extends BaseAd {
 	}
 
 	@Override
-	void onAdLoadFail(int error) {
-		onLoopMeInterstitialLoadFail(this, error);
+	void onAdLoadFail(final int error) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				onLoopMeInterstitialLoadFail(LoopMeInterstitial.this, error);
+			}
+		});
 	}
 
 	@Override

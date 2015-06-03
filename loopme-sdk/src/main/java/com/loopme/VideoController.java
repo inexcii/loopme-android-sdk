@@ -1,5 +1,7 @@
 package com.loopme;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
@@ -10,7 +12,6 @@ import com.loopme.tasks.VideoTask;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
@@ -22,8 +23,8 @@ import android.view.TextureView;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
-class VideoController implements OnBufferingUpdateListener,
-OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoListener, MediaPlayer.OnVideoSizeChangedListener {
+class VideoController implements OnPreparedListener, OnErrorListener, OnCompletionListener,
+		MediaPlayer.OnInfoListener, MediaPlayer.OnVideoSizeChangedListener {
 
 	private static final String LOG_TAG = VideoController.class.getSimpleName();
 	
@@ -43,10 +44,15 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 	private AdFormat mFormat;
 
 	private boolean mWasError;
-	private boolean mIsPlayerPrepared;
 
 	private int mVideoWidth;
 	private int mVideoHeight;
+
+	private boolean mPostponeResize;
+
+	private TextureView mTextureView;
+	private int mResizeWidth;
+	private int mResizeHeight;
 
 	@Override
 	public boolean onInfo(MediaPlayer mp, int what, int extra) {
@@ -84,17 +90,21 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 						if (filePath != null) {
 							preparePlayer(filePath);
 						} else {
-                            BaseAd ad;
-                            if (mFormat == AdFormat.INTERSTITIAL) {
-                                ad = LoopMeAdHolder.getInterstitial(mAppKey, null);
-                            } else {
-                                ad = LoopMeAdHolder.getBanner(mAppKey, null);
-                            }
-							ad.onAdLoadFail(LoopMeError.VIDEO_LOADING);
+							sendLoadFail(LoopMeError.VIDEO_LOADING);
 						}
 					}
 				});
 		mFuture = ExecutorHelper.getExecutor().submit(mVideoTask);
+	}
+
+	private void sendLoadFail(int error) {
+		BaseAd ad;
+		if (mFormat == AdFormat.INTERSTITIAL) {
+			ad = LoopMeAdHolder.getInterstitial(mAppKey, null);
+		} else {
+			ad = LoopMeAdHolder.getBanner(mAppKey, null);
+		}
+		ad.onAdLoadFail(error);
 	}
 	
 	private void setVideoState(VideoState state) {
@@ -186,7 +196,6 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 	private void preparePlayer(String filePath) {
 		mPlayer = new MediaPlayer();
 		mPlayer.setLooping(false);
-		mPlayer.setOnBufferingUpdateListener(this);
 		mPlayer.setOnPreparedListener(this);
 		mPlayer.setOnErrorListener(this);
 		mPlayer.setOnCompletionListener(this);
@@ -195,7 +204,10 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 
 		mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		try {
-			mPlayer.setDataSource(filePath);
+			File file = new File(filePath);
+			FileInputStream inputStream = new FileInputStream(file);
+			mPlayer.setDataSource(inputStream.getFD());
+
 			mPlayer.prepareAsync();
 		} catch (IllegalStateException e) {
 			setVideoState(VideoState.BROKEN);
@@ -222,17 +234,18 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		Logging.out(LOG_TAG, "onPrepared", LogLevel.DEBUG);
-		mIsPlayerPrepared = true;
+		if (mTextureView != null) {
+			SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
+			Surface surface = new Surface(surfaceTexture);
+			mPlayer.setSurface(surface);
+		}
+		if (mPostponeResize) {
+			updateLayoutParams();
+		}
 		setVideoState(VideoState.READY);
 		
 		mVideoDuration = mPlayer.getDuration();
 		mAdView.setVideoDuration(mVideoDuration);
-	}
-
-	@Override
-	public void onBufferingUpdate(MediaPlayer mp, int percent) {
-		Logging.out(LOG_TAG, "Buffered " + percent + "%", LogLevel.DEBUG);
-		setVideoState(VideoState.BUFFERING);
 	}
 
 	@Override
@@ -273,19 +286,25 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 		}
 
 		mHandler.removeCallbacks(mRunnable);
-		mAdView.setWebViewState(AdView.WebviewState.HIDDEN);
-		mAdView.setVideoState(VideoState.PAUSED);
 
-		if (mFormat == AdFormat.BANNER) {
-			LoopMeBanner banner = LoopMeAdHolder.getBanner(mAppKey, null);
-			banner.playbackFinishedWithError();
+		if (mAdView.getCurrentVideoState() == VideoState.BROKEN) {
+			sendLoadFail(LoopMeError.VIDEO_LOADING);
+		} else {
+
+			mAdView.setWebViewState(AdView.WebviewState.HIDDEN);
+			mAdView.setVideoState(VideoState.PAUSED);
+
+			if (mFormat == AdFormat.BANNER) {
+				LoopMeBanner banner = LoopMeAdHolder.getBanner(mAppKey, null);
+				banner.playbackFinishedWithError();
+			}
+			mp.setOnErrorListener(null);
+			mp.setOnCompletionListener(null);
+
+			mPlayer.reset();
+
+			mWasError = true;
 		}
-		mp.setOnErrorListener(null);
-		mp.setOnCompletionListener(null);
-
-		mPlayer.reset();
-
-		mWasError = true;
 		return true;
 	}
 
@@ -312,54 +331,69 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 	}
 	
 	void resizeVideo(final TextureView texture, int viewWidth, int viewHeight) {
-    	
-		if (mPlayer == null) {
+
+		Logging.out(LOG_TAG, "resizeVideo", LogLevel.DEBUG);
+
+		mTextureView = texture;
+		mResizeWidth = viewWidth;
+		mResizeHeight = viewHeight;
+
+		if (mPlayer == null || mVideoHeight == 0 || mVideoWidth == 0) {
+			Logging.out(LOG_TAG, "postpone resize", LogLevel.DEBUG);
+			mPostponeResize = true;
+			return;
+		} else {
+			updateLayoutParams();
+		}
+	}
+
+	void updateLayoutParams() {
+
+		Logging.out(LOG_TAG, "updateLayoutParams()", LogLevel.DEBUG);
+
+		if (mTextureView == null || mResizeWidth == 0 || mResizeHeight == 0) {
 			return;
 		}
-		
-		if (mVideoHeight == 0 || mVideoWidth == 0) {
-			return;
+
+		FrameLayout.LayoutParams lp = (LayoutParams) mTextureView.getLayoutParams();
+		lp.gravity = Gravity.CENTER;
+
+		int blackLines;
+		float percent;
+
+		if (mVideoWidth > mVideoHeight) {
+			lp.width = mResizeWidth;
+			lp.height = (int) (((float)mVideoHeight / (float)mVideoWidth) * (float)mResizeWidth);
+
+			blackLines = mResizeHeight - lp.height;
+			percent = blackLines * 100 / lp.height;
+		} else {
+			lp.height = mResizeHeight;
+			lp.width = (int) (((float)mVideoWidth / (float)mVideoHeight) * (float)mResizeHeight);
+
+			blackLines = mResizeWidth - lp.width;
+			percent = blackLines * 100 / lp.width;
 		}
 
-	    FrameLayout.LayoutParams lp = (LayoutParams) texture.getLayoutParams();
-	    lp.gravity = Gravity.CENTER;
+		Logging.out(LOG_TAG, "stretch param  " + mStretch.toString(), LogLevel.DEBUG);
+		switch (mStretch) {
+			case NONE:
+				if (percent < 11) {
+					lp.width = mResizeWidth;
+					lp.height = mResizeHeight;
+				}
+				break;
 
-	    int blackLines;
-	    float percent;
-	    
-	    if (mVideoWidth > mVideoHeight) {
-	    	lp.width = viewWidth;
-	    	lp.height = (int) (((float)mVideoHeight / (float)mVideoWidth) * (float)viewWidth);
+			case STRECH:
+				lp.width = mResizeWidth;
+				lp.height = mResizeHeight;
+				break;
 
-	    	blackLines = viewHeight - lp.height;
-	    	percent = blackLines * 100 / lp.height; 
-	    } else {
-	    	lp.height = viewHeight;
-	    	lp.width = (int) (((float)mVideoWidth / (float)mVideoHeight) * (float)viewHeight);
-	    	
-	    	blackLines = viewWidth - lp.width;
-	    	percent = blackLines * 100 / lp.width;
-	    }
-	    
-	    Logging.out(LOG_TAG, "stretch param  " + mStretch.toString(), LogLevel.DEBUG);
-	    switch (mStretch) {
-	    case NONE:
-	    	if (percent < 11) {
-		    	lp.width = viewWidth;
-		    	lp.height = viewHeight;
-		    }
-	    	break;
-	    	
-	    case STRECH:
-	    	lp.width = viewWidth;
-	    	lp.height = viewHeight;
-	    	break;
-	    	
-	    case NO_STRETCH:
-	    	//
-	    	break;
-	    }
-	    texture.setLayoutParams(lp);
+			case NO_STRETCH:
+				//
+				break;
+		}
+		mTextureView.setLayoutParams(lp);
 	}
 
 	void setSurface(final TextureView textureView) {
@@ -368,6 +402,7 @@ OnPreparedListener, OnErrorListener, OnCompletionListener, MediaPlayer.OnInfoLis
 			@Override
 			public void run() {
 				if (textureView != null && textureView.isAvailable()) {
+					mTextureView = textureView;
 					SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
 					Surface surface = new Surface(surfaceTexture);
 					Logging.out(LOG_TAG, "mPlayer.setSurface()", LogLevel.DEBUG);

@@ -198,12 +198,7 @@ public class LoopMeBanner extends BaseAd {
 			mAdState = AdState.SHOWING;
 			stopExpirationTimer();
 			
-			if (mViewController.isVideoPresented() && 
-					mViewController.getCurrentVideoState() == VideoState.READY) {
-				mViewController.buildVideoAdView(mBannerView);
-			} else {
-				mViewController.buildStaticAdView(mBannerView);
-			}
+			mViewController.buildVideoAdView(mBannerView);
 
 			if (mBannerView.getVisibility() != View.VISIBLE) {
 				mBannerView.setVisibility(View.VISIBLE);
@@ -470,8 +465,13 @@ public class LoopMeBanner extends BaseAd {
 	}
 
 	@Override
-	void onAdLoadFail(int error) {
-		onLoopMeBannerLoadFail(this, error);
+	void onAdLoadFail(final int error) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				onLoopMeBannerLoadFail(LoopMeBanner.this, error);
+			}
+		});
 	}
 
 	@Override
