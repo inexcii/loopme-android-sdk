@@ -1,5 +1,14 @@
 # Android Mopub Bridge #
 
+1. **[Overview](#overview)**
+2. **[Register on LoopMe network](#register-on-loopme-network)**
+3. **[Adding LoopMe Android SDK](#adding-loopme-android-sdk)**
+4. **[Create Custom Native Network on Mopub dashboard](#create-custom-native-network-on-mopub-dashboard)**
+5. **[Mediate from Mopub Interstitial to LoopMe Interstitial Ad](#mediate-from-mopub-interstitial-to-loopme-interstitial-ad)**
+6. **[Mediate from Mopub banner to LoopMe Native Video Ad](#mediate-from-mopub-banner-to-loopme-native-video-ad)**
+7. **[Mediate from Mopub Native Ads to LoopMe video banner](#mediate-from-mopub-native-ads-to-loopme-video-banner)**
+8. **[Sample project](#sample-project)**
+
 ## Overview ##
 
 LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen video and rich media ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
@@ -41,26 +50,41 @@ and add the following activities:
             android:hardwareAccelerated="true"/>
 <activity android:name="com.loopme.AdBrowserActivity" />
 ```
-## Adding LoopMe Mopub Android bridge ##
-* Download and copy bridge classes to the `com.mopub.mobileads` package in your project. 
 
-## Configure LoopMe network on Mopub dashboard ##
+## Create Custom Native Network on Mopub dashboard ##
 
 <b>NOTE:</b> `LoopMe` is not available as a predefine network in the Mopub tool, SDK bridge mediation needs to be manually configured with Mopub "Custom Native Network" option.
 
-* On Mopub dashboard click Networks -> add a network. Choose “Custom Native Network”:
-<p><img alt="Mopub edit network.png" src="mopub_dashboard.png" width="1044" height="509" /></a>
-<p><b>Custom Event Class Data:</b> requires parameter "app_key" - value you received after registering your app on the LoopMe dashboard. E.g {"app_key":"298f62c196"} 
-<p><b>Custom Event Class</b> should be "com.mopub.mobileads.LoopMeMopubInterstitial" for fullscreen ads or "com.mopub.mobileads.LoopMeMopubBanner" for native video ads.
+* On Mopub dashboard click Networks -> add a network. Choose “Custom Native Network”
 
-## Displaying LoopMe Interstitial Ad ##
+## Mediate from Mopub Interstitial to LoopMe Interstitial Ad ##
 
-To display `LoopMe` interstitial ads, please follow `Mopub` interstitial integration guide: https://github.com/mopub/mopub-android-sdk/wiki/Interstitial-Integration
+<br><b>Configure Custom Native Network on Mopub dashboard </b>
+<p><img src="mopub interstitial dashboard.png"  /></a>
+<br> Instead of test_interstitial_p put your LoopMe app key.
 
-## Displaying LoopMe Native Video Ad ##
+* Download and copy `LoopMeMopubInterstitial` bridge class to the `com.mopub.mobileads` package in your project. 
+* Load `MoPubInterstitial` as usual
+```java
+mInterstitial = new MoPubInterstitial(LoopMeMopubInterstitialSampleActivity.this, AD_UNIT_ID);
+mInterstitial.setInterstitialAdListener(LoopMeMopubInterstitialSampleActivity.this);
+mInterstitial.load();
+```
+* implement in your Activity `MoPubInterstitial.InterstitialAdListener` interface
+* Show interstitial ad
+```java
+mInterstitial.show();
+```
+
+## Mediate from Mopub banner to LoopMe Native Video Ad ##
 
 Displaying `LoopMe` native video ads requires extra integration steps in order to manage ad activity, e.g. to enable video playback or HTML animation.
 
+<br><b>1 Configure Custom Native Network on Mopub dashboard </b>
+<p><img alt="Mopub edit network.png" src="mopub banner dashboard.png"  /></a>
+<br> Instead of test_mpu put your LoopMe app key.
+
+* Download and copy `LoopMeMopubBanner` bridge class to the `com.mopub.mobileads` package in your project. 
 * Define `LoopMeBannerView` in xml
 * Init `MoPubView`
 ```java
@@ -101,6 +125,102 @@ protected void onResume() {
 (`LoopMeMopubInterstitialSampleActivity` is an example explaining how to use `LoopMeMopubInterstitial`. 
 Same for `LoopMeMopubBanner` and `LoopMeMopubBannerSampleActivity`)
 
+## Mediate from Mopub Native Ads to LoopMe video banner ##
+
+Displaying `LoopMe` native video ads requires extra integration steps in order to manage ad activity, e.g. to enable video playback or HTML animation. 
+
+<br><br><b>1 Configure Custom Native Network on Mopub dashboard </b>
+<p><img alt="Mopub edit network.png" src="mopub nativeads to video dashboard.png"  /></a>
+<br> Instead of test_mpu put your LoopMe app key. In "position" define at which position in `ListView` video banner will be shown.
+<br><br><b>2 Copy `LoopMeEventNative` to `com.mopub.nativeads` package </b>
+<br><br><b>3 Update `YourCustomAdapter` (like in `CustomBaseAdapter.java`): </b>
+- implement `LoopMeAdapter` interface
+- add new item type and update related methods: `getItemViewType`, `getViewTypeCount`
+- add in `getView` case for LoopMe banner:
+```java
+case TYPE_BANNER:
+           //inflate xml layout for LoopMe banner
+           v = mInflater.inflate(R.layout.list_ad_layout, null);
+           //assume, you are using ListView ViewHolder pattern
+           holder.banner_ad = (LoopMeBannerView) v.findViewById(R.id.banner_ad_spot);
+           break;
+```
+and bind `LoopMeBannerView` to LoopMe banner
+```java
+mBanner.bindView(holder.banner_ad);
+```
+- add `addBannerToPosition` method
+
+<br><b>4 YourActivity </b>
+- init Mopub native ads as usual
+- add 
+```java
+LoopMeEventNative.addListener(this);
+```
+- implement `LoopMeEventNative.Listener`
+```java
+    @Override
+    public void onNativeAdFailed(String appKey, int position) {
+        mBanner = LoopMeBanner.getInstance(appKey, this);
+        if (mBanner != null) {
+            mBanner.load();
+            mBanner.setListener(this);
+            mBaseAdapter.addBannerToPosition(position, mBanner);
+        }
+    }
+```
+- implement `LoopMeBanner.Listener` and add in `onLoopMeBannerLoadSuccess`:
+```java
+    @Override
+    public void onLoopMeBannerLoadSuccess(LoopMeBanner loopMeBanner) {
+        //mBaseAdapter - your adapter, NOT MopubAdAdapter
+        loopMeBanner.showAdIfItVisible(mBaseAdapter, mListView);
+    }
+```
+- implement `AbsListView.OnScrollListener` and subscribe `ListView` to receive onScroll notifications
+```java
+mListView.setOnScrollListener(this);
+
+@Override
+    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        if (mBanner != null) {
+            mBanner.showAdIfItVisible(mBaseAdapter, mListView);
+        }
+    }
+```
+- trigger `pause()` in Activity onPause() to pause video playback:
+```java
+    @Override
+    protected void onPause() {
+        if (mBanner != null) {
+            mBanner.pause();
+        }
+        super.onPause();
+    }
+```
+- trigger `showAdIfItVisible` in Activity onResume() to resume video playback:
+```java
+    @Override
+    protected void onResume() {
+        if (mBanner != null) {
+            mBanner.showAdIfItVisible(mBaseAdapter, mListView);
+        }
+        super.onResume();
+    }
+```
+- trigger `dismiss` and `destroy` in Activity onDestroy():
+```java
+@Override
+    protected void onDestroy() {
+        if (mBanner != null) {
+            mBanner.dismiss();
+            mBanner.destroy();
+        }
+        mAdAdapter.destroy();
+        super.onDestroy();
+    }
+```
 ## Sample project ##
 
 Check out our `LoopMeMopubBannerSampleActivity.java` and `LoopMeMopubInterstitialSampleActivity` as an integration example.
+For native ads mediation check `NativeAdsToVideoBannerSample` project
