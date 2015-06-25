@@ -60,7 +60,7 @@ and add the following activities:
 ## Mediate from Mopub Interstitial to LoopMe Interstitial Ad ##
 
 <br><b>Configure Custom Native Network on Mopub dashboard </b>
-<p><img src="mopub interstitial dashboard.png"  /></a>
+<p><img src="images/mopub interstitial dashboard.png"  /></a>
 <br> Instead of test_interstitial_p put your LoopMe app key.
 
 * Download and copy `LoopMeMopubInterstitial` bridge class to the `com.mopub.mobileads` package in your project. 
@@ -81,7 +81,7 @@ mInterstitial.show();
 Displaying `LoopMe` native video ads requires extra integration steps in order to manage ad activity, e.g. to enable video playback or HTML animation.
 
 <br><b>1 Configure Custom Native Network on Mopub dashboard </b>
-<p><img alt="Mopub edit network.png" src="mopub banner dashboard.png"  /></a>
+<p><img src="images/mopub banner dashboard.png"  /></a>
 <br> Instead of test_mpu put your LoopMe app key.
 
 * Download and copy `LoopMeMopubBanner` bridge class to the `com.mopub.mobileads` package in your project. 
@@ -130,7 +130,7 @@ Same for `LoopMeMopubBanner` and `LoopMeMopubBannerSampleActivity`)
 Displaying `LoopMe` native video ads requires extra integration steps in order to manage ad activity, e.g. to enable video playback or HTML animation. 
 
 <br><br><b>1 Configure Custom Native Network on Mopub dashboard </b>
-<p><img alt="Mopub edit network.png" src="mopub nativeads to video dashboard.png"  /></a>
+<p><img src="images/mopub nativeads to video dashboard.png"  /></a>
 <br> Instead of test_mpu put your LoopMe app key. In "position" define at which position in `ListView` video banner will be shown.
 <br><br><b>2 Copy `LoopMeEventNative` to `com.mopub.nativeads` package </b>
 <br><br><b>3 Update `YourCustomAdapter` (like in `CustomBaseAdapter.java`): </b>
