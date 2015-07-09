@@ -1,7 +1,6 @@
 package com.loopme;
 
 import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
 
 public class Logging {
@@ -11,7 +10,7 @@ public class Logging {
 	public enum LogLevel {
 		INFO, 
 		DEBUG, 
-		ERROR;
+		ERROR
 	}
 	
 	private Logging() {}
@@ -29,5 +28,4 @@ public class Logging {
    			}
    		}
     }
-    
 }

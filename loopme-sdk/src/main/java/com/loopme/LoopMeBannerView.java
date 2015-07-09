@@ -5,7 +5,9 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 public class LoopMeBannerView extends FrameLayout {
-	
+
+    private static final String LOG_TAG = LoopMeBannerView.class.getSimpleName();
+
     public LoopMeBannerView(Context context) {
         super(context);
     }
@@ -20,7 +22,7 @@ public class LoopMeBannerView extends FrameLayout {
     
     public LoopMeBannerView(Context context, int width, int height) {
     	super(context);
-    	LayoutParams params = new LayoutParams(width, height);
+        LayoutParams params = new LayoutParams(width, height);
     	setLayoutParams(params);
 	}
 
@@ -31,8 +33,26 @@ public class LoopMeBannerView extends FrameLayout {
      */
     public void setViewSize(int width, int height) {
     	android.view.ViewGroup.LayoutParams params = getLayoutParams();
-    	params.width = width;
+        params.width = width;
     	params.height = height;
     	setLayoutParams(params);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeAllViews();
+        try {
+            super.onDetachedFromWindow();
+        } catch (RuntimeException e) {
+            Logging.out(LOG_TAG, "Error during onDetachedFromWindow: " + e.getMessage(), Logging.LogLevel.DEBUG);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (!isHardwareAccelerated()) {
+            Logging.out(LOG_TAG, "Warning: hardware acceleration is off", Logging.LogLevel.ERROR);
+        }
     }
 }

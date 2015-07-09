@@ -250,40 +250,7 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
-		switch (extra) {
-			case MediaPlayer.MEDIA_ERROR_IO:
-				Logging.out(LOG_TAG, "onError: MediaPlayer.MEDIA_ERROR_IO", LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_MALFORMED:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_MALFORMED", LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK",
-						LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_SERVER_DIED", LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_UNKNOWN", LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_TIMED_OUT", LogLevel.ERROR);
-				break;
-
-			case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-				Logging.out(LOG_TAG, "onError: MEDIA_ERROR_UNSUPPORTED", LogLevel.ERROR);
-				break;
-
-			default:
-				Logging.out(LOG_TAG, "onError: " + extra, LogLevel.ERROR);
-				break;
-		}
+		Logging.out(LOG_TAG, "onError: " + extra, LogLevel.ERROR);
 
 		mHandler.removeCallbacks(mRunnable);
 
@@ -302,7 +269,6 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 			mp.setOnCompletionListener(null);
 
 			mPlayer.reset();
-
 			mWasError = true;
 		}
 		return true;
