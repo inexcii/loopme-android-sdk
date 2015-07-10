@@ -2,6 +2,7 @@
 
 - Do not display ads if `Android` version under 4.0
 
+
 ## Version 4.2.0 (30 of April, 2015)
 
 - Displaying `minimized video` when original `banner` ad is out of viewport, with configurable size and margins.

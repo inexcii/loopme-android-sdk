@@ -25,6 +25,8 @@ class AdBrowserWebViewClient extends WebViewClient {
 	private static final String GEO_SCHEME = "geo";
 	private static final String MARKET_SCHEME = "market";
 	private static final String YOUTUBE_SCHEME = "vnd.youtube";
+	private static final String HTTP_SCHEME = "http";
+	private static final String HTTPS_SCHEME = "https";
 
 	private static final String GEO_HOST = "maps.google.com";
 	private static final String MARKET_HOST = "play.google.com";
@@ -108,8 +110,12 @@ class AdBrowserWebViewClient extends WebViewClient {
 				|| scheme.equalsIgnoreCase(YOUTUBE_SCHEME)) {
 			leaveApp(url, context);
 
-		} else {
+		} else if (scheme.equalsIgnoreCase(HTTP_SCHEME)
+				|| scheme.equalsIgnoreCase(HTTPS_SCHEME)) {
 			return checkHost(url, host, context);
+
+		} else {
+			return true;
 		}
 
 		return true;

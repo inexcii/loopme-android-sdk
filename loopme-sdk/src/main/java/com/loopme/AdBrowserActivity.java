@@ -95,7 +95,6 @@ public final class AdBrowserActivity extends Activity {
 	protected void onDestroy() {
 		Logging.out(LOG_TAG, " onDestroy", LogLevel.DEBUG);
 		mAdBrowserWebview.clearCache(true);
-		mAdBrowserWebview.destroy();
 		super.onDestroy();
 	}
 
