@@ -231,17 +231,10 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.2.2.2 (10 of July, 2015)**
+**Version 4.3.0 (31 of July, 2015)**
 
-- Fix for ad clicks (redirect with deep links)
-
-**Version 4.2.2.1 (09 of July, 2015)**
-
-- Hotfix for ad clicks
-
-**Version 4.2.2 (03 of June, 2015)**
-
-- Do not cache video on Cellular network by default (with possibility to configure it)
+- Support video banner in floating window
+- Fixed issue with Activity context
 
 See [Changelog](CHANGELOG.md)
 

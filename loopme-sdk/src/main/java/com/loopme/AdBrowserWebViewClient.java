@@ -147,6 +147,7 @@ class AdBrowserWebViewClient extends WebViewClient {
 	private void leaveApp(String url, Context context) {
 
 		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		resolveAndStartActivity(intent, context);
 		mListener.onLeaveApp();
 	}

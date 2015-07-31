@@ -1,3 +1,15 @@
+## Version 4.2.2.2 (10 of July, 2015)
+
+- Fix for ad clicks (redirect with deep links)
+
+## Version 4.2.2.1 (09 of July, 2015)
+
+- Hotfix for ad clicks
+
+## Version 4.2.2 (03 of June, 2015)
+
+- Do not cache video on Cellular network by default (with possibility to configure it)
+
 ## Version 4.2.1 (06 of May, 2015)
 
 - Do not display ads if `Android` version under 4.0

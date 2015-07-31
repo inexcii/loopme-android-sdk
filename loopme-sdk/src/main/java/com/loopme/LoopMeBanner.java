@@ -1,6 +1,5 @@
 package com.loopme;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
@@ -58,7 +57,7 @@ public class LoopMeBanner extends BaseAd {
 	/**
 	 * Creates new `LoopMeBanner` object with the given appKey
 	 * 
-	 * @param context - activity context
+	 * @param context - application context
 	 * @param appKey - your app key
 	 * 
 	 * @throws IllegalArgumentException if any of parameters is null
@@ -98,32 +97,18 @@ public class LoopMeBanner extends BaseAd {
 	@Override
 	public void destroy() {
 		mAdListener = null;
-		destroyAdContainer();
+		if (mBannerView != null) {
+			mBannerView.setVisibility(View.GONE);
+			mBannerView.removeAllViews();
+			mBannerView = null;
+		}
+		if (mViewController != null) {
+			mViewController.destroyMinimizedView();
+		}
 		
 		super.destroy();
 	}
-	
-	private void destroyShrinkView() {//TODO
-		if (mViewController != null) {
-			mViewController.destroyMinimizedView();// should be in UI thread
-		}
-	}
-	
-	private void destroyAdContainer() {
-		mHandler.post(new Runnable() {
 
-			@Override
-			public void run() {
-				if (mBannerView != null) {
-					mBannerView.removeAllViews();// should be in UI thread
-					mBannerView = null;
-				}
-				
-				destroyShrinkView(); 
-			}
-		});
-	}
-	
 	/**
 	 * Links (@link LoopMeBannerView) view to banner. 
 	 * If ad doesn't linked to @link LoopMeBannerView, it can't be display. 
@@ -292,26 +277,21 @@ public class LoopMeBanner extends BaseAd {
 	 * After it banner ad requires "loading process" to be ready for displaying
 	 * 
 	 * As a result you'll receive onLoopMeBannerHide() notification
-	 * 
+	 *
+	 * NOTE: should be triggered from UI thread
 	 */
 	public void dismiss() {
 		Logging.out(LOG_TAG, "Banner will be dismissed", LogLevel.DEBUG);
 		if (mAdState == AdState.SHOWING) {
-			((Activity) getContext()).runOnUiThread(new Runnable() {
+			if (mBannerView != null) {
+				mBannerView.setVisibility(View.GONE);
+				mBannerView.removeAllViews();
+			}
+			if (mViewController != null) {
+				mViewController.destroyMinimizedView();
+				mViewController.setWebViewState(WebviewState.CLOSED);
+			}
 
-				@Override
-				public void run() {
-					if (mBannerView != null) {
-						mBannerView.setVisibility(View.GONE);
-						mBannerView.removeAllViews();// should be in UI thread
-					}
-					if (mViewController != null) {
-						mViewController.destroyMinimizedView();
-						mViewController.setWebViewState(WebviewState.CLOSED);
-					}
-				}
-			});
-			
 			onLoopMeBannerHide(this);
 		} else {
 			Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying", LogLevel.DEBUG);

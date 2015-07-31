@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.content.pm.PackageManager;
 import com.loopme.Logging.LogLevel;
 import com.loopme.utilites.Drawables;
 
@@ -48,7 +49,7 @@ public final class AdBrowserActivity extends Activity {
 			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-			mLayout = new AdBrowserLayout(this);
+			mLayout = new AdBrowserLayout(this.getApplicationContext());
 			setContentView(mLayout);
 
 			mProgress = mLayout.getProgressBar();
@@ -88,13 +89,17 @@ public final class AdBrowserActivity extends Activity {
 	protected final void onPause() {
 		super.onPause();
 		Logging.out(LOG_TAG, "onPause", LogLevel.DEBUG);
-		mAdBrowserWebview.onPause();
+		if (mAdBrowserWebview != null) {
+			mAdBrowserWebview.onPause();
+		}
 	}
 
 	@Override
 	protected void onDestroy() {
 		Logging.out(LOG_TAG, " onDestroy", LogLevel.DEBUG);
-		mAdBrowserWebview.clearCache(true);
+		if (mAdBrowserWebview != null) {
+			mAdBrowserWebview.clearCache(true);
+		}
 		super.onDestroy();
 	}
 
@@ -184,9 +189,18 @@ public final class AdBrowserActivity extends Activity {
 	    mLayout.getNativeButton().setOnClickListener( new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
-				startActivity(browserIntent);
-				mBaseAd.onAdLeaveApp();
+				String uriString = webView.getUrl();
+				if (uriString != null) {
+					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
+
+					boolean isActivityResolved = getPackageManager()
+							.resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY) != null
+							? true : false;
+					if (isActivityResolved) {
+						startActivity(browserIntent);
+						mBaseAd.onAdLeaveApp();
+					}
+				}
     	    }
 		});
     }

@@ -73,7 +73,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * Getting already initialized ad object or create new one with specified appKey
 	 * Note: Returns null if Android version under 4.0
      * @param appKey - your app key
-     * @param context - Activity context
+     * @param context - application context
      */
     public static LoopMeInterstitial getInstance(String appKey, Context context) {
 		if (Build.VERSION.SDK_INT >= 14) {
@@ -161,6 +161,7 @@ public final class LoopMeInterstitial extends BaseAd {
 		Intent intent = new Intent(getContext(), AdActivity.class);
 		intent.putExtra(KEY_APPKEY, getAppKey());
 		intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		getContext().startActivity(intent);
 	}
 	

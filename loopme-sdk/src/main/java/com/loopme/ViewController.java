@@ -1,6 +1,5 @@
 package com.loopme;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -63,19 +62,12 @@ class ViewController implements TextureView.SurfaceTextureListener {
 			mVideoController.destroy(interruptFile);
 			mVideoController = null;
 		}
-		((Activity) mAd.getContext()).runOnUiThread(new Runnable() {
-			
-			@Override
-			public void run() {
-				if (mAdView != null) {
-					mAdView.stopLoading();
-					mAdView.clearCache(true);
-					mAdView.destroy();
-					mAdView = null;
-					Logging.out(LOG_TAG, "AdView destroyed", LogLevel.DEBUG);
-				}
-			}
-		});
+		if (mAdView != null) {
+			mAdView.stopLoading();
+			mAdView.clearCache(true);
+			mAdView = null;
+			Logging.out(LOG_TAG, "AdView destroyed", LogLevel.DEBUG);
+		}
 		mMinimizedMode = null;
 	}
 

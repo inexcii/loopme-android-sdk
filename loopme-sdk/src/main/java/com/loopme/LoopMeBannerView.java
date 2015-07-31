@@ -40,7 +40,6 @@ public class LoopMeBannerView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
-        removeAllViews();
         try {
             super.onDetachedFromWindow();
         } catch (RuntimeException e) {
