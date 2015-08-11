@@ -1,5 +1,7 @@
 # LoopMe Install-Tracking-SDK #
 
+To support tracking your app download, LoopMe offers a tracking SDK for clients.
+
 Integrating the LoopMe install tracking SDK is very simple and should take less than 5 minutes. 
 
 NOTE The LoopMe SDK requires a minimum of Android 2.2 (API Level 8). 
