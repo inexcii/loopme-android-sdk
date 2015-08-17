@@ -7,5 +7,5 @@ enum VideoState {
 	READY,
 	PLAYING,
 	PAUSED,
-	COMPLETE;
+	COMPLETE
 }

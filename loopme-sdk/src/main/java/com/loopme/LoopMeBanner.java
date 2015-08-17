@@ -5,12 +5,19 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v7.widget.*;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
+
 import com.loopme.AdView.WebviewState;
 import com.loopme.Logging.LogLevel;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The `LoopMeBanner` class provides facilities to display a custom size ads
@@ -34,12 +41,12 @@ public class LoopMeBanner extends BaseAd {
 	private volatile LoopMeBannerView mBannerView;
 	
 	private boolean mIsVideoFinished;
-	
+
 	public interface Listener {
 		
 		void onLoopMeBannerLoadSuccess(LoopMeBanner banner);
 		
-		void onLoopMeBannerLoadFail(LoopMeBanner banner, int error);
+		void onLoopMeBannerLoadFail(LoopMeBanner banner, LoopMeError error);
 		
 		void onLoopMeBannerShow(LoopMeBanner banner);
 		
@@ -69,7 +76,6 @@ public class LoopMeBanner extends BaseAd {
 		mViewController = new ViewController(this);
 		
 		Utils.init(context);
-        Logging.init(context);
 	}
 
     /**
@@ -93,7 +99,10 @@ public class LoopMeBanner extends BaseAd {
 			mViewController.ensureAdIsVisible(mBannerView);
 		}
 	}
-	
+
+	/**
+	 * NOTE: should be in UI thread
+	 */
 	@Override
 	public void destroy() {
 		mAdListener = null;
@@ -169,42 +178,58 @@ public class LoopMeBanner extends BaseAd {
 	/**
 	 * Shows banner ad. 
 	 * This method intended to be used for displaying ad not in scrollable content
-	 * Otherwise see "showAdIfItVisible()" methods 
+	 * Otherwise see "handleScrollViewVisible()" methods
 	 *
 	 * As a result you'll receive onLoopMeBannerShow() callback
 	 */
-	public void show() {
+	private void handleAdVisibility() {
 		if (mAdState == AdState.SHOWING) {
 			ensureAdIsVisible();
 			return;
 		}
+	}
+
+	private boolean handleFirstShow(final LoopMeAdapter adapter, final View view) {
 		if (isReady() && mBannerView != null) {
 			Logging.out(LOG_TAG, "Banner did start showing ad", LogLevel.INFO);
 			mAdState = AdState.SHOWING;
 			stopExpirationTimer();
-			
+
 			mViewController.buildVideoAdView(mBannerView);
 
 			if (mBannerView.getVisibility() != View.VISIBLE) {
 				mBannerView.setVisibility(View.VISIBLE);
 			}
-			
-			onLoopMeBannerShow(this);
 
+			final ViewTreeObserver observer = (view != null) ?
+					view.getViewTreeObserver()
+					: mBannerView.getViewTreeObserver();
+
+			ViewTreeObserver.OnGlobalLayoutListener layoutListener =
+					new ViewTreeObserver.OnGlobalLayoutListener() {
+				@Override
+				public void onGlobalLayout() {
+					Logging.out(LOG_TAG, "onGlobalLayout", LogLevel.DEBUG);
+					handleVisibility(adapter, view);
+					if (observer.isAlive()) {
+						if (Build.VERSION.SDK_INT >= 16) {
+							observer.removeOnGlobalLayoutListener(this);
+						} else {
+							observer.removeGlobalOnLayoutListener(this);
+						}
+					}
+				}
+			};
+			observer.addOnGlobalLayoutListener(layoutListener);
+
+			onLoopMeBannerShow(this);
 			ensureAdIsVisible();
+			return true;
 		}
+		return false;
 	}
-	
-	/**
-	 * Show video ad. This method intended to be used for displaying ad inside scrollable content.
-	 * Calculates video ad visibility inside "listView" content to manage video playback
-	 * For better user experience video is paused if it's out of viewport and resumes when it's in viewport 
-	 * "out of viewport" means less then 50% of ad is visible on scrollable content, othervise it's "in viewport"
-	 *  
-	 * @param adapter - custom adapter which implements @link LoopMeAdapter interface.
-	 * @param listview - listview in which native video ad is displayed.
-	 */
-	public void showAdIfItVisible(LoopMeAdapter adapter, ListView listview) {
+
+	private void handleListViewVisible(LoopMeAdapter adapter, ListView listview) {
 		if (adapter == null || listview == null) {
 			return;
 		}
@@ -214,7 +239,7 @@ public class LoopMeBanner extends BaseAd {
 		for (int i = first; i <= last; i++) {
 			if (adapter.isAd(i)) {
 				switchToNormalMode();
-				show();
+				handleAdVisibility();
 				isAmongVisibleElements = true;
 			}
 		}
@@ -222,11 +247,115 @@ public class LoopMeBanner extends BaseAd {
 			switchToMinimizedMode();
 		}
 	}
+
+	private void handleRecyclerViewVisible(LoopMeAdapter adapter, RecyclerView recyclerView) {
+		if (adapter == null || recyclerView == null) {
+			return;
+		}
+
+		boolean isAmongVisibleElements = false;
+		int first = 0;
+		int last = 0;
+
+		RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+		int orientation = -1;
+
+		if (layoutManager instanceof LinearLayoutManager) {
+			first = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
+			last = ((LinearLayoutManager) layoutManager).findLastVisibleItemPosition();
+			orientation = ((LinearLayoutManager) layoutManager).getOrientation();
+
+		} else if (layoutManager instanceof GridLayoutManager) {
+			first = ((GridLayoutManager) layoutManager).findFirstVisibleItemPosition();
+			last = ((GridLayoutManager) layoutManager).findLastVisibleItemPosition();
+			orientation = ((GridLayoutManager) layoutManager).getOrientation();
+
+		} else if (layoutManager instanceof StaggeredGridLayoutManager) {
+			int[] firsts = null;
+			int[] lasts = null;
+			try {
+				firsts = ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(null);
+				lasts = ((StaggeredGridLayoutManager) layoutManager).findLastVisibleItemPositions(null);
+			} catch (NullPointerException e) {
+				return;
+			}
+
+			orientation = ((StaggeredGridLayoutManager) layoutManager).getOrientation();
+
+			List<Integer> firstList = new ArrayList<Integer>(firsts.length);
+			for (int i = 0; i < firsts.length; i++) {
+				firstList.add(firsts[i]);
+			}
+
+			List<Integer> lastList = new ArrayList<Integer>(lasts.length);
+			for (int i = 0; i < lasts.length; i++) {
+				lastList.add(lasts[i]);
+			}
+
+			first = Collections.min(firstList);
+			last = Collections.max(lastList);
+		}
+
+		if (orientation == OrientationHelper.HORIZONTAL && mViewController != null) {
+			mViewController.setHorizontalScrollingOrientation();
+		}
+
+		for (int i = first; i <= last; i++) {
+			if (adapter.isAd(i)) {
+				switchToNormalMode();
+				handleAdVisibility();
+				isAmongVisibleElements = true;
+			}
+		}
+		if (!isAmongVisibleElements) {
+			switchToMinimizedMode();
+		}
+	}
+
+	/**
+	 * Show video ad.
+	 * Calculates video ad visibility inside "ListView"/"RecyclerView" content to manage video playback
+	 * For better user experience video is paused if it's out of viewport and resumes when it's in viewport
+	 * "out of viewport" means less then 50% of ad is visible on scrollable content, othervise it's "in viewport"
+	 * Usage examples:
+	 * show(null, null) - show ad inside non-scrollable content
+	 * show(null, scrollView) - show ad inside `ScrollView`
+	 * show(adapter, listView) - show ad inside `ListView`
+	 * show(adapter, recyclerView) - show ad inside `RecyclerView`
+	 *
+	 * @param adapter - custom adapter which implements @link LoopMeAdapter interface.
+	 * @param view - listview/recyclerview/scrollview in which native video ad is displayed.
+	 */
+	public void show(LoopMeAdapter adapter, View view) {
+		if (mAdState == AdState.SHOWING) {
+			handleVisibility(adapter, view);
+		} else {
+			handleFirstShow(adapter, view);
+		}
+	}
+
+	private void handleVisibility(LoopMeAdapter adapter, View view) {
+		if (view == null) {
+			handleAdVisibility();
+
+		} else if (view instanceof ScrollView) {
+			handleScrollViewVisible((ScrollView) view);
+
+		} else if (view instanceof ListView) {
+			handleListViewVisible(adapter, (ListView) view);
+
+		} else if (view instanceof RecyclerView) {
+			handleRecyclerViewVisible(adapter, (RecyclerView) view);
+		}
+	}
 	
 	private void switchToMinimizedMode() {
-		if (mAdState == AdState.SHOWING && mViewController != null
-				&& mViewController.isMinimizedModeEnable() && !mIsVideoFinished) {
-            mViewController.switchToMinimizedMode();
+		if (mAdState == AdState.SHOWING && mViewController != null && !mIsVideoFinished) {
+			if (mViewController.isMinimizedModeEnable()) {
+				mViewController.switchToMinimizedMode();
+			} else {
+				pause();
+			}
 		}
 	}
 
@@ -248,10 +377,10 @@ public class LoopMeBanner extends BaseAd {
 	 *  
 	 * @param scrollview - scrollview in which native video ad is displayed.
 	 */
-	public void showAdIfItVisible(ScrollView scrollview) {
+	private void handleScrollViewVisible(ScrollView scrollview) {
 		if (checkVisibilityOnScreen(scrollview)) {
 			switchToNormalMode();
-			show();
+			handleAdVisibility();
 		} else {
 			switchToMinimizedMode();
 		}
@@ -273,6 +402,7 @@ public class LoopMeBanner extends BaseAd {
 	/**
 	 * Dismisses an banner ad
 	 * This method dismisses an banner ad and only if it is currently presented.
+	 * NOTE: should be called from UI thread
 	 * 
 	 * After it banner ad requires "loading process" to be ready for displaying
 	 * 
@@ -286,12 +416,12 @@ public class LoopMeBanner extends BaseAd {
 			if (mBannerView != null) {
 				mBannerView.setVisibility(View.GONE);
 				mBannerView.removeAllViews();
+				mBannerView = null;
 			}
 			if (mViewController != null) {
 				mViewController.destroyMinimizedView();
 				mViewController.setWebViewState(WebviewState.CLOSED);
 			}
-
 			onLoopMeBannerHide(this);
 		} else {
 			Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying", LogLevel.DEBUG);
@@ -309,8 +439,8 @@ public class LoopMeBanner extends BaseAd {
 	 * @param banner - banner object - the sender of message
 	 * @param error - error of unsuccesful ad loading attempt
 	 */
-	void onLoopMeBannerLoadFail(LoopMeBanner banner, final int error) {
-		Logging.out(LOG_TAG, "Ad fails to load: " + LoopMeError.getCodeMessage(error), LogLevel.INFO);
+	void onLoopMeBannerLoadFail(LoopMeBanner banner, final LoopMeError error) {
+		Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage(), LogLevel.INFO);
 		mAdState = AdState.NONE;
 		mIsReady = false;
 		stopFetcherTimer();
@@ -445,7 +575,7 @@ public class LoopMeBanner extends BaseAd {
 	}
 
 	@Override
-	void onAdLoadFail(final int error) {
+	void onAdLoadFail(final LoopMeError error) {
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {

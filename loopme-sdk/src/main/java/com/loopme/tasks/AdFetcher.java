@@ -1,21 +1,12 @@
 package com.loopme.tasks;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+import java.net.URL;
 
 import com.loopme.AdFormat;
 import com.loopme.AdParams;
@@ -34,12 +25,21 @@ public class AdFetcher implements Runnable {
 	
 	private AdFormat mFormat;
 	
-	//timeout for response from server 20 seconds
-	private static final int TIMEOUT = 20000;
-	private int mLoopMeError = -1;
+	/*
+	 * Timeout for response from server 20 seconds
+	 */
+	static int TIMEOUT = 20000;
+
+	private static final String USER_AGENT = "User-Agent";
+	private static final String AGENT_PROPERTY = "http.agent";
+
+	private static final String INVALID_APPKEY_MESS = "Missing or invalid app key";
+	private static final String PAGE_NOT_FOUND = "Page not found";
+
+	private LoopMeError mLoopMeError;
 	
 	public interface Listener {
-		void onComplete(AdParams params, int error);
+		void onComplete(AdParams params, LoopMeError error);
 	}
 	
 	public AdFetcher(String requestUrl, Listener listener, AdFormat format) {
@@ -58,82 +58,96 @@ public class AdFetcher implements Runnable {
 			ResponseParser parser = new ResponseParser(new ResponseParser.Listener() {
 				
 				@Override
-				public void onParseError(String message) {
-					complete(null, LoopMeError.RESPONSE_PARSING);
+				public void onParseError(LoopMeError error) {
+					complete(null, error);
 				}
 			}, mFormat);
 			AdParams adParams = parser.getAdParams(result);
 			if (adParams != null) {
-				complete(adParams, -1);
+				complete(adParams, null);
 			}
 		}
 	}
-	
-	private void complete(final AdParams params, final int error) {
+
+	private void complete(final AdParams params, final LoopMeError error) {
 		if (mListener != null) {
 			mListener.onComplete(params, error);
 		}
 	}
 	
-	private String getResponse(String url) {
+	public String getResponse(String url) {
 		String result = null;
+		HttpURLConnection urlConnection = null;
 		try {
-			HttpParams httpParameters = new BasicHttpParams();
-
-            HttpConnectionParams.setConnectionTimeout(httpParameters, TIMEOUT);
-            HttpConnectionParams.setSoTimeout(httpParameters, TIMEOUT);
-
-			HttpClient httpClient = new DefaultHttpClient(httpParameters);
-			httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, System.getProperty("http.agent"));
-			HttpGet httpGet = new HttpGet(url);
+			URL request = new URL(url);
+			urlConnection = (HttpURLConnection) request.openConnection();
+			urlConnection.setRequestProperty(USER_AGENT, System.getProperty(AGENT_PROPERTY));
+			urlConnection.setReadTimeout(TIMEOUT);
+			urlConnection.setConnectTimeout(TIMEOUT);
 
 			String type = mFormat.toString();
 			Logging.out(LOG_TAG, type + " loads ad with URL: " + url, LogLevel.DEBUG);
-			
-			HttpResponse responce = httpClient.execute(httpGet);
-			HttpEntity entity = responce.getEntity();
-			
-			if (entity == null) {
+
+			int status = urlConnection.getResponseCode();
+			Logging.out(LOG_TAG, "status code: " + status, LogLevel.DEBUG);
+			handleStatusCode(status);
+
+			if (status == HttpURLConnection.HTTP_NOT_FOUND) {
+				InputStream errorStream = urlConnection.getErrorStream();
+				String errorString = Utils.getStringFromStream(errorStream);
+				if (errorString != null && errorString.contains(INVALID_APPKEY_MESS)) {
+					mLoopMeError = new LoopMeError(INVALID_APPKEY_MESS);
+				} else {
+					mLoopMeError = new LoopMeError(PAGE_NOT_FOUND);
+				}
 				return null;
 			}
-			StatusLine statusLine = responce.getStatusLine();
-			if (statusLine == null) {
-				return null;
+
+			if (status == HttpURLConnection.HTTP_OK) {
+				InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+				if (in != null) {
+					result = Utils.getStringFromStream(in);
+				} else {
+					return null;
+				}
 			}
-			int statusCode = statusLine.getStatusCode();
-			
-			switch (statusCode) {
+
+		} catch (MalformedURLException e) {
+			mLoopMeError = new LoopMeError("Error during establish connection");
+
+		} catch (NullPointerException e) {
+			mLoopMeError = new LoopMeError("Error during establish connection");
+
+		} catch (SocketTimeoutException e) {
+			mLoopMeError = new LoopMeError("Request timeout");
+
+		} catch (IOException e) {
+			mLoopMeError = new LoopMeError("Error during establish connection");
+
+		} finally {
+			if (urlConnection != null) {
+				urlConnection.disconnect();
+			}
+		}
+
+		return result;
+	}
+
+	private void handleStatusCode(int statusCode) {
+		switch (statusCode) {
 			case HttpURLConnection.HTTP_NO_CONTENT:
-				mLoopMeError = LoopMeError.NO_ADS_FOUND;
+				mLoopMeError = new LoopMeError("No ads found");
 				break;
 
 			case HttpURLConnection.HTTP_NOT_FOUND:
-				mLoopMeError = LoopMeError.INVALID_APPKEY;
 				break;
 
 			case HttpURLConnection.HTTP_OK:
-				InputStream is = entity.getContent();
-				try {
-					result = Utils.getStringFromStream(is);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
 				break;
 
 			default:
-				mLoopMeError = LoopMeError.UNKNOWN_SERVER_CODE;
+				mLoopMeError = new LoopMeError("Unknown server code " + statusCode);
 				break;
-			}
-			
-		} catch (ConnectTimeoutException ex) {
-			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
-		} catch (SocketTimeoutException ex) {
-			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
-		} catch (IOException ex) {
-			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
-		} catch (IllegalArgumentException ex) {
-			mLoopMeError = LoopMeError.REQUEST_TIMEOUT;
-		} 
-		return result;
+		}
 	}
 }

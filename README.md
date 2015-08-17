@@ -34,7 +34,7 @@ Requires `Android` 4.0 and up
 
 ## SDK Integration ##
 
-* Download latest version of loopme-sdk. Note: after import `loopme-sdk` project update Java Build Path (replace `loopme-sdk/src` to `loopme-sdk/src/main/java`)
+* Download latest version of loopme-sdk
 * Add dependency to loopme-sdk project
 * Update `AndroidManifest.xml` with perfmissions:
 ```xml
@@ -73,7 +73,7 @@ public class YourActivity extends Activity implements LoopMeInterstitial.Listene
  	 * using the unique appKey you received when registering your app via the LoopMe Dashboard.
  	 * For test purposes you can use test appKeys constants defined in LoopMeInterstitial.java
  	*/
-	mInterstitial = LoopMeInterstitial.getInstance(YOUR_APPKEY, this);
+	mInterstitial = LoopMeInterstitial.getInstance(YOUR_APPKEY, getApplicationContext());
 	mInterstitial.setListener(this);
 	
 	/**
@@ -116,7 +116,7 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 `LoopMeBanner` class provides facilities to display a custom size ads during natural transition points in your application.
 
 <b>Note:</b> Integration instructions to display banner ads inside scrollable content.
-`LoopMeSDK` doesn't override `ListView`/`GridView` adapter. 
+`LoopMeSDK` doesn't override `ListView`/`GridView/RecyclerView` adapter. 
 
 * Update `AndroidManifest.xml`:
 ```xml
@@ -125,7 +125,7 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 
 * Create xml layout for ad
 
-* If you use `ListView` or `GridView` in your custom adapter implement `LoopMeAdapter` interface. 
+* Implement `LoopMeAdapter` interface in your custom adapter. 
 
 * Creating `LoopMeBanner` and retrieving ads
 
@@ -142,7 +142,7 @@ public class YourActivity extends Activity implements LoopMeBanner.Listener {
 	 * using the unique appKey you received when registering your app via the LoopMe Dashboard.
 	 * For test purposes you can use test appKeys constants defined in LoopMeBanner.java    
 	*/
-	mBanner = LoopMeBanner.getInstance(YOUR_APPKEY, this);
+	mBanner = LoopMeBanner.getInstance(YOUR_APPKEY, getApplicationContext());
 
     /*
     * If you want to display minimized video when original ad is out of viewport:
@@ -173,22 +173,27 @@ If you display ad inside scrollable content, subscribe to scroll notifications
 ```java
 mListView.setOnScrollListener(this);
 ```
-and trigger `showAdIfItVisible()` inside `onScroll()` as well as in `onLoopMeBannerLoadSuccess`.
+and trigger `show()` inside `onScroll()` as well as in `onLoopMeBannerLoadSuccess`.
 
+There are few variants of method `show()`:<br>
+`show(null, null)` - used to show banner inside non-scrollable content<br>
+`show(null, scrollView)` - used to show(manage visibility) banner inside `ScrollView`<br>
+`show(loopmeAdapter, listView)` - used to show(manage visibility) banner inside `ListView`<br>
+`show(loopmeAdapter, recyclerView)` - used to show(manage visibility) banner inside `RecyclerView`<br><br>
 It manages the ad visibility inside the scrollable content and automatically calculates the ad area visibility and pauses any activity currently happening inside the ad (whether it's a video or animations) if the ad is less than 50% visible, otherwise resumes
 ```java
 @Override
 public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-	mBanner.showAdIfItVisible(mCustomAdapter, mListView);
+	mBanner.show(mCustomAdapter, mListView);
 }
 
 @Override
  public void onLoopMeBannerLoadSuccess(LoopMeBanner arg0) {
-  	arg0.showAdIfItVisible(mCustomAdapter, mListView);
+  	arg0.show(mCustomAdapter, mListView);
  }
 ```
 
-Trigger `LoopMeBanner`'s `pause()` and `showAdIfItVisible` method in appropriate activity lifecycle methods
+Trigger `LoopMeBanner`'s `pause()` and `show()` method in appropriate activity lifecycle methods
 It allows to pause/resume any actions currently happening inside banner ad (f.e to pause video playback)
 ```java
 	@Override
@@ -200,7 +205,7 @@ It allows to pause/resume any actions currently happening inside banner ad (f.e 
 
 	@Override
 	protected void onResume() {
-		mBanner.showAdIfItVisible(mCustomAdapter, mListView);
+		mBanner.show(mCustomAdapter, mListView);
 		super.onResume();
 	}
 ```
@@ -227,11 +232,18 @@ Implement `LoopMeBanner.Listener` in order to receive notifications during the l
 ## Sample projects ##
 
 Check out our project samples:
-- `banner-sample` as an example of `LoopMeBanner` integration within `ListView` and `ScrollView`
+- `banner-sample` as an example of `LoopMeBanner` integration within `ListView`, `ScrollView` and `RecyclerView`
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.3.0 (31 of July, 2015)**
+**Version 4.4.0 (17 of August, 2015)**
+
+- Support video banner in `RecyclerView`
+- Deprecated method `showAdIfItVisible()`. Instead use `show()` with proper parameters
+- Adjust video volume to sytem volume
+- Bug fixes
+
+**Version 4.3.0 (30 of July, 2015)**
 
 - Support video banner in floating window
 - Fixed issue with Activity context

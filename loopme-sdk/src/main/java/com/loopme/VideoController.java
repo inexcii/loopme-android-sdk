@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 
 import android.graphics.SurfaceTexture;
+import android.util.Log;
 import com.loopme.Logging.LogLevel;
 import com.loopme.tasks.VideoTask;
 
@@ -90,14 +91,14 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 						if (filePath != null) {
 							preparePlayer(filePath);
 						} else {
-							sendLoadFail(LoopMeError.VIDEO_LOADING);
+							sendLoadFail(new LoopMeError("Error during video loading"));
 						}
 					}
 				});
 		mFuture = ExecutorHelper.getExecutor().submit(mVideoTask);
 	}
 
-	private void sendLoadFail(int error) {
+	private void sendLoadFail(LoopMeError error) {
 		BaseAd ad;
 		if (mFormat == AdFormat.INTERSTITIAL) {
 			ad = LoopMeAdHolder.getInterstitial(mAppKey, null);
@@ -222,7 +223,8 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 			if (mute) {
 				mPlayer.setVolume(0f, 0f);
 			} else {
-				mPlayer.setVolume(1f, 1f);
+				float systemVolume = Utils.getSystemVolume();
+				mPlayer.setVolume(systemVolume, systemVolume);
 			}
 		}
 	}
@@ -246,6 +248,9 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 		
 		mVideoDuration = mPlayer.getDuration();
 		mAdView.setVideoDuration(mVideoDuration);
+
+		float systemVolume = Utils.getSystemVolume();
+		mPlayer.setVolume(systemVolume, systemVolume);
 	}
 
 	@Override
@@ -255,7 +260,7 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 		mHandler.removeCallbacks(mRunnable);
 
 		if (mAdView.getCurrentVideoState() == VideoState.BROKEN) {
-			sendLoadFail(LoopMeError.VIDEO_LOADING);
+			sendLoadFail(new LoopMeError("Error during video loading"));
 		} else {
 
 			mAdView.setWebViewState(AdView.WebviewState.HIDDEN);
@@ -269,6 +274,7 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 			mp.setOnCompletionListener(null);
 
 			mPlayer.reset();
+
 			mWasError = true;
 		}
 		return true;
@@ -317,7 +323,8 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 
 		Logging.out(LOG_TAG, "updateLayoutParams()", LogLevel.DEBUG);
 
-		if (mTextureView == null || mResizeWidth == 0 || mResizeHeight == 0) {
+		if (mTextureView == null || mResizeWidth == 0 || mResizeHeight == 0
+				|| mVideoWidth == 0 || mVideoHeight == 0) {
 			return;
 		}
 
@@ -325,20 +332,24 @@ class VideoController implements OnPreparedListener, OnErrorListener, OnCompleti
 		lp.gravity = Gravity.CENTER;
 
 		int blackLines;
-		float percent;
+		float percent = 0;
 
 		if (mVideoWidth > mVideoHeight) {
 			lp.width = mResizeWidth;
-			lp.height = (int) (((float)mVideoHeight / (float)mVideoWidth) * (float)mResizeWidth);
+			lp.height = (int)((float)mVideoHeight / (float)mVideoWidth * (float)mResizeWidth);
 
 			blackLines = mResizeHeight - lp.height;
-			percent = blackLines * 100 / lp.height;
+			if (lp.height != 0) {
+				percent = blackLines * 100 / lp.height;
+			}
 		} else {
 			lp.height = mResizeHeight;
-			lp.width = (int) (((float)mVideoWidth / (float)mVideoHeight) * (float)mResizeHeight);
+			lp.width = (int)((float)mVideoWidth / (float)mVideoHeight * (float)mResizeHeight);
 
 			blackLines = mResizeWidth - lp.width;
-			percent = blackLines * 100 / lp.width;
+			if (lp.width != 0) {
+				percent = blackLines * 100 / lp.width;
+			}
 		}
 
 		Logging.out(LOG_TAG, "stretch param  " + mStretch.toString(), LogLevel.DEBUG);

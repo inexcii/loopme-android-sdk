@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -9,6 +10,7 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.os.Build;
+import android.util.Log;
 import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -42,6 +44,8 @@ class ViewController implements TextureView.SurfaceTextureListener {
 	private MinimizedMode mMinimizedMode;
 	private LoopMeBannerView mMinimizedView;
 
+	private boolean mHorizontalScrollOrientation;
+
 	public ViewController(BaseAd ad) {
 		mAd = ad;
 		mAdView = new AdView(mAd.getContext());
@@ -55,7 +59,7 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		});
 		mVideoController = new VideoController(mAd.getAppKey(), mAdView, mAd.getAdFormat());
 	}
-	
+
 	void destroy(boolean interruptFile) {
 		mBridgeListener = null;
 		if (mVideoController != null) {
@@ -128,6 +132,10 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		bannerView.addView(mTextureView, 0);
 		bannerView.addView(mAdView, 1);
 	}
+
+	void setHorizontalScrollingOrientation() {
+		mHorizontalScrollOrientation = true;
+	}
 	
 	void ensureAdIsVisible(View view) {
 		if (mAdView == null || view == null) {
@@ -137,17 +145,17 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		Rect rect = new Rect();
 		boolean b = view.getGlobalVisibleRect(rect);
 
-		int halfOfView = view.getHeight() / 2;
-		int rectHeight = rect.height();
+		int halfOfView = mHorizontalScrollOrientation ? view.getWidth() / 2 : view.getHeight() / 2;
+		int rectHeight = mHorizontalScrollOrientation ? rect.width() : rect.height();
 
 		if (b) {
-
 			if (rectHeight < halfOfView) {
 				setWebViewState(WebviewState.HIDDEN);
-			}
-			else if (rectHeight >= halfOfView) {
+			} else if (rectHeight >= halfOfView) {
 				setWebViewState(WebviewState.VISIBLE);
 			}
+		} else {
+			setWebViewState(WebviewState.HIDDEN);
 		}
 	}
 	
@@ -202,7 +210,8 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		lp.rightMargin = mMinimizedMode.getMarginRight();
 		bannerView.setLayoutParams(lp);
 	}
-	
+
+	@SuppressLint("NewApi")
 	private void addBordersToView(LoopMeBannerView bannerView) {
 		ShapeDrawable drawable = new ShapeDrawable(new RectShape());
 		drawable.getPaint().setColor(Color.BLACK);
@@ -259,7 +268,7 @@ class ViewController implements TextureView.SurfaceTextureListener {
             Logging.out(LOG_TAG, "loadDataWithBaseURL", LogLevel.DEBUG);
 			mAdView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
 		} else {
-            mAd.onAdLoadFail(LoopMeError.HTML_LOADING);
+            mAd.onAdLoadFail(new LoopMeError("Html loading error"));
         }
 	}
 	
@@ -321,7 +330,7 @@ class ViewController implements TextureView.SurfaceTextureListener {
 		return mVideoController;
 	}
 	
-	private void loadFail(BaseAd baseAd, int error) {
+	private void loadFail(BaseAd baseAd, LoopMeError error) {
 		baseAd.onAdLoadFail(error);
 	}
 	
@@ -333,14 +342,16 @@ class ViewController implements TextureView.SurfaceTextureListener {
 	
 	private void onAdLoadFail(String mess) {
 		Logging.out(LOG_TAG, "JS command: load fail", LogLevel.DEBUG);
-		loadFail(mAd, LoopMeError.SPECIFIC_HOST);
+		loadFail(mAd, new LoopMeError("Failed to process ad"));
 	}
 	
 	private void onAdVideoLoad(final String videoUrl) {
 		Logging.out(LOG_TAG, "JS command: load video " + videoUrl, LogLevel.DEBUG);
 		
 		mIsVideoPresented = true;
-		mVideoController.loadVideoFile(videoUrl, mAd.getContext());
+		if (mVideoController != null) {
+			mVideoController.loadVideoFile(videoUrl, mAd.getContext());
+		}
 	}
 	
 	private void onAdVideoMute(boolean mute) {

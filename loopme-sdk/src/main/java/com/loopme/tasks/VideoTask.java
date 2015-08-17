@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -23,8 +22,15 @@ import com.loopme.StaticParams;
 public class VideoTask implements Runnable {
 
 	private static final String LOG_TAG = VideoTask.class.getSimpleName();
-	
-	private static final int TIMEOUT = 3 * 60 * 1000;//3 minutes
+
+	/**
+	 * Timeout for downloading video (3 minutes)
+	 */
+	private static final int TIMEOUT = 3 * 60 * 1000;
+
+	private static final String MP4_FORMAT = ".mp4";
+
+	private static final String VIDEO_FOLDER = "LoopMeAds";
 	
 	private String mVideoUrl;
 	private File mVideoFile;
@@ -33,6 +39,7 @@ public class VideoTask implements Runnable {
 	private Context mContext;
 	
 	private Listener mListener;
+	private VideoHelper mHelper;
 	
 	public interface Listener {
 		void onComplete(String filePath);
@@ -42,6 +49,7 @@ public class VideoTask implements Runnable {
 		mVideoUrl = videoUrl;
 		mContext = context;
 		mListener = listener;
+		mHelper = new VideoHelper();
 	}
 	
 	public void deleteCorruptedVideoFile() {
@@ -50,22 +58,7 @@ public class VideoTask implements Runnable {
 			mVideoFile.delete();
 		}
 	}
-	
-	private String detectFileName(String videoUrl) {
-		String fileName = null;
-		try {
-			URL url = new URL(videoUrl);
-			fileName = url.getFile();
-			if (!TextUtils.isEmpty(fileName)) {
-				fileName = fileName.replace("/", "");
-				fileName = fileName.replace(".mp4", "");
-			}
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		return fileName;
-	}
-	
+
 	private void deleteInvalidVideoFiles() {
 		File parentDir = getParentDir();
 		
@@ -73,8 +66,8 @@ public class VideoTask implements Runnable {
 	    File[] files = parentDir.listFiles();
 	    for (File file : files) {
 	        if (!file.isDirectory()) {
-	            if(file.getName().endsWith(".mp4")){
-	                inFiles.add(file);
+	            if(file.getName().endsWith(MP4_FORMAT)){
+					inFiles.add(file);
 	                
 	                File f = new File(file.getAbsolutePath());
 	                long creationTime = f.lastModified();
@@ -91,7 +84,7 @@ public class VideoTask implements Runnable {
 	}
 	
 	private File getParentDir() {
-		return mContext.getDir("LoopMeAds", Context.MODE_WORLD_READABLE);
+		return mContext.getDir(VIDEO_FOLDER, Context.MODE_WORLD_READABLE);
 	}
 	
 	private File checkFileNotExists(String filename) {
@@ -111,8 +104,8 @@ public class VideoTask implements Runnable {
 	public void run() {
 		deleteInvalidVideoFiles();
 
-		mVideoFileName = detectFileName(mVideoUrl);
-        if (mVideoFileName == null) {
+		mVideoFileName = mHelper.detectFileName(mVideoUrl);
+        if (TextUtils.isEmpty(mVideoFileName)) {
             complete(null);
             return;
         }
@@ -152,7 +145,7 @@ public class VideoTask implements Runnable {
 	private void createNewFile(String fileName) {
 		try {
 			File dir = getParentDir();
-			mVideoFile = File.createTempFile(fileName, ".mp4", dir);
+			mVideoFile = File.createTempFile(fileName, MP4_FORMAT, dir);
 			
 		} catch (IOException e) {
 			Logging.out(LOG_TAG, e.getMessage(), LogLevel.DEBUG);
@@ -206,5 +199,4 @@ public class VideoTask implements Runnable {
 		} 
 		return inputStream;
 	}
-
 }

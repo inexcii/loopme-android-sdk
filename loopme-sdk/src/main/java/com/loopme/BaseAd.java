@@ -107,14 +107,14 @@ public abstract class BaseAd implements AdTargeting {
         }
 		
 		if (Build.VERSION.SDK_INT < 14) {
-			onAdLoadFail(LoopMeError.UNSUPPORTED_ANDROID_VERSION);
+			onAdLoadFail(new LoopMeError("Not supported Android version. Expected Android 4.0+"));
 			return;
 		}
 
 		if (Utils.isOnline(getContext())) {
 			proceedLoad();
 		} else {
-			onAdLoadFail(LoopMeError.NO_CONNECTION);
+			onAdLoadFail(new LoopMeError("No connection"));
 		}
 	}
 	
@@ -168,7 +168,7 @@ public abstract class BaseAd implements AdTargeting {
 	
 	abstract void onAdExpired();
 	abstract void onAdLoadSuccess();
-	abstract void onAdLoadFail(int errorCode);
+	abstract void onAdLoadFail(LoopMeError errorCode);
 	abstract void onAdLeaveApp();
 	abstract void onAdClicked();
 	abstract void onAdVideoDidReachEnd();
@@ -207,12 +207,12 @@ public abstract class BaseAd implements AdTargeting {
 	
 	private void preloadHtmlInWebview(String html) {
 		if (TextUtils.isEmpty(html)) {
-			onAdLoadFail(LoopMeError.BROKEN_RESPONSE);
+			onAdLoadFail(new LoopMeError("Broken response"));
 		} else {
 			if (mViewController != null) {
 				mViewController.preloadHtml(html);
 			} else {
-				onAdLoadFail(LoopMeError.HTML_LOADING);
+				onAdLoadFail(new LoopMeError("Html loading error"));
 			}
 		}
 	}
@@ -222,7 +222,7 @@ public abstract class BaseAd implements AdTargeting {
 			
 			@Override
 			public void onComplete(final AdParams params,
-					final int error) {
+					final LoopMeError error) {
 
 				if (params != null && !params.getPackageIds().isEmpty()) {
 					
@@ -232,7 +232,7 @@ public abstract class BaseAd implements AdTargeting {
 						mAdState = AdState.NONE;
 						EventManager eventManager = new EventManager();
 						eventManager.trackSdkEvent(params.getToken());
-						completeRequest(null, LoopMeError.NO_VALID_ADS_FOUND);
+						completeRequest(null, new LoopMeError("No valid ads found"));
 					} else {
 						completeRequest(params, error);
 					}
@@ -243,17 +243,17 @@ public abstract class BaseAd implements AdTargeting {
 		};
 	}
 	
-	private void completeRequest(final AdParams params, final int error) {
+	private void completeRequest(final AdParams params, final LoopMeError error) {
 
 		mHandler.post(new Runnable() {
 			
 			@Override
 			public void run() {
                 if (params == null) {
-					if (error >= 0) {
+					if (error != null) {
 						onAdLoadFail(error);
 					} else {
-						onAdLoadFail(LoopMeError.REQUEST_TIMEOUT);
+						onAdLoadFail(new LoopMeError("Request timeout"));
 					}
 				} else {
 					fetchAdComplete(params);
@@ -329,7 +329,7 @@ public abstract class BaseAd implements AdTargeting {
 			@Override
 			public void onTimeout() {
 				cancelFetcher();
-				onAdLoadFail(LoopMeError.TIMEOUT);
+				onAdLoadFail(new LoopMeError("Ad processing timeout"));
 			}
 		};
 		mFetcherTimer = new AdFetcherTimer(StaticParams.FETCH_TIMEOUT, 
@@ -350,7 +350,7 @@ public abstract class BaseAd implements AdTargeting {
 		LoopMeAdHolder.putAd(this);
 		mRequestUrl = new AdRequestUrlBuilder(mContext).buildRequestUrl(mAppKey, mAdTargetingData);
     	if (mRequestUrl == null) {
-    		onAdLoadFail(LoopMeError.REQUEST_URL);
+    		onAdLoadFail(new LoopMeError("Error during building ad request url"));
     		return;
     	}
 		

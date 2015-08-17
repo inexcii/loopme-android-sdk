@@ -1,0 +1,20 @@
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:cardview="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <android.support.v7.widget.CardView
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <com.loopme.LoopMeBannerView
+                android:id="@+id/ad_image"
+                android:layout_width="320dp"
+                android:layout_height="250dp"
+                android:layout_gravity="center"/>
+
+    </android.support.v7.widget.CardView>
+
+</RelativeLayout>

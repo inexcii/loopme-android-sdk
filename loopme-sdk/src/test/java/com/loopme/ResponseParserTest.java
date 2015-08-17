@@ -225,7 +225,7 @@ public class ResponseParserTest {
 		AdParams params4 = parser4.getAdParams(responseString4);
 
 		assertNotNull(params4);
-		assertEquals(params4.getHtml(), "10");
+		assertNull(params4.getHtml());
 	}
 
 	@Test

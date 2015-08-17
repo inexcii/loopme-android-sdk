@@ -1,12 +1,9 @@
 package com.loopme;
 
-import android.content.Context;
 import android.util.Log;
 
 public class Logging {
 
-	private static Context sContext;
-	
 	public enum LogLevel {
 		INFO, 
 		DEBUG, 
@@ -14,10 +11,6 @@ public class Logging {
 	}
 	
 	private Logging() {}
-	
-	public static void init(Context context) {
-		sContext = context;
-	}
 	
 	public static void out(String tag, String text, LogLevel logLevel) {
    		if (StaticParams.DEBUG_MODE) {

@@ -1,5 +1,7 @@
 package com.loopme;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
@@ -107,7 +109,8 @@ final class AdBrowserLayout extends RelativeLayout {
 		whiteLine.setBackgroundColor(Color.WHITE);
 		return whiteLine;
 	}
-	
+
+	@SuppressLint("NewApi")
 	private void configBackButton(Context context, LinearLayout buttonsContainer,
 			RelativeLayout.LayoutParams buttons_params,
 			RelativeLayout.LayoutParams pb_params) {
@@ -122,7 +125,8 @@ final class AdBrowserLayout extends RelativeLayout {
 		backLayout.addView(mBackBtn);
 		buttonsContainer.addView(backLayout);
 	}
-	
+
+	@SuppressLint("NewApi")
 	private void configRefreshButton(Context context, LinearLayout buttonsContainer,
 			RelativeLayout.LayoutParams buttons_params,
 			RelativeLayout.LayoutParams pb_params) {
@@ -137,7 +141,8 @@ final class AdBrowserLayout extends RelativeLayout {
 		refreshLayout.addView(mRefreshBtn);
 		buttonsContainer.addView(refreshLayout);
 	}
-	
+
+	@SuppressLint("NewApi")
 	private void configNativeButton(Context context, LinearLayout buttonsContainer,
 			RelativeLayout.LayoutParams buttons_params,
 			RelativeLayout.LayoutParams pb_params) {
@@ -152,7 +157,8 @@ final class AdBrowserLayout extends RelativeLayout {
 		nativeLayout.addView(mNativeBtn);
 		buttonsContainer.addView(nativeLayout);
 	}
-	
+
+	@SuppressLint("NewApi")
 	private void configCloseButton(Context context, LinearLayout buttonsContainer,
 			RelativeLayout.LayoutParams buttons_params,
 			RelativeLayout.LayoutParams pb_params) {

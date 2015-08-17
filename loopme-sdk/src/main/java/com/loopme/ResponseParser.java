@@ -3,6 +3,7 @@ package com.loopme;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.text.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,12 +28,12 @@ public class ResponseParser {
 	private AdFormat mAdFormat;
 	
 	public interface Listener {
-		void onParseError(String message);
+		void onParseError(LoopMeError message);
 	}
 	
 	public ResponseParser(Listener listener, AdFormat format) {
 		if (listener == null || format == null) {
-			Logging.out(LOG_TAG, "Wrong parameter(s)", LogLevel.DEBUG);
+			Logging.out(LOG_TAG, "Wrong parameter(s)", LogLevel.ERROR);
 		}
 		mListener = listener;
 		mAdFormat = format;
@@ -45,32 +46,28 @@ public class ResponseParser {
 		String format = null;
 		JSONObject object = null;
 		JSONObject settings = null;
-		
+
 		try {
 			object = (JSONObject) new JSONTokener(result).nextValue();
+
 			settings = object.getJSONObject(JSON_SETTINGS);
-			
+
 			format = settings.getString(JSON_FORMAT);
 			if (mAdFormat == null || !format.equalsIgnoreCase(mAdFormat.toString())) {
-				if (mListener != null) {
-					mListener.onParseError("Wrong Ad format");
-				}
+				handleParseError("Wrong Ad format");
 				return null;
 			}
 
 		} catch (JSONException e) {
-			e.printStackTrace();
-			if (mListener != null) {
-				mListener.onParseError("Exception during json parse");
-			}
+			handleParseError("Exception during json parse");
 			return null;
+
 		} catch (ClassCastException ex) {
 			ex.printStackTrace();
-			if (mListener != null) {
-				mListener.onParseError("Exception during json parse");
-			}
+			handleParseError("Exception during json parse");
 			return null;
 		}
+
 		return new AdParams.AdParamsBuilder(format)
 					.html(parseString(object,JSON_SCRIPT))
 					.orientation(parseString(settings, JSON_ORIENTATION))
@@ -78,6 +75,12 @@ public class ResponseParser {
 					.token(parseString(settings, JSON_TOKEN))
 					.packageIds(parseArray(settings, JSON_PACKAGE_IDS))
 					.build();
+	}
+
+	private void handleParseError(String mess) {
+		if (mListener != null) {
+			mListener.onParseError(new LoopMeError(mess));
+		}
 	}
 	
 	private List<String> parseArray(JSONObject object, String jsonParam) {

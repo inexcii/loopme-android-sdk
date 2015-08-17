@@ -36,7 +36,7 @@ public final class LoopMeInterstitial extends BaseAd {
 
 		void onLoopMeInterstitialLoadSuccess(LoopMeInterstitial interstitial);
 		
-		void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial, int error);
+		void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial, LoopMeError error);
 		
 		void onLoopMeInterstitialShow(LoopMeInterstitial interstitial);
 		
@@ -54,7 +54,7 @@ public final class LoopMeInterstitial extends BaseAd {
 	/**
 	 * Creates new `LoopMeInterstitial` object with the given appKey
 	 * 
-	 * @param context - activity context
+	 * @param context - application context
 	 * @param appKey - your app key
 	 * 
 	 * @throws IllegalArgumentException if any of parameters is null
@@ -66,7 +66,6 @@ public final class LoopMeInterstitial extends BaseAd {
 		mViewController = new ViewController(this);
 		
 		Utils.init(context);
-        Logging.init(context);
 	}
 
     /**
@@ -198,8 +197,8 @@ public final class LoopMeInterstitial extends BaseAd {
 	 * @param interstitial - interstitial object - the sender of message
 	 * @param error - error of unsuccesful ad loading attempt
 	 */
-	void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial, final int error) {
-		Logging.out(LOG_TAG, "Ad fails to load: " + LoopMeError.getCodeMessage(error), LogLevel.INFO);
+	void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial, final LoopMeError error) {
+		Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage(), LogLevel.INFO);
 		mIsReady = false;
 		mAdState = AdState.NONE;
 		stopFetcherTimer();
@@ -305,7 +304,7 @@ public final class LoopMeInterstitial extends BaseAd {
 	}
 
 	@Override
-	void onAdLoadFail(final int error) {
+	void onAdLoadFail(final LoopMeError error) {
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {

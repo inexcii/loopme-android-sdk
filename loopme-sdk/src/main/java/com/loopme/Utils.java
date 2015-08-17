@@ -4,18 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import android.media.AudioManager;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 
 import com.loopme.Logging.LogLevel;
 
-import android.animation.Animator;
-import android.animation.Animator.AnimatorListener;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -60,15 +56,20 @@ public class Utils {
     	sContext = context;
     }
     
-    public static String getStringFromStream(InputStream inputStream) throws IOException {
+    public static String getStringFromStream(InputStream inputStream) {
         int numberBytesRead = 0;
         StringBuilder out = new StringBuilder();
         byte[] bytes = new byte[4096];
-        
-        while ((numberBytesRead = inputStream.read(bytes)) != -1) {
-            out.append(new String(bytes, 0, numberBytesRead));
+
+        try {
+            while ((numberBytesRead = inputStream.read(bytes)) != -1) {
+                out.append(new String(bytes, 0, numberBytesRead));
+            }
+            inputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        inputStream.close();
         return out.toString();
     }
     
@@ -147,5 +148,20 @@ public class Utils {
         view.animate()
 		    .setDuration(500)
 		    .alpha(1.0f);
+    }
+
+    public static float getSystemVolume() {
+        if (sContext == null) {
+            return 1.0f;
+        }
+        AudioManager am= (AudioManager) sContext.getSystemService(Context.AUDIO_SERVICE);
+        if (am != null) {
+            int volume_level = am.getStreamVolume(AudioManager.STREAM_RING);
+            int max = am.getStreamMaxVolume(AudioManager.STREAM_RING);
+            int percent = Math.round(volume_level * 100 / max);
+            return (float) percent / 100;
+        } else {
+            return 1.0f;
+        }
     }
 }

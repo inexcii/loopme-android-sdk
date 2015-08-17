@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import com.loopme.Logging.LogLevel;
 import com.loopme.utilites.Drawables;
@@ -135,6 +136,7 @@ public final class AdBrowserActivity extends Activity {
 			}
 			
 			@Override
+			@SuppressLint("NewApi")
 			public void onPageFinished(boolean canGoBack) {
 				mProgress.setVisibility(View.INVISIBLE);
 				if (canGoBack) {
@@ -150,7 +152,8 @@ public final class AdBrowserActivity extends Activity {
 			}
 		};
     }
-    
+
+	@SuppressLint("NewApi")
 	private void setImage(Button button, Drawables image) {
 		if (Build.VERSION.SDK_INT < 16) {
 			button.setBackgroundDrawable(image.decodeImage());
