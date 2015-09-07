@@ -57,7 +57,7 @@ public class AdRequestUrlBuilder {
 		List<String> list = Arrays.asList(str.split("/"));
 		
 		Uri.Builder builder = new Uri.Builder();
-		builder.scheme("http");
+		builder.scheme("https");
 
 		for (String s : list) {
 			if (list.indexOf(s) == 0) {

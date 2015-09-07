@@ -230,9 +230,9 @@ public abstract class BaseAd implements AdTargeting {
 
 					if (b) {
 						mAdState = AdState.NONE;
+						completeRequest(null, new LoopMeError("No valid ads found"));
 						EventManager eventManager = new EventManager();
 						eventManager.trackSdkEvent(params.getToken());
-						completeRequest(null, new LoopMeError("No valid ads found"));
 					} else {
 						completeRequest(params, error);
 					}

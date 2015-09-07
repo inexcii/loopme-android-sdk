@@ -1,3 +1,15 @@
+## Version 4.4.0 (17 of August, 2015)
+
+- Support video banner in `RecyclerView`
+- Deprecated method `showAdIfItVisible()`. Instead use `show()` with proper parameters
+- Adjust video volume to sytem volume
+- Bug fixes
+
+## Version 4.3.0 (30 of July, 2015)
+
+- Support video banner in floating window
+- Fixed issue with Activity context
+
 ## Version 4.2.2.2 (10 of July, 2015)
 
 - Fix for ad clicks (redirect with deep links)
