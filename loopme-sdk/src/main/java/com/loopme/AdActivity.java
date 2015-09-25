@@ -151,7 +151,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     @Override
     protected void onDestroy() {
     	Logging.out(LOG_TAG, "onDestroy", LogLevel.DEBUG);
-    	unregisterReceiver(mReceiver);
+		if (mReceiver != null) {
+			unregisterReceiver(mReceiver);
+		}
 		if (mLayout != null) {
 			mLayout.removeAllViews();
 		}

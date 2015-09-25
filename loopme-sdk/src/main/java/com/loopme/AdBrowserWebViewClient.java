@@ -10,6 +10,8 @@ import android.webkit.WebViewClient;
 
 import com.loopme.Logging.LogLevel;
 
+import java.net.URISyntaxException;
+
 /**
  * Custom WebViewClient for AdBrowserWebView which handles different url schemes.
  * Has listener to communicate with buttons on AdBrowserLayout.
@@ -17,6 +19,8 @@ import com.loopme.Logging.LogLevel;
 class AdBrowserWebViewClient extends WebViewClient {
 
 	private static final String LOG_TAG = AdBrowserWebViewClient.class.getSimpleName();
+
+	public static final String PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=";
 
 	private static final String HEADER_PLAIN_TEXT = "plain/text";
 
@@ -27,6 +31,7 @@ class AdBrowserWebViewClient extends WebViewClient {
 	private static final String YOUTUBE_SCHEME = "vnd.youtube";
 	private static final String HTTP_SCHEME = "http";
 	private static final String HTTPS_SCHEME = "https";
+	private static final String INTENT_SCHEME = "intent";
 
 	private static final String GEO_HOST = "maps.google.com";
 	private static final String MARKET_HOST = "play.google.com";
@@ -106,14 +111,17 @@ class AdBrowserWebViewClient extends WebViewClient {
 			Intent searchAddress = new Intent(Intent.ACTION_VIEW, uri);
 			resolveAndStartActivity(searchAddress, context);
 
-		} else if (scheme.equalsIgnoreCase(MARKET_SCHEME)
-				|| scheme.equalsIgnoreCase(YOUTUBE_SCHEME)) {
+		} else if (scheme.equalsIgnoreCase(YOUTUBE_SCHEME)) {
 			leaveApp(url, context);
 
 		} else if (scheme.equalsIgnoreCase(HTTP_SCHEME)
 				|| scheme.equalsIgnoreCase(HTTPS_SCHEME)) {
 			return checkHost(url, host, context);
 
+		} else if (scheme.equalsIgnoreCase(INTENT_SCHEME)) {
+			handleIntentScheme(url, context);
+		} else if (scheme.equalsIgnoreCase(MARKET_SCHEME)) {
+			handleMarketScheme(url, context);
 		} else {
 			return true;
 		}
@@ -144,8 +152,39 @@ class AdBrowserWebViewClient extends WebViewClient {
 		return true;
 	}
 
-	private void leaveApp(String url, Context context) {
+	private void handleMarketScheme(String url, Context context) {
+		try {
+			Intent intent = Intent.parseUri(url, 0);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			if (isActivityResolved(intent, context)) {
+				context.startActivity(intent);
+			} else {
+				Uri uri = Uri.parse(url);
+				String id = uri.getQueryParameter("id");
+				url = PLAY_STORE_URL + id;
+				leaveApp(url, context);
+			}
+		} catch (Exception e) {
+			mListener.onReceiveError();
+		}
+	}
 
+	private void handleIntentScheme(String url, Context context) {
+		try {
+			Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			if (isActivityResolved(intent, context)) {
+				context.startActivity(intent);
+			} else {
+				url = PLAY_STORE_URL + intent.getPackage();
+				leaveApp(url, context);
+			}
+		} catch (URISyntaxException e) {
+			mListener.onReceiveError();
+		}
+	}
+
+	private void leaveApp(String url, Context context) {
 		Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		resolveAndStartActivity(intent, context);
@@ -153,14 +192,16 @@ class AdBrowserWebViewClient extends WebViewClient {
 	}
 
 	private void resolveAndStartActivity(Intent intent, Context context) {
-		boolean isActivityResolved = context.getPackageManager()
-				.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null
-				? true : false;
-		if (isActivityResolved) {
+		if (isActivityResolved(intent, context)) {
 			context.startActivity(intent);
 		} else {
 			mListener.onReceiveError();
 		}
+	}
+
+	private boolean isActivityResolved(Intent intent, Context context) {
+		return context.getPackageManager()
+				.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null;
 	}
 
 	@Override

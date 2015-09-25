@@ -1,3 +1,9 @@
+## Version 4.5.0 (7 of September, 2015)
+
+- Support `https` ad requests
+- Updated project structure
+- Removed `WRITE_EXTERNAL_STORAGE` permission
+
 ## Version 4.4.0 (17 of August, 2015)
 
 - Support video banner in `RecyclerView`

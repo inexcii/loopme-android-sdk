@@ -1,11 +1,10 @@
 package com.loopme;
 
 import android.content.Context;
-import android.view.View;
-import android.webkit.WebChromeClient;
+import android.text.TextUtils;
 import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.webkit.WebSettings.PluginState;
+import android.webkit.WebView;
 
 import com.loopme.Logging.LogLevel;
 
@@ -17,24 +16,38 @@ import com.loopme.Logging.LogLevel;
 public class AdView extends WebView implements BridgeInterface, Bridge.Listener {
 
 	private static final String LOG_TAG = AdView.class.getSimpleName();
-	
+
+	public static final String DEFAULT_CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36";
+
+	public static final String CHROME_USER_AGENT = initUserAgent();
+
 	private Bridge.Listener mBridgeListener;
+
 	private volatile Bridge mBridge;
 
 	private VideoState mCurrentVideoState = VideoState.BROKEN;
 	private WebviewState mViewState = WebviewState.CLOSED;
-
 	public AdView(Context context) {
 		super(context);
 		init();
 	}
-	
+
+
+
 	enum WebviewState {
 		VISIBLE,
 		HIDDEN,
-		CLOSED
+		CLOSED;
 	}
-	
+
+	private static String initUserAgent() {
+		String agent = System.getProperty("http.agent");
+		if (TextUtils.isEmpty(agent)) {
+			agent = DEFAULT_CHROME_USER_AGENT;
+		}
+		return agent;
+	}
+
 	/**
 	 * Add listener of js commands
 	 */
@@ -54,6 +67,9 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 		webSettings.setSupportZoom(false);
 //        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 //        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+		webSettings.setUserAgentString(CHROME_USER_AGENT);
+
 
 		setWebChromeClient(new AdViewChromeClient());
 
@@ -85,7 +101,7 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
             mCurrentVideoState = state;
             Logging.out(LOG_TAG, "VIDEO : " + state.toString(), LogLevel.DEBUG);
             String command = new BridgeCommandBuilder().videoState(state);
-            loadUrl(command);
+			loadUrl(command);
         }
 	}
 
