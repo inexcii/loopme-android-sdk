@@ -235,11 +235,9 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.5.1 (25 of September, 2015)**
+**Version 4.5.2 (29 of October, 2015)**
 
-- Support `market://` urls if Play Market not installed
-- Deep link handling
-
+- New request parameters
 
 See [Changelog](CHANGELOG.md)
 

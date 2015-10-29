@@ -1,3 +1,12 @@
+## Version 4.5.2 (29 of October, 2015)
+
+- New request parameters
+
+## Version 4.5.1 (25 of September, 2015)
+
+- Support `market://` urls if Play Market not installed
+- Deep link handling
+
 ## Version 4.5.0 (7 of September, 2015)
 
 - Support `https` ad requests

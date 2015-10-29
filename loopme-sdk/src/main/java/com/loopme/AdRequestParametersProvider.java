@@ -1,17 +1,20 @@
 package com.loopme;
 
-import java.util.Locale;
-
-import com.loopme.Logging.LogLevel;
-
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+
+import com.loopme.Logging.LogLevel;
+
+import java.util.Locale;
 
 public class AdRequestParametersProvider {
 	
@@ -226,4 +229,29 @@ public class AdRequestParametersProvider {
 	public boolean isDntPresent() {
 		return mDntPresent;
 	}
+
+	public boolean isWifiInfoAvailable(Context context) {
+		String permission = "android.permission.ACCESS_WIFI_STATE";
+		int res = context.checkCallingOrSelfPermission(permission);
+		return res == PackageManager.PERMISSION_GRANTED;
+	}
+
+	public String getWifiName(Context context) {
+		try {
+			WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+			WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+			String ssid = wifiInfo.getSSID();
+
+			// remove extra quotes if needed
+			if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+				ssid = ssid.substring(1, ssid.length() - 1);
+			}
+
+			return ssid;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 }
