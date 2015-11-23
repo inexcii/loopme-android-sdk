@@ -10,8 +10,12 @@ public class AdViewChromeClient extends WebChromeClient {
 
     @Override
     public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-        Logging.out(LOG_TAG, "Console Message: " + consoleMessage.message(),
-                Logging.LogLevel.DEBUG);
+        if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR ||
+                consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.WARNING) {
+
+            Logging.out(LOG_TAG, "Console Message: " + consoleMessage.message(),
+                    Logging.LogLevel.DEBUG);
+        }
         return super.onConsoleMessage(consoleMessage);
     }
 

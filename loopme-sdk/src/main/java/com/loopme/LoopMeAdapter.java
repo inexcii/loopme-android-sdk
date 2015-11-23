@@ -7,11 +7,12 @@ package com.loopme;
  */
 public interface LoopMeAdapter {
 
-	/**
-	 * Detects is element of ListView/GridView Ad or not 
-	 * @param i - element position in list
-	 * @return - true - if element is Ad
-	 * 			 false - otherwise
-	 */
-	public boolean isAd(int i);
+    /**
+     * Detects is element of ListView/GridView Ad or not
+     *
+     * @param i - element position in list
+     * @return - true - if element is Ad
+     * false - otherwise
+     */
+    public boolean isAd(int i);
 }

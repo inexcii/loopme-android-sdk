@@ -42,6 +42,8 @@ Requires `Android` 4.0 and up
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
 //Optional permissions
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -235,9 +237,12 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.5.2 (29 of October, 2015)**
+**Version 4.6.0 (23 of November, 2015)**
 
-- New request parameters
+- Expand to fullscreen
+- Improved loading process (require 2 new permissions `android.permission.DOWNLOAD_WITHOUT_NOTIFICATION` and `android.permission.WRITE_EXTERNAL_STORAGE`)
+- Live debugging
+- Bug fixes for end card, wi-fi name 
 
 See [Changelog](CHANGELOG.md)
 

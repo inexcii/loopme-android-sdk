@@ -1,8 +1,10 @@
 package com.loopme;
 
-public enum DisplayMode {
+class DisplayMode {
 
-    NORMAL,
-    MINIMIZED,
-    EXPANDED
+    public static final int NORMAL = 100;
+    public static final int MINIMIZED = 101;
+    public static final int FULLSCREEN = 102;
+
+    private DisplayMode() {}
 }

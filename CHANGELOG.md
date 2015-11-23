@@ -1,3 +1,10 @@
+## Version 4.6.0 (23 of November, 2015)
+
+- Expand to fullscreen
+- Improved loading process (require 2 new permissions `android.permission.DOWNLOAD_WITHOUT_NOTIFICATION` and `android.permission.WRITE_EXTERNAL_STORAGE`)
+- Live debugging
+- Bug fixes for end card, wi-fi name 
+
 ## Version 4.5.2 (29 of October, 2015)
 
 - New request parameters
