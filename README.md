@@ -237,12 +237,9 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.6.0 (23 of November, 2015)**
+**Version 4.6.1 (8 of December, 2015)**
 
-- Expand to fullscreen
-- Improved loading process (require 2 new permissions `android.permission.DOWNLOAD_WITHOUT_NOTIFICATION` and `android.permission.WRITE_EXTERNAL_STORAGE`)
-- Live debugging
-- Bug fixes for end card, wi-fi name 
+- Bug fixes 
 
 See [Changelog](CHANGELOG.md)
 

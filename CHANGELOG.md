@@ -1,3 +1,7 @@
+## Version 4.6.1 (8 of December, 2015)
+
+- Bug fixes 
+
 ## Version 4.6.0 (23 of November, 2015)
 
 - Expand to fullscreen

@@ -771,7 +771,9 @@ class ViewController implements TextureView.SurfaceTextureListener,
         Logging.out(LOG_TAG, "onSurfaceTextureDestroyed", LogLevel.DEBUG);
         mIsSurfaceTextureAvailable = false;
 
-        mPlayer.setSurface(null);
+        if (mPlayer != null) {
+            mPlayer.setSurface(null);
+        }
         return true;
     }
 
