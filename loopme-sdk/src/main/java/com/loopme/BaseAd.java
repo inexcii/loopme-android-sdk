@@ -6,7 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
-import com.loopme.Logging.LogLevel;
+import com.loopme.debugging.ErrorTracker;
 import com.loopme.tasks.AdFetcher;
 import com.loopme.tasks.AdvIdFetcher;
 
@@ -92,9 +92,9 @@ public abstract class BaseAd implements AdTargeting {
      * After its execution, the interstitial/banner notifies whether the loading of the ad content failed or succeded.
      */
     public void load() {
-        Logging.out(LOG_TAG, "Start loading ad with app key " + mAppKey, LogLevel.INFO);
+        Logging.out(LOG_TAG, "Start loading ad with app key " + mAppKey);
         if (mAdState == AdState.LOADING || mAdState == AdState.SHOWING) {
-            Logging.out(LOG_TAG, "Ad already loading or showing", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Ad already loading or showing");
             return;
         }
 
@@ -107,7 +107,7 @@ public abstract class BaseAd implements AdTargeting {
         startFetcherTimer();
 
         if (isReady()) {
-            Logging.out(LOG_TAG, "Ad already loaded", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Ad already loaded");
             onAdLoadSuccess();
             return;
         }
@@ -130,7 +130,7 @@ public abstract class BaseAd implements AdTargeting {
      * If the Ad is in "displaying ad" phase, destroy causes "closing ad" and cleaning-up all related resources
      */
     public void destroy() {
-        Logging.out(LOG_TAG, "Ad will be destroyed", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Ad will be destroyed");
 
         mAdFetcherListener = null;
         mIsReady = false;
@@ -156,7 +156,7 @@ public abstract class BaseAd implements AdTargeting {
     }
 
     protected void cancelFetcher() {
-        Logging.out(LOG_TAG, "Cancel ad fether", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Cancel ad fether");
 
         mAdFetcherListener = null;
         releaseViewController(true);
@@ -221,6 +221,7 @@ public abstract class BaseAd implements AdTargeting {
     private void preloadHtmlInWebview(String html) {
         if (TextUtils.isEmpty(html)) {
             onAdLoadFail(new LoopMeError("Broken response"));
+            ErrorTracker.post("Broken response. Empty html");
         } else {
             if (mViewController != null) {
                 mViewController.preloadHtml(html);
@@ -278,7 +279,7 @@ public abstract class BaseAd implements AdTargeting {
 
     private void proceedLoad() {
         if (AdRequestParametersProvider.getInstance().getGoogleAdvertisingId() == null) {
-            Logging.out(LOG_TAG, "Start initialization google adv id", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Start initialization google adv id");
 
             detectGoogleAdvertisingId();
 
@@ -300,7 +301,7 @@ public abstract class BaseAd implements AdTargeting {
     }
 
     protected void releaseViewController(boolean interruptFile) {
-        Logging.out(LOG_TAG, "Release ViewController", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Release ViewController");
 
         if (mViewController != null) {
             mViewController.destroy(interruptFile);
@@ -327,7 +328,7 @@ public abstract class BaseAd implements AdTargeting {
 
     protected void stopExpirationTimer() {
         if (mExpirationTimer != null) {
-            Logging.out(LOG_TAG, "Stop schedule expiration", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Stop schedule expiration");
             mExpirationTimer.cancel();
             mExpirationTimer = null;
         }
@@ -348,11 +349,13 @@ public abstract class BaseAd implements AdTargeting {
         };
         mFetcherTimer = new AdFetcherTimer(StaticParams.FETCH_TIMEOUT,
                 mFetcherTimerListener);
+        float fetchTimeout = StaticParams.FETCH_TIMEOUT / (1000 * 60);
+        Logging.out(LOG_TAG, "Fetch timeout: " + fetchTimeout + " minutes");
         mFetcherTimer.start();
     }
 
     protected void stopFetcherTimer() {
-        Logging.out(LOG_TAG, "Stop fetcher timer", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Stop fetcher timer");
         if (mFetcherTimer != null) {
             mFetcherTimer.cancel();
             mFetcherTimer = null;

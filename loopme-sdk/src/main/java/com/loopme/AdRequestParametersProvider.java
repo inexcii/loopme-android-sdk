@@ -12,8 +12,6 @@ import android.net.wifi.WifiManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
-import com.loopme.Logging.LogLevel;
-
 import java.util.Locale;
 
 public class AdRequestParametersProvider {
@@ -46,7 +44,7 @@ public class AdRequestParametersProvider {
     }
 
     void setGoogleAdvertisingId(String advId) {
-        Logging.out(LOG_TAG, "Advertising Id = " + advId, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Advertising Id = " + advId);
         mAdvertisingId = advId;
     }
 
@@ -133,8 +131,7 @@ public class AdRequestParametersProvider {
             mAppVersion = context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
         } catch (NameNotFoundException e) {
-            Logging.out(LOG_TAG, "Can't get app version. Exception: " + e.getMessage(),
-                    LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Can't get app version. Exception: " + e.getMessage());
             mAppVersion = "0.0";
         }
     }
@@ -173,7 +170,7 @@ public class AdRequestParametersProvider {
             mDntPresent = true;
             if (mLoopMeId == null) {
                 String loopmeId = Long.toHexString(Double.doubleToLongBits(Math.random()));
-                Logging.out(LOG_TAG, "LoopMe Id = " + loopmeId, LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "LoopMe Id = " + loopmeId);
                 mLoopMeId = loopmeId;
             }
             return mLoopMeId;

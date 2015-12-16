@@ -9,10 +9,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.loopme.debugging.ErrorTracker;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 
 public class VideoLoader {
 
@@ -27,9 +28,9 @@ public class VideoLoader {
 
     private static final String MP4_FORMAT = ".mp4";
 
-    private String downloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
-    private IntentFilter downloadCompleteIntentFilter = new IntentFilter(downloadCompleteIntentName);
-    private long downloadID;
+    private String mDownloadCompleteIntentName = DownloadManager.ACTION_DOWNLOAD_COMPLETE;
+    private IntentFilter mDownloadCompleteIntentFilter = new IntentFilter(mDownloadCompleteIntentName);
+    private long mDownloadId;
     private DownloadManager mDownloadManager;
 
     private Callback mCallback;
@@ -50,7 +51,7 @@ public class VideoLoader {
         @Override
         public void onReceive(Context context, Intent intent) {
             long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L);
-            if (id != downloadID) {
+            if (id != mDownloadId) {
                 return;
             }
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -64,13 +65,13 @@ public class VideoLoader {
 
             int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
             if (DownloadManager.STATUS_SUCCESSFUL != cursor.getInt(statusIndex)) {
-                Logging.out(LOG_TAG, "Download Failed", Logging.LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "Download Failed");
                 if (mCallback != null) {
                     mCallback.onError(new LoopMeError("Download Failed"));
                 }
                 return;
             } else {
-                Logging.out(LOG_TAG, "Download Success", Logging.LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "Download Success");
                 if (mCallback != null) {
                     int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
                     String downloadedPackageUriString = cursor.getString(uriIndex);
@@ -89,12 +90,13 @@ public class VideoLoader {
 
         mDownloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
         if (mDownloadManager == null) {
-            Logging.out(LOG_TAG, "Error: DOWNLOAD_SERVICE not available", Logging.LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Error: DOWNLOAD_SERVICE not available");
         }
     }
 
     public void start() {
-        Logging.out(LOG_TAG, "start", Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "start");
+        Logging.out(LOG_TAG, "Use mobile network for caching: " + StaticParams.USE_MOBILE_NETWORK_FOR_CACHING);
         deleteInvalidVideoFiles(mContext);
 
         String fileName = detectFileName(mVideoUrl) + MP4_FORMAT;
@@ -102,7 +104,7 @@ public class VideoLoader {
 
         File f = checkFileNotExists(fileName, mContext);
         if (f != null) {
-            Logging.out(LOG_TAG, "Video file already exists", Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Video file already exists");
             if (mCallback != null) {
                 mCallback.onLoadFromFile(getParentDir(mContext).getAbsolutePath() + "/" + fileName);
             }
@@ -128,7 +130,7 @@ public class VideoLoader {
      * Triggered when video completely buffered
      */
     public void downloadVideo() {
-        Logging.out(LOG_TAG, "downloadVideo", Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "downloadVideo");
         mCallback = null;
         int connectiontype = AdRequestParametersProvider.getInstance().getConnectionType(mContext);
         if (connectiontype == ConnectionType.WIFI) {
@@ -137,19 +139,19 @@ public class VideoLoader {
             if (StaticParams.USE_MOBILE_NETWORK_FOR_CACHING) {
                 downloadVideoToNewFile();
             } else {
-                Logging.out(LOG_TAG, "Mobile network. Video will not be cached", Logging.LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "Mobile network. Video will not be cached");
             }
         }
     }
 
     private void downloadVideoToNewFile() {
-        mContext.registerReceiver(mDownloadCompleteReceiver, downloadCompleteIntentFilter);
+        mContext.registerReceiver(mDownloadCompleteReceiver, mDownloadCompleteIntentFilter);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mVideoUrl));
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
         request.setDestinationInExternalFilesDir(mContext, null, mFilePath);
 
-        downloadID = mDownloadManager.enqueue(request);
+        mDownloadId = mDownloadManager.enqueue(request);
     }
 
     private void handlePreloadingType(String videoUrl) {
@@ -163,9 +165,9 @@ public class VideoLoader {
     }
 
     public void stop(boolean interruptFile) {
-        Logging.out(LOG_TAG, "stop(" + interruptFile + ")", Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "stop(" + interruptFile + ")");
         if (interruptFile) {
-            mDownloadManager.remove(downloadID);
+            mDownloadManager.remove(mDownloadId);
         }
         try {
             mContext.unregisterReceiver(mDownloadCompleteReceiver);
@@ -190,14 +192,16 @@ public class VideoLoader {
                     if ((creationTime + StaticParams.CACHED_VIDEO_LIFE_TIME < currentTime) ||
                             (f.length() == 0)) {
                         f.delete();
-                        Logging.out(LOG_TAG, "Deleted cached file: " + file.getAbsolutePath(), Logging.LogLevel.DEBUG);
+                        Logging.out(LOG_TAG, "Deleted cached file: " + file.getAbsolutePath());
                     } else {
                         amountOfCachedFiles++;
                     }
                 }
             }
         }
-        Logging.out(LOG_TAG, "In cache " + amountOfCachedFiles + " file(s)", Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "In cache " + amountOfCachedFiles + " file(s)");
+        float cacheHours = StaticParams.CACHED_VIDEO_LIFE_TIME / (1000 * 60 * 60);
+        Logging.out(LOG_TAG, "Cache time: " + cacheHours + " hours");
     }
 
     private String detectFileName(String videoUrl) {
@@ -208,7 +212,8 @@ public class VideoLoader {
             if (fileName != null && !fileName.isEmpty()) {
 
                 if (!fileName.endsWith(MP4_FORMAT)) {
-                    Logging.out(LOG_TAG, "Wrong video url (not .mp4 format)", Logging.LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, "Wrong video url (not .mp4 format)");
+                    ErrorTracker.post("Wrong video url (not .mp4 format): " + videoUrl);
                     return null;
 
                 } else {
@@ -230,7 +235,7 @@ public class VideoLoader {
 
     private File checkFileNotExists(String filename, Context context) {
         File parentDir = getParentDir(context);
-        Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath(), Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath());
 
         File[] files = parentDir.listFiles();
         for (File file : files) {

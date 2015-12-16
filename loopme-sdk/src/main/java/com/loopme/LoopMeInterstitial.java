@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import com.loopme.Logging.LogLevel;
 import com.loopme.debugging.DebugController;
 
 /**
@@ -56,7 +55,7 @@ public final class LoopMeInterstitial extends BaseAd {
      */
     LoopMeInterstitial(Context context, String appKey) {
         super(context, appKey);
-        Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey, LogLevel.INFO);
+        Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 
         mViewController = new ViewController(this);
 
@@ -75,8 +74,7 @@ public final class LoopMeInterstitial extends BaseAd {
         if (Build.VERSION.SDK_INT >= 14) {
             return LoopMeAdHolder.getInterstitial(appKey, context);
         } else {
-            Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+",
-                    LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+");
             return null;
         }
     }
@@ -98,14 +96,14 @@ public final class LoopMeInterstitial extends BaseAd {
      */
     public void dismiss() {
         if (mAdState == AdState.SHOWING) {
-            Logging.out(LOG_TAG, "Dismiss ad", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Dismiss ad");
             broadcastDestroyIntent();
             stopExpirationTimer();
             if (mHandler != null) {
                 mHandler.removeCallbacksAndMessages(null);
             }
         } else {
-            Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
         }
     }
 
@@ -136,24 +134,24 @@ public final class LoopMeInterstitial extends BaseAd {
      * As a result you'll receive onLoopMeInterstitialShow() callback
      */
     public void show() {
-        Logging.out(LOG_TAG, "Interstitial will present fullscreen ad", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Interstitial will present fullscreen ad. App key: " + getAppKey());
         if (isReady()) {
             if (mAdState != AdState.SHOWING) {
                 mAdState = AdState.SHOWING;
                 stopExpirationTimer();
                 startAdActivity();
             } else {
-                Logging.out(LOG_TAG, "Interstitial is already presented on the screen", LogLevel.INFO);
+                Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
             }
         } else {
             mShowWhenAdNotReadyCounter++;
             Logging.out(LOG_TAG, "Interstitial is not ready (" + mShowWhenAdNotReadyCounter +
-                    " time(s))", LogLevel.INFO);
+                    " time(s))");
         }
     }
 
     private void startAdActivity() {
-        Logging.out(LOG_TAG, "Starting Ad Activity", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Starting Ad Activity");
         LoopMeAdHolder.putAd(this);
 
         Intent intent = new Intent(getContext(), AdActivity.class);
@@ -186,7 +184,7 @@ public final class LoopMeInterstitial extends BaseAd {
         long currentTime = System.currentTimeMillis();
         long loadingTime = currentTime - mAdLoadingTimer;
 
-        Logging.out(LOG_TAG, "Ad successfully loaded (" + loadingTime + "ms)", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad successfully loaded (" + loadingTime + "ms)");
         mIsReady = true;
         mAdState = AdState.NONE;
         stopFetcherTimer();
@@ -202,7 +200,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param error        - error of unsuccesful ad loading attempt
      */
     void onLoopMeInterstitialLoadFail(LoopMeInterstitial interstitial, final LoopMeError error) {
-        Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage(), LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage());
         mIsReady = false;
         mAdState = AdState.NONE;
         stopFetcherTimer();
@@ -218,7 +216,7 @@ public final class LoopMeInterstitial extends BaseAd {
      */
     void onLoopMeInterstitialShow(LoopMeInterstitial interstitial) {
         if (mAdListener != null) {
-            Logging.out(LOG_TAG, "Ad appeared on screen", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Ad appeared on screen");
             mAdListener.onLoopMeInterstitialShow(this);
         }
     }
@@ -229,7 +227,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param interstitial - interstitial object the sender of message
      */
     void onLoopMeInterstitialHide(LoopMeInterstitial interstitial) {
-        Logging.out(LOG_TAG, "Ad disappeared from screen", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad disappeared from screen");
         mIsReady = false;
         mAdState = AdState.NONE;
         releaseViewController(false);
@@ -245,7 +243,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param interstitial - interstitial object the sender of message
      */
     void onLoopMeInterstitialClicked(LoopMeInterstitial interstitial) {
-        Logging.out(LOG_TAG, "Ad received tap event", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad received tap event");
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialClicked(this);
         }
@@ -259,7 +257,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param interstitial - interstitial object the sender of message
      */
     void onLoopMeInterstitialLeaveApp(LoopMeInterstitial interstitial) {
-        Logging.out(LOG_TAG, "Leaving application", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Leaving application");
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLeaveApp(this);
         }
@@ -274,7 +272,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param interstitial - interstitial object the sender of message
      */
     void onLoopMeInterstitialExpired(LoopMeInterstitial interstitial) {
-        Logging.out(LOG_TAG, "Ads content expired", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ads content expired");
         mExpirationTimer = null;
         mIsReady = false;
         mAdState = AdState.NONE;
@@ -291,7 +289,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param interstitial - interstitial object - the sender of message
      */
     void onLoopMeInterstitialVideoDidReachEnd(LoopMeInterstitial interstitial) {
-        Logging.out(LOG_TAG, "Video reach end", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Video reach end");
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialVideoDidReachEnd(this);
         }

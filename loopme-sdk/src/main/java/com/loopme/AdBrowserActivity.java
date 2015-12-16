@@ -16,7 +16,6 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.Button;
 
-import com.loopme.Logging.LogLevel;
 import com.loopme.utilites.Base64Drawables;
 
 /**
@@ -94,7 +93,7 @@ public final class AdBrowserActivity extends Activity {
     @Override
     protected final void onPause() {
         super.onPause();
-        Logging.out(LOG_TAG, "onPause", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onPause");
         if (mAdBrowserWebview != null) {
             mAdBrowserWebview.onPause();
         }
@@ -102,7 +101,7 @@ public final class AdBrowserActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        Logging.out(LOG_TAG, " onDestroy", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, " onDestroy");
         if (mAdBrowserWebview != null) {
             mAdBrowserWebview.clearCache(true);
         }
@@ -112,7 +111,7 @@ public final class AdBrowserActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        Logging.out(LOG_TAG, "onResume", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onResume");
         if (mIsBackFromMarket) {
             finish();
         }

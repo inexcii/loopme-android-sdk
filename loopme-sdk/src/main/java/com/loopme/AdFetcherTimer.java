@@ -2,8 +2,6 @@ package com.loopme;
 
 import android.os.CountDownTimer;
 
-import com.loopme.Logging.LogLevel;
-
 public class AdFetcherTimer extends CountDownTimer {
 
     private static final String LOG_TAG = AdFetcherTimer.class.getSimpleName();
@@ -17,7 +15,7 @@ public class AdFetcherTimer extends CountDownTimer {
     public AdFetcherTimer(long millisInFuture, Listener listener) {
         super(millisInFuture, 1000 * 60);
         mListener = listener;
-        Logging.out(LOG_TAG, "Start fetcher timeout", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Start fetcher timeout");
     }
 
     @Override

@@ -4,6 +4,8 @@ import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import com.loopme.debugging.ErrorTracker;
+
 public class AdViewChromeClient extends WebChromeClient {
 
     private static final String LOG_TAG = AdViewChromeClient.class.getSimpleName();
@@ -13,8 +15,10 @@ public class AdViewChromeClient extends WebChromeClient {
         if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR ||
                 consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.WARNING) {
 
-            Logging.out(LOG_TAG, "Console Message: " + consoleMessage.message(),
-                    Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Console Message: " + consoleMessage.message());
+        }
+        if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+            ErrorTracker.post("Error from console: " + consoleMessage.message());
         }
         return super.onConsoleMessage(consoleMessage);
     }

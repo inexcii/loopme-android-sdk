@@ -2,8 +2,6 @@ package com.loopme;
 
 import android.text.TextUtils;
 
-import com.loopme.Logging.LogLevel;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -63,7 +61,7 @@ public class AdTargetingData {
                 gender.equalsIgnoreCase("female") || gender.equalsIgnoreCase("male")) {
             mGender = gender;
         } else {
-            Logging.out(LOG_TAG, "Wrong gender value", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Wrong gender value");
         }
     }
 

@@ -52,7 +52,7 @@ public class DebugController {
     }
 
     public static void setLiveDebug(final boolean debug) {
-        Logging.out(LOG_TAG, "setLiveDebug " + debug, Logging.LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "setLiveDebug " + debug);
         if (sIsDebugOn != debug) {
             if (debug) {
                 sIsDebugOn = debug;
@@ -87,7 +87,7 @@ public class DebugController {
                     sDebugTimer = null;
                 }
             };
-            Logging.out(LOG_TAG, "start debug timer", Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "start debug timer");
             sDebugTimer.start();
         }
     }
@@ -98,7 +98,7 @@ public class DebugController {
             @Override
             public void run() {
                 if (sLogDbHelper != null) {
-                    Logging.out(LOG_TAG, "send to server", Logging.LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, "send to server");
                     Map<String, String> params = initPostDataParams();
                     postDataToServer(params);
                 }
@@ -161,15 +161,15 @@ public class DebugController {
             urlConnection.connect();
 
             int code = urlConnection.getResponseCode();
-            Logging.out(LOG_TAG, "response code : " + code, Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "response code : " + code);
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage(), Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, e.getMessage());
 
         } catch (IOException e) {
             e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage(), Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, e.getMessage());
 
         } finally {
             if (urlConnection != null) {

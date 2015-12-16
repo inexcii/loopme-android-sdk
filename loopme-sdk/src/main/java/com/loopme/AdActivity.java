@@ -10,12 +10,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-
-import com.loopme.Logging.LogLevel;
 
 public final class AdActivity extends Activity implements AdReceiver.Listener {
 
@@ -74,7 +71,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
         String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
         if (TextUtils.isEmpty(appKey)) {
-            Logging.out(LOG_TAG, "Empty app key", LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Empty app key");
         }
         int format = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -84,7 +81,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
-        Logging.out(LOG_TAG, "onCreate", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onCreate");
 
         if (format == AdFormat.INTERSTITIAL) {
             mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
@@ -93,7 +90,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         }
 
         if (mBaseAd == null || mBaseAd.getViewController() == null) {
-            Logging.out(LOG_TAG, "No ads with app key " + appKey, LogLevel.ERROR);
+            Logging.out(LOG_TAG, "No ads with app key " + appKey);
             finish();
         } else {
             mViewController = mBaseAd.getViewController();
@@ -177,7 +174,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     @Override
     protected void onDestroy() {
-        Logging.out(LOG_TAG, "onDestroy", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onDestroy");
         if (mReceiver != null) {
             unregisterReceiver(mReceiver);
         }
@@ -193,7 +190,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     @Override
     protected void onPause() {
         super.onPause();
-        Logging.out(LOG_TAG, "onPause", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onPause");
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mSensorListener);
         }
@@ -212,7 +209,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     @Override
     protected void onResume() {
         super.onResume();
-        Logging.out(LOG_TAG, "onResume", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onResume");
         mKeepAlive = false;
         if (mViewController != null) {
             mViewController.setWebViewState(WebviewState.VISIBLE);
@@ -229,12 +226,10 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     @Override
     public void onDestroyBroadcast() {
-        Logging.out(LOG_TAG, "onDestroyBroadcast", LogLevel.DEBUG);
-        Log.d("debug2", "onDestroyBroadcast");
+        Logging.out(LOG_TAG, "onDestroyBroadcast");
         mReceivedDestroyBroadcast = true;
         if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
             setRequestedOrientation(mInitialOrientation);
-//            mViewController.rebuildView(((LoopMeBanner) mBaseAd).getBannerView());
             mViewController.switchToPreviousMode();
         }
         if (mReceiver != null) {

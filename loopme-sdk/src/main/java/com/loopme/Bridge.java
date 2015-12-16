@@ -8,7 +8,7 @@ import android.text.TextUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.loopme.Logging.LogLevel;
+import com.loopme.debugging.ErrorTracker;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -68,15 +68,16 @@ public class Bridge extends WebViewClient {
         if (listener != null) {
             mListener = listener;
         } else {
-            Logging.out(LOG_TAG, "VideoBridgeListener should not be null", LogLevel.ERROR);
+            Logging.out(LOG_TAG, "VideoBridgeListener should not be null");
         }
     }
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        Logging.out(LOG_TAG, "shouldOverrideUrlLoading " + url, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "shouldOverrideUrlLoading " + url);
 
         if (TextUtils.isEmpty(url)) {
+            ErrorTracker.post("Broken redirect in bridge: " + url);
             return false;
         }
 
@@ -85,8 +86,9 @@ public class Bridge extends WebViewClient {
         try {
             redirect = new URI(url);
         } catch (URISyntaxException e) {
-            Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+            Logging.out(LOG_TAG, e.getMessage());
             e.printStackTrace();
+            ErrorTracker.post("Broken redirect in bridge: " + url);
             return false;
         }
 
@@ -154,8 +156,9 @@ public class Bridge extends WebViewClient {
             Uri uri = Uri.parse(url);
             String modeStr = detectQueryParameter(uri, QUERY_PARAM_FULLSCREEN_MODE);
             if (!isValidBooleanParameter(modeStr)) {
-                Logging.out(LOG_TAG, "ERROR: Empty fullscreenMode parameter", LogLevel.ERROR);
-                //todo error log to kibana http://loopme.me/api/errors?msg
+                Logging.out(LOG_TAG, "ERROR: Empty fullscreenMode parameter");
+                ErrorTracker.post("ERROR: Empty fullscreen mode parameter in js command");
+
             } else {
                 mListener.onJsFullscreenMode(Boolean.parseBoolean(modeStr));
             }
@@ -184,7 +187,7 @@ public class Bridge extends WebViewClient {
                 v.vibrate(500);
             }
         } catch (Exception e) {
-            Logging.out(LOG_TAG, "Missing permission for vibrate", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Missing permission for vibrate");
         }
     }
 
@@ -208,8 +211,8 @@ public class Bridge extends WebViewClient {
                 if (!TextUtils.isEmpty(videoUrl)) {
                     mListener.onJsVideoLoad(videoUrl);
                 } else {
-                    Logging.out(LOG_TAG, "ERROR: Empty src parameter", LogLevel.ERROR);
-                    //todo error log to kibana http://loopme.me/api/errors?msg
+                    Logging.out(LOG_TAG, "ERROR: Empty src parameter");
+                    ErrorTracker.post("ERROR: Empty src parameter in js command");
                 }
                 break;
 
@@ -218,8 +221,8 @@ public class Bridge extends WebViewClient {
                 if (isValidBooleanParameter(muteStr)) {
                     mListener.onJsVideoMute(Boolean.parseBoolean(muteStr));
                 } else {
-                    Logging.out(LOG_TAG, "ERROR: Empty mute parameter", LogLevel.ERROR);
-                    //todo error log to kibana http://loopme.me/api/errors?msg
+                    Logging.out(LOG_TAG, "ERROR: Empty mute parameter");
+                    ErrorTracker.post("ERROR: Empty mute parameter in js command");
                 }
                 break;
 
@@ -276,7 +279,7 @@ public class Bridge extends WebViewClient {
 
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        Logging.out(LOG_TAG, "onPageStarted", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onPageStarted");
         super.onPageStarted(view, url, favicon);
     }
 }

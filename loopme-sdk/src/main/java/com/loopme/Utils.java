@@ -22,8 +22,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.loopme.Logging.LogLevel;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,18 +93,18 @@ public class Utils {
         try {
             gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         } catch (SecurityException e) {
-            Logging.out(LOG_TAG, "Failed to retrieve GPS location: access appears to be disabled.", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Failed to retrieve GPS location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
-            Logging.out(LOG_TAG, "Failed to retrieve GPS location: device has no GPS provider.", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Failed to retrieve GPS location: device has no GPS provider.");
         }
 
         Location networkLocation = null;
         try {
             networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         } catch (SecurityException e) {
-            Logging.out(LOG_TAG, "Failed to retrieve network location: access appears to be disabled.", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Failed to retrieve network location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
-            Logging.out(LOG_TAG, "Failed to retrieve network location: device has no network provider.", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Failed to retrieve network location: device has no network provider.");
         }
 
         if (gpsLocation == null && networkLocation == null) {
@@ -267,26 +265,6 @@ public class Utils {
     public static BitmapDrawable decodeImage(String base64drawable) {
         byte[] rawImageData = Base64.decode(base64drawable, 0);
         return new BitmapDrawable(null, new ByteArrayInputStream(rawImageData));
-    }
-
-    public static int detectScreenHeight() {
-        if (sWindowManager == null) {
-            return 0;
-        }
-        Display display = sWindowManager.getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        return size.y;
-    }
-
-    public static int detectScreenWidth() {
-        if (sWindowManager == null) {
-            return 0;
-        }
-        Display display = sWindowManager.getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        return size.x;
     }
 
     public static FrameLayout.LayoutParams calculateNewLayoutParams(

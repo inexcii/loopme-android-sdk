@@ -10,13 +10,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
-import com.loopme.Logging.LogLevel;
 import com.loopme.debugging.DebugController;
 
 import java.util.ArrayList;
@@ -80,7 +78,7 @@ public class LoopMeBanner extends BaseAd {
         Utils.init(context);
         DebugController.init(context);
 
-        Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey, LogLevel.INFO);
+        Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey);
     }
 
     /**
@@ -94,8 +92,7 @@ public class LoopMeBanner extends BaseAd {
         if (Build.VERSION.SDK_INT >= 14) {
             return LoopMeAdHolder.getBanner(appKey, context);
         } else {
-            Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+",
-                    LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+");
             return null;
         }
     }
@@ -133,14 +130,14 @@ public class LoopMeBanner extends BaseAd {
     public void bindView(LoopMeBannerView viewGroup) {
         if (viewGroup != null) {
             String visibility = Utils.getViewVisibility(viewGroup);
-            Logging.out(LOG_TAG, "Bind view (" + visibility + ")", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Bind view (" + visibility + ")");
             mBannerView = viewGroup;
         }
     }
 
     public void setMinimizedMode(MinimizedMode mode) {
         if (mViewController != null && mode != null) {
-            Logging.out(LOG_TAG, "Set minimized mode", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Set minimized mode");
             mViewController.setMinimizedMode(mode);
         }
     }
@@ -170,7 +167,7 @@ public class LoopMeBanner extends BaseAd {
             }
 
             if (mViewController.getCurrentVideoState() == VideoState.PLAYING) {
-                Logging.out(LOG_TAG, "pause Ad", LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "pause Ad");
                 mViewController.setWebViewState(WebviewState.HIDDEN);
             }
         }
@@ -206,7 +203,7 @@ public class LoopMeBanner extends BaseAd {
 
     private boolean handleFirstShow(final LoopMeAdapter adapter, final View view) {
         if (isReady() && mBannerView != null) {
-            Logging.out(LOG_TAG, "Banner did start showing ad", LogLevel.INFO);
+            Logging.out(LOG_TAG, "Banner did start showing ad");
             mAdState = AdState.SHOWING;
             stopExpirationTimer();
 
@@ -224,7 +221,7 @@ public class LoopMeBanner extends BaseAd {
                     new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            Logging.out(LOG_TAG, "onGlobalLayout", LogLevel.DEBUG);
+                            Logging.out(LOG_TAG, "onGlobalLayout");
                             if (mViewController != null &&
                                     mViewController.getCurrentDisplayMode() != DisplayMode.FULLSCREEN) {
                                 handleVisibility(adapter, view);
@@ -375,7 +372,6 @@ public class LoopMeBanner extends BaseAd {
     private void switchToMinimizedMode() {
         if (mAdState == AdState.SHOWING && mViewController != null && !mIsVideoFinished) {
             if (mViewController.isBackFromExpand()) {
-                Log.d("debug2", "prev FULLSCREEN");
                 return;
             }
             if (mViewController.isMinimizedModeEnable() ) {
@@ -438,7 +434,7 @@ public class LoopMeBanner extends BaseAd {
      * NOTE: should be triggered from UI thread
      */
     public void dismiss() {
-        Logging.out(LOG_TAG, "Banner will be dismissed", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Banner will be dismissed");
         if (mAdState == AdState.SHOWING) {
             if (mBannerView != null) {
                 mBannerView.setVisibility(View.GONE);
@@ -451,7 +447,7 @@ public class LoopMeBanner extends BaseAd {
             }
             onLoopMeBannerHide(this);
         } else {
-            Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
         }
     }
 
@@ -467,7 +463,7 @@ public class LoopMeBanner extends BaseAd {
      * @param error  - error of unsuccesful ad loading attempt
      */
     void onLoopMeBannerLoadFail(LoopMeBanner banner, final LoopMeError error) {
-        Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage(), LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage());
         mAdState = AdState.NONE;
         mIsReady = false;
         stopFetcherTimer();
@@ -488,7 +484,7 @@ public class LoopMeBanner extends BaseAd {
         long currentTime = System.currentTimeMillis();
         long loadingTime = currentTime - mAdLoadingTimer;
 
-        Logging.out(LOG_TAG, "Ad successfully loaded (" + loadingTime + "ms)", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad successfully loaded (" + loadingTime + "ms)");
         mIsReady = true;
         mAdState = AdState.NONE;
         stopFetcherTimer();
@@ -503,7 +499,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object the sender of message
      */
     void onLoopMeBannerShow(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Ad appeared on screen", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad appeared on screen");
         mIsVideoFinished = false;
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerShow(this);
@@ -516,7 +512,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object the sender of message
      */
     void onLoopMeBannerHide(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Ad disappeared from screen", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad disappeared from screen");
         mIsReady = false;
         mAdState = AdState.NONE;
         releaseViewController(false);
@@ -532,7 +528,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object the sender of message
      */
     void onLoopMeBannerClicked(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Ad received click event", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad received click event");
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerClicked(this);
         }
@@ -546,7 +542,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object the sender of message
      */
     void onLoopMeBannerLeaveApp(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Leaving application", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Leaving application");
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLeaveApp(LoopMeBanner.this);
         }
@@ -559,7 +555,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object - the sender of message
      */
     void onLoopMeBannerVideoDidReachEnd(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Video did reach end", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Video did reach end");
         mIsVideoFinished = true;
         Runnable runnable = new Runnable() {
 
@@ -575,9 +571,6 @@ public class LoopMeBanner extends BaseAd {
             handler.postDelayed(runnable, StaticParams.SHRINK_MODE_KEEP_AFTER_FINISH_TIME);
 
         }
-//        else if (mViewController.getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
-//            handler.post(runnable);
-//        }
 
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerVideoDidReachEnd(this);
@@ -593,7 +586,7 @@ public class LoopMeBanner extends BaseAd {
      * @param banner - banner object the sender of message
      */
     void onLoopMeBannerExpired(LoopMeBanner banner) {
-        Logging.out(LOG_TAG, "Ad content is expired", LogLevel.INFO);
+        Logging.out(LOG_TAG, "Ad content is expired");
         mExpirationTimer = null;
         mIsReady = false;
         mAdState = AdState.NONE;

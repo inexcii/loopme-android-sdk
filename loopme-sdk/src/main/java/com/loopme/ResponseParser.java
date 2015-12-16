@@ -1,7 +1,7 @@
 package com.loopme;
 
-import com.loopme.Logging.LogLevel;
 import com.loopme.debugging.DebugController;
+import com.loopme.debugging.ErrorTracker;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,7 +34,7 @@ public class ResponseParser {
 
     public ResponseParser(Listener listener, int format) {
         if (listener == null) {
-            Logging.out(LOG_TAG, "Wrong parameter(s)", LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Wrong parameter(s)");
         }
         mListener = listener;
         mAdFormat = format;
@@ -54,6 +54,9 @@ public class ResponseParser {
             settings = object.getJSONObject(JSON_SETTINGS);
 
             format = settings.getString(JSON_FORMAT);
+            if (!isValidFormat(format)) {
+                ErrorTracker.post("Response broken. Wrong format parameter: " + format);
+            }
             String requestedFormat;
             switch (mAdFormat) {
                 case AdFormat.BANNER:
@@ -73,11 +76,13 @@ public class ResponseParser {
 
         } catch (JSONException e) {
             handleParseError("Exception during json parse");
+            ErrorTracker.post("Broken json");
             return null;
 
         } catch (ClassCastException ex) {
             ex.printStackTrace();
             handleParseError("Exception during json parse");
+            ErrorTracker.post("Broken json");
             return null;
         }
 
@@ -99,6 +104,17 @@ public class ResponseParser {
                 .build();
     }
 
+    private boolean isValidFormat(String format) {
+        if (format == null) {
+            return false;
+        }
+        if (format.equalsIgnoreCase(StaticParams.BANNER_TAG) ||
+                format.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG)) {
+            return true;
+        }
+        return false;
+    }
+
     private void handleParseError(String mess) {
         if (mListener != null) {
             mListener.onParseError(new LoopMeError(mess));
@@ -114,7 +130,7 @@ public class ResponseParser {
                 packagIds.add(item);
             }
         } catch (JSONException e) {
-            Logging.out(LOG_TAG, jsonParam + " absent", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, jsonParam + " absent");
         }
         return packagIds;
     }
@@ -124,7 +140,7 @@ public class ResponseParser {
         try {
             value = object.getString(jsonParam);
         } catch (JSONException e) {
-            Logging.out(LOG_TAG, jsonParam + " absent", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, jsonParam + " absent");
         }
         return value;
     }
@@ -134,7 +150,7 @@ public class ResponseParser {
         try {
             value = object.getInt(jsonParam);
         } catch (JSONException e) {
-            Logging.out(LOG_TAG, jsonParam + " absent", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, jsonParam + " absent");
         }
         return value;
     }

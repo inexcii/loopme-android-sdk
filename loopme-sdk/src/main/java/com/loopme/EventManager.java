@@ -60,10 +60,10 @@ public class EventManager {
                     urlConnection.getInputStream();
 
                 } catch (MalformedURLException e) {
-                    Logging.out(LOG_TAG, e.getMessage(), Logging.LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, e.getMessage());
 
                 } catch (IOException e) {
-                    Logging.out(LOG_TAG, e.getMessage(), Logging.LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, e.getMessage());
 
                 } finally {
                     if (urlConnection != null) {

@@ -4,7 +4,7 @@ public class StaticParams {
 
     private StaticParams() {}
 
-    public static final String SDK_VERSION = "4.6.1";
+    public static final String SDK_VERSION = "4.6.2";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
     static boolean DEBUG_MODE = true;
@@ -21,7 +21,7 @@ public class StaticParams {
 
     public static long CACHED_VIDEO_LIFE_TIME = 1000 * 60 * 60 * 32;//32 hours
 
-    static final long FETCH_TIMEOUT = 1000 * 60 * 3;
+    static final long FETCH_TIMEOUT = 1000 * 60 * 3;//3 minutes
 
     static final long BUFFERING_TIMEOUT = 1000 * 7;//7 seconds
 

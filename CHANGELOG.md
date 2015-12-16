@@ -1,3 +1,8 @@
+## Version 4.6.2 (16 of December, 2015)
+
+- Added optional SDK settings to live debug report
+- Bug fixes 
+
 ## Version 4.6.1 (8 of December, 2015)
 
 - Bug fixes 

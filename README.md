@@ -237,8 +237,9 @@ Check out our project samples:
 - `interstitial-sample` as an example of `LoopMeInterstitial` integration
 
 ## What's new ##
-**Version 4.6.1 (8 of December, 2015)**
+**Version 4.6.2 (16 of December, 2015)**
 
+- Added optional SDK settings to live debug report
 - Bug fixes 
 
 See [Changelog](CHANGELOG.md)

@@ -6,8 +6,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 
-import com.loopme.Logging.LogLevel;
-
 /**
  * Custom ad view.
  * Communicate with javascript.
@@ -56,8 +54,6 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
         setHorizontalScrollBarEnabled(false);
 
         webSettings.setSupportZoom(false);
-//        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-//        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
         webSettings.setUserAgentString(CHROME_USER_AGENT);
 
@@ -75,7 +71,7 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
     public void setWebViewState(int state) {
         if (mViewState != state) {
             mViewState = state;
-            Logging.out(LOG_TAG, "WEBVIEW : " + WebviewState.toString(state), LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "WEBVIEW : " + WebviewState.toString(state));
             String command = new BridgeCommandBuilder().webviewState(mViewState);
             loadUrl(command);
         }
@@ -95,7 +91,7 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
     public void setVideoState(int state) {
         if (mCurrentVideoState != state) {
             mCurrentVideoState = state;
-            Logging.out(LOG_TAG, "VIDEO : " + VideoState.toString(state), LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "VIDEO : " + VideoState.toString(state));
             String command = new BridgeCommandBuilder().videoState(state);
             loadUrl(command);
         }
@@ -115,20 +111,20 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 
     @Override
     public void setVideoMute(boolean mute) {
-        Logging.out(LOG_TAG, "MUTE : " + mute, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "MUTE : " + mute);
         String command = new BridgeCommandBuilder().videoMute(mute);
         loadUrl(command);
     }
 
     public void shake() {
-        Logging.out(LOG_TAG, "SHAKE", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "SHAKE");
         String command = new BridgeCommandBuilder().shake(true);
         loadUrl(command);
     }
 
     @Override
     public void sendNativeCallFinished() {
-        Logging.out(LOG_TAG, "sendNativeCallFinished", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "sendNativeCallFinished");
         String command = new BridgeCommandBuilder().isNativeCallFinished(true);
         loadUrl(command);
     }

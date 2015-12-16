@@ -1,6 +1,8 @@
 package com.loopme;
 
-import com.loopme.Logging.LogLevel;
+import android.text.TextUtils;
+
+import com.loopme.debugging.ErrorTracker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ public class AdParams {
 
         Logging.out(LOG_TAG, "Server response indicates  ad params: "
                 + "format: " + mFormat + ", orientation: " + mOrientation
-                + ", expire in: " + mExpiredDate, LogLevel.DEBUG);
+                + ", expire in: " + mExpiredDate);
     }
 
     public boolean getPartPreload() {
@@ -99,6 +101,9 @@ public class AdParams {
         }
 
         public AdParamsBuilder html(String html) {
+            if (TextUtils.isEmpty(html)) {
+                ErrorTracker.post("Broken response. Html absent");
+            }
             mBuilderHtml = html;
             return this;
         }
@@ -106,6 +111,9 @@ public class AdParams {
         public AdParamsBuilder orientation(String orientation) {
             if (isValidOrientationValue(orientation)) {
                 mBuilderOrientation = orientation;
+            } else {
+                if (!TextUtils.isEmpty(mBuilderFormat) && mBuilderFormat.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG))
+                ErrorTracker.post("Broken response. Invalid orientation: " + orientation);
             }
             return this;
         }
@@ -121,7 +129,7 @@ public class AdParams {
             if (isValidFormatValue()) {
                 return new AdParams(this);
             } else {
-                Logging.out(LOG_TAG, "Wrong ad format value", LogLevel.ERROR);
+                Logging.out(LOG_TAG, "Wrong ad format value");
                 return null;
             }
         }

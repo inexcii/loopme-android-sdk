@@ -3,8 +3,6 @@ package com.loopme;
 import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 
-import com.loopme.Logging.LogLevel;
-
 public class MinimizedMode {
 
     private static final String LOG_TAG = MinimizedMode.class.getSimpleName();
@@ -17,8 +15,7 @@ public class MinimizedMode {
 
     public MinimizedMode(ViewGroup root) {
         if (root == null) {
-            Logging.out(LOG_TAG, "Root view should be not null. Minimized mode will not work",
-                    LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Error: Root view should be not null. Minimized mode will not work");
             return;
         }
         mRoot = root;

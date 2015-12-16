@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
+import com.loopme.debugging.ErrorTracker;
+
 public class LoopMeBannerView extends FrameLayout {
 
     private static final String LOG_TAG = LoopMeBannerView.class.getSimpleName();
@@ -44,7 +46,7 @@ public class LoopMeBannerView extends FrameLayout {
         try {
             super.onDetachedFromWindow();
         } catch (RuntimeException e) {
-            Logging.out(LOG_TAG, "Error during onDetachedFromWindow: " + e.getMessage(), Logging.LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "Error during onDetachedFromWindow: " + e.getMessage());
         }
     }
 
@@ -52,7 +54,8 @@ public class LoopMeBannerView extends FrameLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isHardwareAccelerated()) {
-            Logging.out(LOG_TAG, "Warning: hardware acceleration is off", Logging.LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Warning: hardware acceleration is off");
+            ErrorTracker.post("Hardware acceleration is off");
         }
     }
 }

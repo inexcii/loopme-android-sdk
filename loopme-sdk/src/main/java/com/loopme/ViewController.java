@@ -29,7 +29,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-import com.loopme.Logging.LogLevel;
+import com.loopme.debugging.ErrorTracker;
 
 import java.io.IOException;
 
@@ -67,7 +67,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     private Handler mHandler;
     private Runnable mRunnable;
 
-    private static volatile MediaPlayer mPlayer;
+    private volatile MediaPlayer mPlayer;
     private int mVideoDuration;
     private VideoLoader mVideoLoader;
     private boolean mMuteState = false;
@@ -85,6 +85,8 @@ class ViewController implements TextureView.SurfaceTextureListener,
     private boolean mPlayerReady;
     private boolean mPostponePlay;
     private int mPostponePlayPosition;
+
+    private String mVideoUrl;
 
     public enum StretchOption {
         NONE,
@@ -148,7 +150,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
             mAdView.stopLoading();
             mAdView.clearCache(true);
             mAdView = null;
-            Logging.out(LOG_TAG, "AdView destroyed", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "AdView destroyed");
         }
         mMinimizedMode = null;
     }
@@ -265,7 +267,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
             }
             return;
         }
-        Logging.out(LOG_TAG, "switch to minimized mode", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "switch to minimized mode");
         storePreviousMode(mDisplayMode);
 
         mDisplayMode = DisplayMode.MINIMIZED;
@@ -332,7 +334,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
             return;
         }
 
-        Logging.out(LOG_TAG, "switch to normal mode", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "switch to normal mode");
         if (mDisplayMode == DisplayMode.FULLSCREEN) {
             mIsBackFromExpand = true;
         }
@@ -377,7 +379,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     void preloadHtml(String html) {
         if (mAdView != null) {
-            Logging.out(LOG_TAG, "loadDataWithBaseURL", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "loadDataWithBaseURL");
             mAdView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
         } else {
             mAd.onAdLoadFail(new LoopMeError("Html loading error"));
@@ -444,20 +446,21 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void handleLoadSuccess() {
-        Logging.out(LOG_TAG, "JS command: load success", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: load success");
         mAd.startExpirationTimer();
         mAd.onAdLoadSuccess();
     }
 
     private void handleLoadFail(String mess) {
-        Logging.out(LOG_TAG, "JS command: load fail", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: load fail");
         if (mAd != null) {
             mAd.onAdLoadFail(new LoopMeError("Failed to process ad"));
         }
     }
 
     private void handleVideoLoad(String videoUrl) {
-        Logging.out(LOG_TAG, "JS command: load video " + videoUrl, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: load video " + videoUrl);
+        mVideoUrl = videoUrl;
 
         mIsVideoPresented = true;
         boolean preload = mAd.getAdParams().getPartPreload();
@@ -478,7 +481,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
                 ExecutorHelper.getExecutor().submit(new Runnable() {
                     @Override
                     public void run() {
-                        Logging.out(LOG_TAG, "onLoadFromUrl", LogLevel.DEBUG);
+                        Logging.out(LOG_TAG, "onLoadFromUrl");
                         preparePlayerFromUrl(url);
                     }
                 });
@@ -487,7 +490,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
             @Override
             public void onLoadFromFile(String filePath) {
-                Logging.out(LOG_TAG, "onLoadFromFile", LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "onLoadFromFile");
                 preparePlayerFromFile(filePath);
             }
         });
@@ -510,11 +513,11 @@ class ViewController implements TextureView.SurfaceTextureListener,
             mPlayer.prepareAsync();
 
         } catch (IllegalStateException e) {
-            Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+            Logging.out(LOG_TAG, e.getMessage());
             setVideoState(VideoState.BROKEN);
 
         } catch (IOException e) {
-            Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+            Logging.out(LOG_TAG, e.getMessage());
             setVideoState(VideoState.BROKEN);
         }
     }
@@ -526,6 +529,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         mPlayer = MediaPlayer.create(mAdView.getContext(), Uri.parse(videoUrl));
         initPlayerListeners();
         mPlayer.setOnBufferingUpdateListener(this);
+        Logging.out(LOG_TAG, "Buffering level for part preload: " + StaticParams.BUFFERING_LEVEL);
         mPlayer.setVolume(0, 0);
         mPlayer.start();
     }
@@ -545,7 +549,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void handleVideoMute(boolean mute) {
-        Logging.out(LOG_TAG, "JS command: video mute " + mute, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: video mute " + mute);
 
         if (mPlayer != null) {
             mAdView.setVideoMute(mute);
@@ -563,7 +567,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void handleVideoPlay(final int time) {
-        Logging.out(LOG_TAG, "JS command: play video " + time, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: play video " + time);
 
         playVideo(time);
 
@@ -573,17 +577,17 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void handleVideoPause(int time) {
-        Logging.out(LOG_TAG, "JS command: pause video " + time, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: pause video " + time);
         pauseVideo(time);
     }
 
     private void handleClose() {
-        Logging.out(LOG_TAG, "JS command: close", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: close");
         mAd.dismiss();
     }
 
     private void handleVideoStretch(boolean b) {
-        Logging.out(LOG_TAG, "JS command: stretch video ", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "JS command: stretch video ");
         mStretch = b ? StretchOption.STRECH : StretchOption.NO_STRETCH;
     }
 
@@ -611,14 +615,14 @@ class ViewController implements TextureView.SurfaceTextureListener,
         if (mPlayer != null && mAdView != null && !mWasError) {
             try {
                 if (mPlayer.isPlaying()) {
-                    Logging.out(LOG_TAG, "Pause video", LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, "Pause video");
                     mHandler.removeCallbacks(mRunnable);
                     mPlayer.pause();
                     mAdView.setVideoState(VideoState.PAUSED);
                 }
             } catch (IllegalStateException e) {
                 e.printStackTrace();
-                Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+                Logging.out(LOG_TAG, e.getMessage());
             }
         }
     }
@@ -627,7 +631,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         if (mPlayer != null && mAdView != null && !mWasError) {
             try {
                 if (!mIsSurfaceTextureAvailable) {
-                    Logging.out(LOG_TAG, "postpone play (surface not available)", LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, "postpone play (surface not available)");
                     mPostponePlay = true;
                     mPostponePlayPosition = time;
                     return;
@@ -636,7 +640,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
                     return;
                 }
 
-                Logging.out(LOG_TAG, "Play video", LogLevel.DEBUG);
+                Logging.out(LOG_TAG, "Play video");
                 applyMuteSettings();
                 if (time > 0) {
                     mPlayer.seekTo(time);
@@ -649,14 +653,14 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
             } catch (IllegalStateException e) {
                 e.printStackTrace();
-                Logging.out(LOG_TAG, e.getMessage(), LogLevel.ERROR);
+                Logging.out(LOG_TAG, e.getMessage());
             }
         }
     }
 
     private void switchToFullScreenMode() {
         if (mDisplayMode != DisplayMode.FULLSCREEN) {
-            Logging.out(LOG_TAG, "switch to fullscreen mode", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "switch to fullscreen mode");
             storePreviousMode(mDisplayMode);
             mDisplayMode = DisplayMode.FULLSCREEN;
 
@@ -690,7 +694,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void handleNonLoopMe(String url) {
-        Logging.out(LOG_TAG, "Non Js command", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "Non Js command");
         Context context = mAd.getContext();
         if (Utils.isOnline(context)) {
             Intent intent = new Intent(context, AdBrowserActivity.class);
@@ -705,7 +709,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
             context.startActivity(intent);
         } else {
-            Logging.out(LOG_TAG, "No internet connection", LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "No internet connection");
         }
     }
 
@@ -719,11 +723,10 @@ class ViewController implements TextureView.SurfaceTextureListener,
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width,
                                           int height) {
 
-        Logging.out(LOG_TAG, "onSurfaceTextureAvailable", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onSurfaceTextureAvailable");
 
         mIsSurfaceTextureAvailable = true;
         if (mPostponePlay) {
-            Logging.out(LOG_TAG, "play video after postpone", LogLevel.DEBUG);
             playVideo(mPostponePlayPosition);
             mPostponePlay = false;
         }
@@ -737,7 +740,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
                     viewWidth = mMinimizedMode.getWidth();
                     viewHeight = mMinimizedMode.getHeight();
                 } else {
-                    Logging.out(LOG_TAG, "WARNING: MinimizedMode is null", LogLevel.ERROR);
+                    Logging.out(LOG_TAG, "WARNING: MinimizedMode is null");
                 }
                 break;
 
@@ -752,13 +755,17 @@ class ViewController implements TextureView.SurfaceTextureListener,
                 break;
 
             default:
-                Logging.out(LOG_TAG, "Unknown display mode", LogLevel.ERROR);
+                Logging.out(LOG_TAG, "Unknown display mode");
                 break;
         }
 
-        Surface s = new Surface(surface);
-        mPlayer.setSurface(s);
-        resizeVideo(mTextureView, viewWidth, viewHeight);
+        if (mPlayer != null) {
+            Surface s = new Surface(surface);
+            mPlayer.setSurface(s);
+            resizeVideo(mTextureView, viewWidth, viewHeight);
+        } else {
+            Logging.out(LOG_TAG, "mPlayer is null");
+        }
     }
 
     @Override
@@ -768,7 +775,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        Logging.out(LOG_TAG, "onSurfaceTextureDestroyed", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onSurfaceTextureDestroyed");
         mIsSurfaceTextureAvailable = false;
 
         if (mPlayer != null) {
@@ -790,7 +797,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void updateLayoutParams() {
-        Logging.out(LOG_TAG, "updateLayoutParams()", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "updateLayoutParams()");
 
         if (mTextureView == null || mResizeWidth == 0 || mResizeHeight == 0
                 || mVideoWidth == 0 || mVideoHeight == 0) {
@@ -816,7 +823,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Logging.out(LOG_TAG, "onError: " + extra, LogLevel.ERROR);
+        Logging.out(LOG_TAG, "onError: " + extra);
 
         mHandler.removeCallbacks(mRunnable);
 
@@ -830,6 +837,9 @@ class ViewController implements TextureView.SurfaceTextureListener,
         if (mAdView.getCurrentVideoState() == VideoState.BROKEN ||
                 mAdView.getCurrentVideoState() == VideoState.IDLE) {
             sendLoadFail(new LoopMeError("Error during video loading"));
+            if (extra == -2147483648) {
+                ErrorTracker.post("Error -2147483648: Probably wrong video encoding " + mVideoUrl);
+            }
         } else {
 
             mAdView.setWebViewState(WebviewState.HIDDEN);
@@ -847,7 +857,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     @Override
     public void onBufferingUpdate(final MediaPlayer mp, int percent) {
-        Logging.out(LOG_TAG, "onBufferingUpdate " + percent, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onBufferingUpdate " + percent);
         if (mp.isPlaying()) {
             mPlayerReady = true;
         }
@@ -886,7 +896,12 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
                 @Override
                 public void onFinish() {
-                    Logging.out(LOG_TAG, "Buffering timeout", LogLevel.DEBUG);
+                    Logging.out(LOG_TAG, "Buffering timeout");
+                    String appKey = null;
+                    if (mAd != null) {
+                        appKey = mAd.getAppKey();
+                    }
+                    ErrorTracker.post("Buffering timeout. Url: " + mVideoUrl + ". App key: " + appKey);
                     if (mAdView != null) {
                         mAdView.setWebViewState(WebviewState.HIDDEN);
                         if (mPlayer != null) {
@@ -911,7 +926,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        Logging.out(LOG_TAG, "onPrepared", LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "onPrepared");
         setVideoState(VideoState.READY);
         configMediaPlayer(mp);
     }
@@ -931,7 +946,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     private void applyMuteSettings() {
         if (mPlayer != null) {
-            Logging.out(LOG_TAG, "applyMuteSettings " + mMuteState, LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "applyMuteSettings " + mMuteState);
             if (mMuteState) {
                 mPlayer.setVolume(0f, 0f);
             } else {

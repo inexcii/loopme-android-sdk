@@ -4,8 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 
-import com.loopme.Logging.LogLevel;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,7 +41,7 @@ public class AdRequestUrlBuilder {
     public AdRequestUrlBuilder(Context context) {
         mContext = context;
         if (context == null) {
-            Logging.out(LOG_TAG, "Context should not be null. Can't build request url", LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Context should not be null. Can't build request url");
         }
     }
 

@@ -3,11 +3,11 @@ package com.loopme.tasks;
 import com.loopme.AdFormat;
 import com.loopme.AdParams;
 import com.loopme.Logging;
-import com.loopme.Logging.LogLevel;
 import com.loopme.LoopMeError;
 import com.loopme.ResponseParser;
 import com.loopme.StaticParams;
 import com.loopme.Utils;
+import com.loopme.debugging.ErrorTracker;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -88,10 +88,10 @@ public class AdFetcher implements Runnable {
 
             String type = mFormat == AdFormat.INTERSTITIAL ? StaticParams.INTERSTITIAL_TAG
                     : StaticParams.BANNER_TAG;
-            Logging.out(LOG_TAG, type + " loads ad with URL: " + url, LogLevel.DEBUG);
+            Logging.out(LOG_TAG, type + " loads ad with URL: " + url);
 
             int status = urlConnection.getResponseCode();
-            Logging.out(LOG_TAG, "status code: " + status, LogLevel.DEBUG);
+            Logging.out(LOG_TAG, "status code: " + status);
             handleStatusCode(status);
 
             if (status == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -124,6 +124,7 @@ public class AdFetcher implements Runnable {
 
         } catch (SocketTimeoutException e) {
             mLoopMeError = new LoopMeError("Request timeout");
+            ErrorTracker.post("Request timeout");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -152,6 +153,7 @@ public class AdFetcher implements Runnable {
 
             default:
                 mLoopMeError = new LoopMeError("Unknown server code " + statusCode);
+                ErrorTracker.post("Unknown server code " + statusCode);
                 break;
         }
     }

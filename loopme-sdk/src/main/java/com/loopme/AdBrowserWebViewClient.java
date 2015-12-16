@@ -8,7 +8,7 @@ import android.net.Uri;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.loopme.Logging.LogLevel;
+import com.loopme.debugging.ErrorTracker;
 
 import java.net.URISyntaxException;
 
@@ -74,7 +74,7 @@ class AdBrowserWebViewClient extends WebViewClient {
 
     public AdBrowserWebViewClient(Listener listener) {
         if (listener == null) {
-            Logging.out(LOG_TAG, "Error: Wrong listener", LogLevel.ERROR);
+            Logging.out(LOG_TAG, "Error: Wrong listener");
             mListener = mEmptyListener;
         } else {
             mListener = listener;
@@ -83,7 +83,7 @@ class AdBrowserWebViewClient extends WebViewClient {
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        Logging.out(LOG_TAG, "shouldOverrideUrlLoading url=" + url, LogLevel.DEBUG);
+        Logging.out(LOG_TAG, "shouldOverrideUrlLoading url=" + url);
         Context context = view.getContext();
 
         Uri uri = null;
@@ -91,6 +91,7 @@ class AdBrowserWebViewClient extends WebViewClient {
             uri = Uri.parse(url);
         } catch (NullPointerException ex) {
             ex.printStackTrace();
+            ErrorTracker.post("Wrong redirect (in AdBrowser screen): " + url);
         }
         if (uri == null) {
             return false;
@@ -226,7 +227,7 @@ class AdBrowserWebViewClient extends WebViewClient {
         super.onReceivedError(view, errorCode, description, failingUrl);
 
         String mess = "onReceivedError code: " + errorCode + " description: " + description;
-        Logging.out(LOG_TAG, mess, LogLevel.ERROR);
+        Logging.out(LOG_TAG, mess);
         mListener.onReceiveError();
     }
 }
