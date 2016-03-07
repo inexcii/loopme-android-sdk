@@ -2,23 +2,26 @@ package com.loopme.banner_sample.app.recyclerview;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.*;
-import com.loopme.LoopMeError;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+
+import com.loopme.LoopMeBanner;
+import com.loopme.NativeVideoBinder;
+import com.loopme.NativeVideoRecyclerAdapter;
+import com.loopme.common.LoopMeError;
 import com.loopme.banner_sample.app.CustomListItem;
 import com.loopme.banner_sample.app.R;
-import com.loopme.LoopMeBanner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclerViewActivity extends AppCompatActivity implements
-        LoopMeBanner.Listener, CustomRecyclerViewAdapter.BindViewListener {
+        LoopMeBanner.Listener {
 
     private RecyclerView mRecyclerView;
-    private CustomRecyclerViewAdapter mAdapter;
-    private List<CustomListItem> mList = new ArrayList<CustomListItem>();
-
-    private LoopMeBanner mBanner;
+    private List<CustomListItem> mList = new ArrayList<>();
+    private NativeVideoRecyclerAdapter mNativeVideoRecyclerAdapter;
+    private String mAppKey = LoopMeBanner.TEST_MPU_BANNER;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,51 +33,35 @@ public class RecyclerViewActivity extends AppCompatActivity implements
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         fillList();
+        CustomRecyclerViewAdapter adapter = new CustomRecyclerViewAdapter(this, mList);
 
-        mAdapter = new CustomRecyclerViewAdapter(mList, this);
-        mRecyclerView.setAdapter(mAdapter);
+        mNativeVideoRecyclerAdapter = new NativeVideoRecyclerAdapter(adapter, this, mRecyclerView);
+        mNativeVideoRecyclerAdapter.putAdWithAppKeyToPosition(mAppKey, 1);
+        NativeVideoBinder binder = new NativeVideoBinder.Builder(R.layout.ad_row)
+                .setLoopMeBannerViewId(R.id.lm_banner_view)
+                .build();
+        mNativeVideoRecyclerAdapter.setViewBinder(binder);
 
-        mBanner = LoopMeBanner.getInstance(LoopMeBanner.TEST_MPU_BANNER, getApplicationContext());
-        if (mBanner != null) {
-            mBanner.setListener(this);
-            mBanner.load();
-        }
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                if (mBanner != null) {
-                    mBanner.show(mAdapter, mRecyclerView);
-                }
-            }
-        });
+        mRecyclerView.setAdapter(mNativeVideoRecyclerAdapter);
+        mNativeVideoRecyclerAdapter.loadAds();
     }
 
     @Override
     public void onBackPressed() {
-        if (mBanner != null) {
-            mBanner.destroy();
-        }
+        mNativeVideoRecyclerAdapter.destroy();
         super.onBackPressed();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mBanner != null) {
-            mBanner.pause();
-        }
+        mNativeVideoRecyclerAdapter.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (mBanner != null) {
-            mBanner.show(mAdapter, mRecyclerView);
-        }
+        mNativeVideoRecyclerAdapter.onResume();
     }
 
     private void fillList() {
@@ -96,7 +83,6 @@ public class RecyclerViewActivity extends AppCompatActivity implements
 
     @Override
     public void onLoopMeBannerLoadSuccess(LoopMeBanner loopMeBanner) {
-        mAdapter.addBannerToPosition(2, mBanner);
     }
 
     @Override
@@ -132,13 +118,6 @@ public class RecyclerViewActivity extends AppCompatActivity implements
     @Override
     public void onLoopMeBannerExpired(LoopMeBanner loopMeBanner) {
 
-    }
-
-    @Override
-    public void onViewBinded() {
-        if (mBanner != null) {
-            mBanner.show(mAdapter, mRecyclerView);
-        }
     }
 }
 

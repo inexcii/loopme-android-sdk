@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.loopme.AdvertisingIdClient;
 import com.loopme.AdvertisingIdClient.AdInfo;
-import com.loopme.Logging;
+import com.loopme.common.Logging;
 
 public class AdvIdFetcher implements Runnable {
 
@@ -28,7 +28,7 @@ public class AdvIdFetcher implements Runnable {
     public void run() {
         mAdvertisingId = "";
         try {
-            AdInfo adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
+            AdvertisingIdClient.AdInfo adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
             mAdvertisingId = adInfo.getId();
         } catch (Exception e) {
             Logging.out(LOG_TAG, "Exception: " + e.getMessage());

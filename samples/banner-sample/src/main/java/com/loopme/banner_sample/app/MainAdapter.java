@@ -7,16 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.loopme.banner_sample.app.listview.ListViewActivity;
 import com.loopme.banner_sample.app.listview.ListViewShrinkModeActivity;
 import com.loopme.banner_sample.app.recyclerview.RecyclerViewActivity;
 import com.loopme.banner_sample.app.recyclerview.RecyclerViewShrinkActivity;
-import com.loopme.banner_sample.app.scrollview.ScrollViewActivity;
-import com.loopme.banner_sample.app.scrollview.ScrollViewShrinkModeActivity;
 
 import java.util.List;
 
-public class MainAdapter  extends RecyclerView.Adapter<MainAdapter.CustomViewHolder> {
+public class MainAdapter extends RecyclerView.Adapter<MainAdapter.CustomViewHolder> {
 
     private List<String> mData;
     private Context mContext;
@@ -91,14 +90,6 @@ public class MainAdapter  extends RecyclerView.Adapter<MainAdapter.CustomViewHol
 
             case Constants.LISTVIEW_SHRINK:
                 mContext.startActivity(new Intent(mContext, ListViewShrinkModeActivity.class));
-                break;
-
-            case Constants.SCROLLVIEW:
-                mContext.startActivity(new Intent(mContext, ScrollViewActivity.class));
-                break;
-
-            case Constants.SCROLLVIEW_SHRINK:
-                mContext.startActivity(new Intent(mContext, ScrollViewShrinkModeActivity.class));
                 break;
 
             case Constants.RECYCLERVIEW:

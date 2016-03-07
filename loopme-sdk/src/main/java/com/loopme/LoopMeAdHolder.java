@@ -3,6 +3,8 @@ package com.loopme;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.loopme.constants.AdFormat;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +29,7 @@ public class LoopMeAdHolder {
         }
     }
 
-    static LoopMeInterstitial getInterstitial(String appKey, Context context) {
+    public static LoopMeInterstitial getInterstitial(String appKey, Context context) {
         if (mInterstitialMap.containsKey(appKey)) {
             return mInterstitialMap.get(appKey);
         } else {
@@ -35,21 +37,21 @@ public class LoopMeAdHolder {
                 return null;
             } else {
                 LoopMeInterstitial interstitial = new LoopMeInterstitial(
-                        context, appKey);
+                        context.getApplicationContext(), appKey);
                 mInterstitialMap.put(appKey, interstitial);
                 return interstitial;
             }
         }
     }
 
-    static LoopMeBanner getBanner(String appKey, Context context) {
+    public static LoopMeBanner getBanner(String appKey, Context context) {
         if (mBannerMap.containsKey(appKey)) {
             return mBannerMap.get(appKey);
         } else {
             if (context == null || TextUtils.isEmpty(appKey)) {
                 return null;
             } else {
-                LoopMeBanner banner = new LoopMeBanner(context, appKey);
+                LoopMeBanner banner = new LoopMeBanner(context.getApplicationContext(), appKey);
                 mBannerMap.put(appKey, banner);
                 return banner;
             }

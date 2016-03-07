@@ -45,7 +45,6 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:recyclerview-v7:23.1.1'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
@@ -55,14 +54,14 @@ dependencies {
 }
 
 task clearJar(type: Delete) {
-    delete 'build/outputs/loopme-android-sdk.jar'
+    delete 'build/outputs/loopme-sdk.jar'
 }
 
 task makeJar(type: Copy) {
     from('build/intermediates/bundles/release//')
     into('build/outputs/')
     include('classes.jar')
-    rename('classes.jar', 'loopme-android-sdk.jar')
+    rename('classes.jar', 'loopme-sdk.jar')
 }
 
 makeJar.dependsOn(clearJar, build)

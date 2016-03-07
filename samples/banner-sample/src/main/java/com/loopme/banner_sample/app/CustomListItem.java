@@ -2,25 +2,25 @@ package com.loopme.banner_sample.app;
 
 public class CustomListItem {
 
-	private final String mTitle;
-	private final String mSubtitle;
-	private final int mIconId;
-	
-	public CustomListItem(String title, String subtitle, int icon) {
-		mTitle = title;
-		mSubtitle = subtitle;
-		mIconId = icon;
-	}
+    private final String mTitle;
+    private final String mSubtitle;
+    private final int mIconId;
 
-	public String getTitle() {
-		return mTitle;
-	}
+    public CustomListItem(String title, String subtitle, int icon) {
+        mTitle = title;
+        mSubtitle = subtitle;
+        mIconId = icon;
+    }
 
-	public String getSubtitle() {
-		return mSubtitle;
-	}
+    public String getTitle() {
+        return mTitle;
+    }
 
-	public int getIconId() {
-		return mIconId;
-	}
+    public String getSubtitle() {
+        return mSubtitle;
+    }
+
+    public int getIconId() {
+        return mIconId;
+    }
 }

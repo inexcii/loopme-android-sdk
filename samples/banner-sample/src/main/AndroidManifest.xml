@@ -28,19 +28,11 @@
             android:theme="@style/Theme.AppCompat"
             android:configChanges="orientation|keyboardHidden|screenSize"/>
         <activity
-            android:name=".scrollview.ScrollViewActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
             android:name="com.loopme.banner_sample.app.SimpleBannerActivity"
             android:theme="@style/Theme.AppCompat"
             android:configChanges="orientation|keyboardHidden|screenSize"/>
         <activity
             android:name=".listview.ListViewShrinkModeActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
-            android:name=".scrollview.ScrollViewShrinkModeActivity"
             android:theme="@style/Theme.AppCompat"
             android:configChanges="orientation|keyboardHidden|screenSize"/>
         <activity
@@ -59,6 +51,7 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:hardwareAccelerated="true"/>
         <activity android:name="com.loopme.AdBrowserActivity"/>
+        <receiver android:name="com.loopme.data.LoopMeReceiver"/>
         <!--   LoopMe activity end  -->
 
     </application>
@@ -69,8 +62,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-
-    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
 </manifest>

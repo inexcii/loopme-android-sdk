@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.loopme.common.StaticParams;
+
 class AdReceiver extends BroadcastReceiver {
 
     private Listener mListener;

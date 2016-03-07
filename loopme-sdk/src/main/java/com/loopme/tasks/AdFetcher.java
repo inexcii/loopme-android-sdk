@@ -1,12 +1,12 @@
 package com.loopme.tasks;
 
-import com.loopme.AdFormat;
-import com.loopme.AdParams;
-import com.loopme.Logging;
-import com.loopme.LoopMeError;
-import com.loopme.ResponseParser;
-import com.loopme.StaticParams;
-import com.loopme.Utils;
+import com.loopme.constants.AdFormat;
+import com.loopme.common.AdParams;
+import com.loopme.common.Logging;
+import com.loopme.common.LoopMeError;
+import com.loopme.common.ResponseParser;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
 import com.loopme.debugging.ErrorTracker;
 
 import java.io.BufferedInputStream;
@@ -124,7 +124,7 @@ public class AdFetcher implements Runnable {
 
         } catch (SocketTimeoutException e) {
             mLoopMeError = new LoopMeError("Request timeout");
-            ErrorTracker.post("Request timeout");
+            ErrorTracker.post("Timeout");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,6 +149,11 @@ public class AdFetcher implements Runnable {
                 break;
 
             case HttpURLConnection.HTTP_OK:
+                break;
+
+            case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+                mLoopMeError = new LoopMeError("Server code " + statusCode);
+                ErrorTracker.post("504");
                 break;
 
             default:

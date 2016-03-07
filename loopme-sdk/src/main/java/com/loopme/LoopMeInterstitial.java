@@ -4,7 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import com.loopme.constants.AdFormat;
+import com.loopme.common.Logging;
+import com.loopme.common.LoopMeError;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
+import com.loopme.constants.AdState;
 import com.loopme.debugging.DebugController;
+import com.loopme.debugging.ErrorTracker;
 
 /**
  * The `LoopMenterstitial` class provides the facilities to display a full-screen ad
@@ -120,6 +127,10 @@ public final class LoopMeInterstitial extends BaseAd {
         mAdListener = listener;
     }
 
+    public Listener getListener() {
+        return mAdListener;
+    }
+
     /**
      * Removes listener.
      */
@@ -147,6 +158,7 @@ public final class LoopMeInterstitial extends BaseAd {
             mShowWhenAdNotReadyCounter++;
             Logging.out(LOG_TAG, "Interstitial is not ready (" + mShowWhenAdNotReadyCounter +
                     " time(s))");
+            ErrorTracker.post("Interstitial is not ready");
         }
     }
 
@@ -160,10 +172,6 @@ public final class LoopMeInterstitial extends BaseAd {
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);
-    }
-
-    void setReadyStatus(boolean status) {
-        mIsReady = status;
     }
 
     @Override
@@ -190,6 +198,8 @@ public final class LoopMeInterstitial extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadSuccess(LoopMeInterstitial.this);
+        } else {
+            Logging.out(LOG_TAG, "Warning: empty listener");
         }
     }
 
@@ -206,6 +216,8 @@ public final class LoopMeInterstitial extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadFail(LoopMeInterstitial.this, error);
+        } else {
+            Logging.out(LOG_TAG, "Warning: empty listener");
         }
     }
 
@@ -230,7 +242,7 @@ public final class LoopMeInterstitial extends BaseAd {
         Logging.out(LOG_TAG, "Ad disappeared from screen");
         mIsReady = false;
         mAdState = AdState.NONE;
-        releaseViewController(false);
+        releaseViewController();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialHide(this);
         }
@@ -276,7 +288,7 @@ public final class LoopMeInterstitial extends BaseAd {
         mExpirationTimer = null;
         mIsReady = false;
         mAdState = AdState.NONE;
-        releaseViewController(false);
+        releaseViewController();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialExpired(this);
         }
@@ -338,5 +350,14 @@ public final class LoopMeInterstitial extends BaseAd {
     @Override
     int detectHeight() {
         return Utils.getScreenHeight();
+    }
+
+    /**
+     * Removes all video files from cache.
+     */
+    public void clearCache() {
+        if (getContext() != null) {
+            Utils.clearCache(getContext());
+        }
     }
 }

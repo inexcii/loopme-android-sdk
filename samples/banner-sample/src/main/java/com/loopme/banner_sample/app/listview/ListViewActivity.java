@@ -1,110 +1,71 @@
 package com.loopme.banner_sample.app.listview;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
-
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import com.loopme.banner_sample.app.CustomListItem;
-import com.loopme.banner_sample.app.R;
-import com.loopme.LoopMeAdapter;
-import com.loopme.LoopMeBanner;
-import com.loopme.LoopMeBannerView;
-import com.loopme.LoopMeError;
-
-import android.content.Context;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-public class ListViewActivity extends AppCompatActivity implements LoopMeBanner.Listener,
-OnScrollListener {
+import com.loopme.LoopMeBanner;
+import com.loopme.NativeVideoAdapter;
+import com.loopme.NativeVideoBinder;
+import com.loopme.common.LoopMeError;
+import com.loopme.banner_sample.app.CustomListItem;
+import com.loopme.banner_sample.app.R;
 
-	private LoopMeBanner mBanner;
-	private CustomAdapter mCustomAdapter;
-	private ListView mListView;
-	
-	private List<CustomListItem> mList = new ArrayList<CustomListItem>();
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		setContentView(R.layout.listview_layout);
-		setTitle("ListView");
-		
-		fillList();
+import java.util.ArrayList;
+import java.util.List;
 
-		mCustomAdapter = new CustomAdapter(mList);
+public class ListViewActivity extends AppCompatActivity implements LoopMeBanner.Listener {
 
-		/*
-		 * Getting already initialized ad object or create new one with specified appKey
-		 */
-		mBanner = LoopMeBanner.getInstance(LoopMeBanner.TEST_MPU_BANNER,
-				this.getApplicationContext());
-		
-		if (mBanner != null) {
-			/*
-			 * Start loading immediately
-			 */
-			mBanner.load();
-		
-			/*
-		 	* Adding listener to receive SDK notifications
-		 	* during the loading/displaying ad processes
-		 	*/
-			mBanner.setListener(this);
+    private ListView mListView;
+    private List<CustomListItem> mList = new ArrayList<CustomListItem>();
+    private NativeVideoAdapter mNativeVideoAdapter;
+    private String mAppKey = LoopMeBanner.TEST_MPU_BANNER;
 
-			// Setting advertisement to be 1st item in list view
-			mCustomAdapter.addBannerToPosition(0);
-		}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		mListView = (ListView) findViewById(R.id.listview);
-		mListView.setAdapter(mCustomAdapter);
-		mListView.setOnScrollListener(this);
-	}
-	
-	@Override
-	protected void onPause() {
-		if (mBanner != null) {
-			/*					
-			* Pause any actions currently happening inside banner ad (f.e to pause video playback) 			 
-			*/ 
-			mBanner.pause();
-		}
-		super.onPause();
-	}
-	
-	@Override
-	protected void onResume() {
-		if (mBanner != null) {
-			/*
-			 * Resume actions inside banner (f.e. resume video playback)
-			 */
-			mBanner.show(mCustomAdapter, mListView);
-		}
-		super.onResume();
-	}
-	
-	@Override
-	public void onBackPressed() {
-		if (mBanner != null) {
-			mBanner.dismiss();
-			mBanner.removeListener();
-		}
-		super.onBackPressed();
-	}
-	
-	private void fillList() {
+        setContentView(R.layout.listview_layout);
+        setTitle("ListView");
+
+        mListView = (ListView) findViewById(R.id.listview);
+        fillList();
+        CustomAdapter adapter = new CustomAdapter(this, mList);
+
+        //Init NativeVideoAdapter
+        mNativeVideoAdapter = new NativeVideoAdapter(adapter, this, mListView);
+        //define position for ad
+        mNativeVideoAdapter.putAdWithAppKeyToPosition(mAppKey, 1);
+        mNativeVideoAdapter.setAdListener(this);
+        NativeVideoBinder binder = new NativeVideoBinder.Builder(R.layout.list_ad_row)
+                .setLoopMeBannerViewId(R.id.lm_banner_view)
+                .build();
+        mNativeVideoAdapter.setViewBinder(binder);
+
+        mListView.setAdapter(mNativeVideoAdapter);
+        mNativeVideoAdapter.loadAds();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mNativeVideoAdapter.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mNativeVideoAdapter.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        mNativeVideoAdapter.destroy();
+        super.onBackPressed();
+    }
+
+    private void fillList() {
         mList.add(new CustomListItem("THE GREY (2012)", "Liam Neeson", R.drawable.poster1));
         mList.add(new CustomListItem("MAN OF STEEL (2013)", "Henry Cavill, Amy Adams", R.drawable.poster2));
         mList.add(new CustomListItem("AVATAR (2009)", "Sam Worthington", R.drawable.poster3));
@@ -114,177 +75,39 @@ OnScrollListener {
         mList.add(new CustomListItem("THE SILENCE OF THE LAMBS (1991)", "Jodie Foster", R.drawable.poster7));
         mList.add(new CustomListItem("MR. POPPER'S PENGUINS (2011)", "Jim Carrey", R.drawable.poster8));
         mList.add(new CustomListItem("LAST EXORCISM (2010)", "Patrick Fabian", R.drawable.poster9));
-	}
-	
-	private class CustomAdapter extends BaseAdapter implements LoopMeAdapter {
-		
-		static final int TYPE_DATA = 0;
-		static final int TYPE_BANNER = 1;
-		
-		static final int TYPE_COUNT = 2;
-
-		private LayoutInflater mInflater;
-		private List<Object> mData = new ArrayList<Object>();
-		
-		private TreeSet mBannerSet = new TreeSet();
-		
-		public CustomAdapter(List data) {
-			mData = data;
-			mInflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		}
-		
-		public void addBannerToPosition(int position) {
-			if (position >= 0 && position < mData.size()) {
-				mData.add(position, mBanner);
-				mBannerSet.add(position);
-				notifyDataSetChanged();
-			}
-		}
-		
-		@Override
-        public int getItemViewType(int position) {
-            if (mBannerSet.contains(position)) {
-            	return TYPE_BANNER;
-            }             	
-			return TYPE_DATA;
-        }
-		
-		@Override
-		public boolean isAd(int position) {
-			// Check whether current item ad or not
-			return mBannerSet.contains(position);
-		}
-		
-		@Override
-        public int getViewTypeCount() {
-            return TYPE_COUNT;
-        }
-		
-		@Override
-		public int getCount() {
-			return mData.size();
-		}
-
-		@Override
-		public Object getItem(int position) {
-			return mData.get(position);
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return position;
-		}
-
-		@Override
-		public View getView(int position, View view, ViewGroup parent) {
-			View v = view;
-			ViewHolder holder = null;
-            int type = getItemViewType(position);
-            
-            if (v == null || v.getTag() == null) {
-            	holder = new ViewHolder();
-            	switch (type) {
-            	case TYPE_DATA:
-            		v = mInflater.inflate(R.layout.list_data_layout, null);
-            		holder.title = (TextView) v.findViewById(R.id.title);
-                    holder.subtitle = (TextView) v.findViewById(R.id.subtitle);
-                    holder.icon = (ImageView) v.findViewById(R.id.icon);
-            		break;
-            		
-            	case TYPE_BANNER:
-            		v = mInflater.inflate(R.layout.list_ad_layout, null);
-            		holder.banner_ad = (LoopMeBannerView) v.findViewById(R.id.banner_ad_spot);
-            		break;
-            	}
-            	v.setTag(holder);
-            } else {
-            	holder = (ViewHolder) v.getTag();
-            }
-            
-            if (holder.banner_ad != null) {
-            	if (mBanner != null) {
-            		/*
-            		 * Binding banner view
-            		 */
-        			mBanner.bindView(holder.banner_ad);
-					mBanner.show(this, mListView);
-        		}
-            }
-            if (holder.title != null) {
-            	holder.title.setText(((CustomListItem)mData.get(position)).getTitle());
-            }
-            if (holder.subtitle != null) {
-            	holder.subtitle.setText(((CustomListItem)mData.get(position)).getSubtitle());
-            }
-            if (holder.icon != null) {
-            	holder.icon.setImageResource(((CustomListItem)mData.get(position)).getIconId());
-            }
-			return v;
-		}
-	}
-	
-	public static class ViewHolder {
-		public TextView title;
-        public TextView subtitle;
-        public ImageView icon;
-        
-        public LoopMeBannerView banner_ad;
     }
-	
-	@Override
-	public void onScrollStateChanged(AbsListView view, int scrollState) {
-	}
 
-	@Override
-	public void onScroll(AbsListView view, int firstVisibleItem,
-			int visibleItemCount, int totalItemCount) {
-		
-		if (mBanner != null) {
-			/*
-			 * Manages the ad visibility inside the listView during scrolling
-			 * It automatically calculates the ad area visibility
-			 * and pauses any actions currently happening inside the banner ad 
-			 * (whether it's a video or animations) if the ad is less than 50% visible, otherwise resumes
-			 */
-			mBanner.show(mCustomAdapter, mListView);
-		}
-	}
+    @Override
+    public void onLoopMeBannerClicked(LoopMeBanner arg0) {
+    }
 
-	@Override
-	public void onLoopMeBannerClicked(LoopMeBanner arg0) {
-	}
+    @Override
+    public void onLoopMeBannerExpired(LoopMeBanner arg0) {
+    }
 
-	@Override
-	public void onLoopMeBannerExpired(LoopMeBanner arg0) {
-	}
+    @Override
+    public void onLoopMeBannerHide(LoopMeBanner arg0) {
+    }
 
-	@Override
-	public void onLoopMeBannerHide(LoopMeBanner arg0) {
-	}
+    @Override
+    public void onLoopMeBannerLeaveApp(LoopMeBanner arg0) {
+    }
 
-	@Override
-	public void onLoopMeBannerLeaveApp(LoopMeBanner arg0) {
-	}
+    @Override
+    public void onLoopMeBannerLoadFail(LoopMeBanner arg0, LoopMeError arg1) {
+        Toast.makeText(getApplicationContext(), "LoadFail " + arg1.getMessage(), Toast.LENGTH_SHORT).show();
+    }
 
-	@Override
-	public void onLoopMeBannerLoadFail(LoopMeBanner arg0, LoopMeError arg1) {
-		Toast.makeText(getApplicationContext(), arg1.getMessage(), Toast.LENGTH_SHORT).show();
-	}
+    @Override
+    public void onLoopMeBannerLoadSuccess(LoopMeBanner arg0) {
+        Toast.makeText(getApplicationContext(), "LoadSuccess", Toast.LENGTH_SHORT).show();
+    }
 
-	@Override
-	public void onLoopMeBannerLoadSuccess(LoopMeBanner arg0) {
-		
-		/*
-		 * Manages the ad visibility if no scrolling happened before 
-		 */
-		arg0.show(mCustomAdapter, mListView);
-	}
+    @Override
+    public void onLoopMeBannerShow(LoopMeBanner arg0) {
+    }
 
-	@Override
-	public void onLoopMeBannerShow(LoopMeBanner arg0) {
-	}
-
-	@Override
-	public void onLoopMeBannerVideoDidReachEnd(LoopMeBanner arg0) {
-	}
+    @Override
+    public void onLoopMeBannerVideoDidReachEnd(LoopMeBanner arg0) {
+    }
 }

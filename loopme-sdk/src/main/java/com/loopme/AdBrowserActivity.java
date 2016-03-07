@@ -16,7 +16,14 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.Button;
 
-import com.loopme.utilites.Base64Drawables;
+import com.loopme.adbrowser.AdBrowserLayout;
+import com.loopme.adbrowser.AdBrowserWebViewClient;
+import com.loopme.adbrowser.BrowserWebView;
+import com.loopme.constants.AdFormat;
+import com.loopme.common.Logging;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
+import com.loopme.common.Base64Drawables;
 
 /**
  * Browser Activity. Starts when ad click happened.

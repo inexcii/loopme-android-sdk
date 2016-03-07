@@ -29,13 +29,28 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
+import com.loopme.adview.AdView;
+import com.loopme.adview.Bridge;
+import com.loopme.common.ExecutorHelper;
+import com.loopme.common.MinimizedMode;
+import com.loopme.common.VideoLoader;
+import com.loopme.constants.AdFormat;
+import com.loopme.constants.DisplayMode;
+import com.loopme.common.Logging;
+import com.loopme.common.LoopMeError;
+import com.loopme.common.StaticParams;
+import com.loopme.common.SwipeListener;
+import com.loopme.common.Utils;
+import com.loopme.constants.StretchOption;
+import com.loopme.constants.VideoState;
+import com.loopme.constants.WebviewState;
 import com.loopme.debugging.ErrorTracker;
 
 import java.io.IOException;
 
 class ViewController implements TextureView.SurfaceTextureListener,
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnBufferingUpdateListener{
+        MediaPlayer.OnBufferingUpdateListener {
 
     private static final String LOG_TAG = ViewController.class.getSimpleName();
 
@@ -88,12 +103,6 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     private String mVideoUrl;
 
-    public enum StretchOption {
-        NONE,
-        STRECH,
-        NO_STRETCH
-    }
-
     public ViewController(BaseAd ad) {
         mAd = ad;
         mAdView = new AdView(mAd.getContext());
@@ -132,7 +141,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         mIsFirstFullScreenCommand = true;
     }
 
-    void destroy(boolean interruptFile) {
+    void destroy() {
         mBridgeListener = null;
         if (mHandler != null) {
             mHandler.removeCallbacks(mRunnable);
@@ -143,7 +152,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
             mPlayer = null;
         }
         if (mVideoLoader != null) {
-            mVideoLoader.stop(interruptFile);
+            mVideoLoader.stop();
         }
 
         if (mAdView != null) {
@@ -155,7 +164,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         mMinimizedMode = null;
     }
 
-    void setWebViewState(int state) {
+    public void setWebViewState(int state) {
         if (mAdView != null) {
             mAdView.setWebViewState(state);
         }
@@ -174,7 +183,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         return -1;
     }
 
-    int getCurrentDisplayMode() {
+    public int getCurrentDisplayMode() {
         return mDisplayMode;
     }
 
@@ -215,10 +224,6 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
         bannerView.addView(mTextureView, 0);
         bannerView.addView(mAdView, 1);
-    }
-
-    void setHorizontalScrollingOrientation() {
-        mHorizontalScrollOrientation = true;
     }
 
     void ensureAdIsVisible(View view) {
@@ -359,7 +364,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         });
     }
 
-    void setMinimizedMode(MinimizedMode mode) {
+    public void setMinimizedMode(MinimizedMode mode) {
         mMinimizedMode = mode;
     }
 
@@ -467,7 +472,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         loadVideoFile(videoUrl, mAd.getContext(), preload);
     }
 
-    private void loadVideoFile(String videoUrl, Context context, boolean preload) {
+    private void loadVideoFile(final String videoUrl, Context context, boolean preload) {
 
         mVideoLoader = new VideoLoader(videoUrl, preload, context, new VideoLoader.Callback() {
 
@@ -720,9 +725,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width,
-                                          int height) {
-
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         Logging.out(LOG_TAG, "onSurfaceTextureAvailable");
 
         mIsSurfaceTextureAvailable = true;
@@ -838,7 +841,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
                 mAdView.getCurrentVideoState() == VideoState.IDLE) {
             sendLoadFail(new LoopMeError("Error during video loading"));
             if (extra == -2147483648) {
-                ErrorTracker.post("Error -2147483648: Probably wrong video encoding " + mVideoUrl);
+                ErrorTracker.post("Bad asset (probably wrong video encoding) " + mVideoUrl);
             }
         } else {
 

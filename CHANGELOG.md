@@ -1,3 +1,11 @@
+## Version 4.7.0 (7 of March, 2016)
+- Simplify banner integration
+- In-SDK error messages
+- Added method clearCache()
+- Added hash id
+- removed `WRITE_EXTERNAL_STORAGE` and `DOWNLOAD_WITHOUT_NOTIFICATION` permissions
+- Bug fixes
+
 ## Version 4.6.2 (16 of December, 2015)
 
 - Added optional SDK settings to live debug report

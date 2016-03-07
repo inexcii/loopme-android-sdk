@@ -5,8 +5,8 @@ import android.os.CountDownTimer;
 import android.os.Looper;
 import android.os.Handler;
 
-import com.loopme.AdRequestParametersProvider;
-import com.loopme.Logging;
+import com.loopme.request.AdRequestParametersProvider;
+import com.loopme.common.Logging;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

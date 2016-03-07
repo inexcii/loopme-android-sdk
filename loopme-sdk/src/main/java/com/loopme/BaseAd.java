@@ -6,6 +6,22 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
+import com.loopme.common.AdFetcherTimer;
+import com.loopme.common.EventManager;
+import com.loopme.common.ExecutorHelper;
+import com.loopme.constants.AdFormat;
+import com.loopme.common.AdParams;
+import com.loopme.data.DataCollector;
+import com.loopme.request.AdRequestParametersProvider;
+import com.loopme.request.AdRequestUrlBuilder;
+import com.loopme.request.AdTargeting;
+import com.loopme.request.AdTargetingData;
+import com.loopme.common.ExpirationTimer;
+import com.loopme.common.Logging;
+import com.loopme.common.LoopMeError;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
+import com.loopme.constants.AdState;
 import com.loopme.debugging.ErrorTracker;
 import com.loopme.tasks.AdFetcher;
 import com.loopme.tasks.AdvIdFetcher;
@@ -50,6 +66,8 @@ public abstract class BaseAd implements AdTargeting {
         }
         mContext = context;
         mAppKey = appKey;
+
+        DataCollector.getInstance(mContext).start();
     }
 
     /**
@@ -139,7 +157,7 @@ public abstract class BaseAd implements AdTargeting {
         mAdState = AdState.NONE;
         getAdTargetingData().clear();
         AdRequestParametersProvider.getInstance().reset();
-        releaseViewController(false);
+        releaseViewController();
 
         if (getAdFormat() == AdFormat.INTERSTITIAL) {
             LoopMeAdHolder.removeInterstitial(mAppKey);
@@ -159,7 +177,7 @@ public abstract class BaseAd implements AdTargeting {
         Logging.out(LOG_TAG, "Cancel ad fether");
 
         mAdFetcherListener = null;
-        releaseViewController(true);
+        releaseViewController();
 
         if (mFuture != null) {
             mFuture.cancel(true);
@@ -221,7 +239,7 @@ public abstract class BaseAd implements AdTargeting {
     private void preloadHtmlInWebview(String html) {
         if (TextUtils.isEmpty(html)) {
             onAdLoadFail(new LoopMeError("Broken response"));
-            ErrorTracker.post("Broken response. Empty html");
+            ErrorTracker.post("Broken response (empty html)");
         } else {
             if (mViewController != null) {
                 mViewController.preloadHtml(html);
@@ -300,11 +318,11 @@ public abstract class BaseAd implements AdTargeting {
         mFuture = ExecutorHelper.getExecutor().submit(advTask);
     }
 
-    protected void releaseViewController(boolean interruptFile) {
+    protected void releaseViewController() {
         Logging.out(LOG_TAG, "Release ViewController");
 
         if (mViewController != null) {
-            mViewController.destroy(interruptFile);
+            mViewController.destroy();
             mViewController = null;
         }
     }

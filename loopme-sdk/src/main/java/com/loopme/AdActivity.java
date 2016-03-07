@@ -10,9 +10,16 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import com.loopme.constants.AdFormat;
+import com.loopme.common.Logging;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
+import com.loopme.constants.WebviewState;
 
 public final class AdActivity extends Activity implements AdReceiver.Listener {
 
@@ -222,6 +229,10 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     @Override
     public void onBackPressed() {
+        if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
+            mViewController.switchToPreviousMode();
+            super.onBackPressed();
+        }
     }
 
     @Override
