@@ -43,6 +43,7 @@ Requires `Android` 4.0 and up
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
 //Optional permissions
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -266,7 +267,7 @@ Check out our project samples:
 - In-SDK error messages
 - Added method clearCache()
 - Added hash id
-- removed `WRITE_EXTERNAL_STORAGE` and `DOWNLOAD_WITHOUT_NOTIFICATION` permissions
+- removed `DOWNLOAD_WITHOUT_NOTIFICATION` permission
 - Bug fixes 
 
 See [Changelog](CHANGELOG.md)
