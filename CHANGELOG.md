@@ -3,7 +3,7 @@
 - In-SDK error messages
 - Added method clearCache()
 - Added hash id
-- removed `WRITE_EXTERNAL_STORAGE` and `DOWNLOAD_WITHOUT_NOTIFICATION` permissions
+- removed `DOWNLOAD_WITHOUT_NOTIFICATION` permission
 - Bug fixes
 
 ## Version 4.6.2 (16 of December, 2015)
