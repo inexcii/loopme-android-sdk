@@ -1,3 +1,7 @@
+## Version 4.7.1 (23 of March, 2016)
+- Battery info
+- Bug fixes
+
 ## Version 4.7.0 (7 of March, 2016)
 - Simplify banner integration
 - In-SDK error messages

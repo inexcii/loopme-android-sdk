@@ -296,6 +296,11 @@ public class VideoLoader {
 
         int amountOfCachedFiles = 0;
         File[] files = parentDir.listFiles();
+
+        if (files == null) {
+            return;
+        }
+
         for (File file : files) {
             if (!file.isDirectory()) {
                 if (file.getName().endsWith(MP4_FORMAT)) {
@@ -354,6 +359,11 @@ public class VideoLoader {
         Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath());
 
         File[] files = parentDir.listFiles();
+
+        if (files == null) {
+            return null;
+        }
+
         for (File file : files) {
             if (!file.isDirectory() && file.getName().startsWith(filename)) {
                 return file;

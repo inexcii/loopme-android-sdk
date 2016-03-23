@@ -1,7 +1,10 @@
 package com.loopme.request;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
@@ -10,15 +13,20 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
 import com.loopme.constants.ConnectionType;
 
 import java.util.Locale;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class AdRequestParametersProvider {
 
@@ -274,13 +282,13 @@ public class AdRequestParametersProvider {
             return null;
         }
     }
-    
+
     public String getDeviceId(Context context) {
         String imei = null;
         if (context != null) {
             TelephonyManager telephonyManager = (TelephonyManager) context
                     .getSystemService(Context.TELEPHONY_SERVICE);
-            
+
             if (telephonyManager != null) {
                 int permissionCheck = ContextCompat.checkSelfPermission(context,
                         Manifest.permission.READ_PHONE_STATE);
@@ -292,4 +300,82 @@ public class AdRequestParametersProvider {
         }
         return imei;
     }
+
+    /**
+     * @return result[0] - charge level: 0..1
+     * result[1] - plugged type: USB,AC,WL,CHRG,NCHRG
+     */
+    public String[] getBatteryInfo(final Context context) {
+
+        final Object monitor = new Object();
+
+        final String[] result = new String[2];
+
+        final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                synchronized (monitor) {
+                    int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                    int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                    float batteryPct = level / (float) scale;
+                    result[0] = String.valueOf(batteryPct);
+
+                    int status = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+                    switch (status) {
+                        case 0:
+                            result[1] = "NCHRG";
+                            break;
+                        case BatteryManager.BATTERY_PLUGGED_AC:
+                            result[1] = "AC";
+                            break;
+                        case BatteryManager.BATTERY_PLUGGED_USB:
+                            result[1] = "USB";
+                            break;
+                        case BatteryManager.BATTERY_PLUGGED_WIRELESS:
+                            result[1] = "WL";
+                            break;
+                        default:
+                            result[1] = "CHRG";
+                    }
+                    monitor.notifyAll();
+                }
+            }
+        };
+
+        IntentFilter batteryLevelFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        context.registerReceiver(batteryReceiver, batteryLevelFilter);
+
+        // on some devices broadcast does not sent sometimes
+        // in this case continue by timeout
+        final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+        executor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (monitor) {
+                    if (result[0] == null) {
+                        result[0] = "-1.0";
+                        result[1] = "UNKNOWN";
+                    }
+                    monitor.notifyAll();
+                }
+            }
+        }, 2, TimeUnit.SECONDS);
+
+        synchronized (monitor) {
+            try {
+                if (result[0] == null) {
+                    monitor.wait();
+                }
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+            try {
+                context.unregisterReceiver(batteryReceiver);
+            } catch (IllegalArgumentException e) {
+                // ignore
+            }
+        }
+        return result;
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.loopme.common;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.loopme.common.StaticParams;
@@ -12,6 +13,9 @@ public class Logging {
     private Logging() {}
 
     public static void out(String tag, final String text) {
+        if (TextUtils.isEmpty(text)) {
+            return;
+        }
         final String logTag = new StringBuilder(PREFIX).append(tag).toString();
 
         if (StaticParams.DEBUG_MODE) {

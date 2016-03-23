@@ -356,12 +356,14 @@ class ViewController implements TextureView.SurfaceTextureListener,
             mMinimizedView.removeAllViews();
         }
 
-        mAdView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return (event.getAction() == MotionEvent.ACTION_MOVE);
-            }
-        });
+        if (mAdView != null) {
+            mAdView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    return (event.getAction() == MotionEvent.ACTION_MOVE);
+                }
+            });
+        }
     }
 
     public void setMinimizedMode(MinimizedMode mode) {
@@ -834,8 +836,10 @@ class ViewController implements TextureView.SurfaceTextureListener,
             mBufferingTimer.cancel();
         }
 
-        mp.setOnErrorListener(null);
-        mp.setOnCompletionListener(null);
+        if (mp != null) {
+            mp.setOnErrorListener(null);
+            mp.setOnCompletionListener(null);
+        }
 
         if (mAdView.getCurrentVideoState() == VideoState.BROKEN ||
                 mAdView.getCurrentVideoState() == VideoState.IDLE) {
@@ -852,7 +856,9 @@ class ViewController implements TextureView.SurfaceTextureListener,
                 ((LoopMeBanner) mAd).playbackFinishedWithError();
             }
 
-            mPlayer.reset();
+            if (mPlayer != null) {
+                mPlayer.reset();
+            }
             mWasError = true;
         }
         return true;
@@ -935,13 +941,15 @@ class ViewController implements TextureView.SurfaceTextureListener,
     }
 
     private void configMediaPlayer(MediaPlayer mp) {
-        mVideoWidth = mp.getVideoWidth();
-        mVideoHeight = mp.getVideoHeight();
-        configPlayerDuration();
+        if (mp != null) {
+            mVideoWidth = mp.getVideoWidth();
+            mVideoHeight = mp.getVideoHeight();
+            configPlayerDuration();
+        }
     }
 
     private void configPlayerDuration() {
-        if (mPlayer != null) {
+        if (mPlayer != null && mAdView != null) {
             mVideoDuration = mPlayer.getDuration();
             mAdView.setVideoDuration(mVideoDuration);
         }

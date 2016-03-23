@@ -31,6 +31,8 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_CARRIER = "carrier";
     private static final String PARAM_BUNDLE_ID = "bundleid";
     private static final String PARAM_WIFI_NAME = "wn";
+    private static final String PARAM_CHARGE_LEVEL = "chl";
+    private static final String PARAM_PLUGGED = "plg";
 
     /**
      * Optional targeting parameters
@@ -52,6 +54,9 @@ public class AdRequestUrlBuilder {
      * Build and return request url
      */
     public String buildRequestUrl(String appKey, AdTargetingData metadata) {
+
+        Logging.out(LOG_TAG, "Start build request url");
+
         if (mContext == null) {
             return null;
         }
@@ -124,7 +129,14 @@ public class AdRequestUrlBuilder {
             }
         }
 
+        String[] batteryInfo = provider.getBatteryInfo(mContext);
+        builder.appendQueryParameter(PARAM_CHARGE_LEVEL, batteryInfo[0]);
+        builder.appendQueryParameter(PARAM_PLUGGED, batteryInfo[1]);
+
         String url = builder.build().toString();
+
+        Logging.out(LOG_TAG, "Finish build request url");
+
         return url;
     }
 }

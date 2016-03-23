@@ -262,13 +262,9 @@ Check out our project samples:
 
 ## What's new ##
 
-**Version 4.7.0**
-- Simplify banner integration
-- In-SDK error messages
-- Added method clearCache()
-- Added hash id
-- removed `DOWNLOAD_WITHOUT_NOTIFICATION` permission
-- Bug fixes 
+**Version 4.7.1**
+- Battery info
+- Bug fixes
 
 See [Changelog](CHANGELOG.md)
 
