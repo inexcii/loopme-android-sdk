@@ -4,7 +4,7 @@ public class StaticParams {
 
     private StaticParams() {}
 
-    public static final String SDK_VERSION = "4.7.1";
+    public static final String SDK_VERSION = "4.8.0";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
     public static boolean DEBUG_MODE = true;
@@ -23,8 +23,6 @@ public class StaticParams {
 
     public static final long FETCH_TIMEOUT = 1000 * 60 * 3;//3 minutes
 
-    public static final long BUFFERING_TIMEOUT = 1000 * 7;//7 seconds
-
     public static final int SHRINK_MODE_KEEP_AFTER_FINISH_TIME = 1000;
 
     public static boolean USE_MOBILE_NETWORK_FOR_CACHING = false;
@@ -34,11 +32,6 @@ public class StaticParams {
 
     public static final String APPKEY_TAG = "appkey";
     public static final String FORMAT_TAG = "format";
-
-    /**
-     * Buffering level for play video, when used part preload.
-     */
-    public static final int BUFFERING_LEVEL = 25;
 
     public static final String LOOPME_PREFERENCES = "loopme";
     public static final String VIEWER_TOKEN = "viewer_token";

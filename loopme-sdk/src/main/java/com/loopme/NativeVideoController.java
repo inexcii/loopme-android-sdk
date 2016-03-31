@@ -8,6 +8,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -144,6 +145,7 @@ class NativeVideoController {
     }
 
     void putAdWithAppKeyToPosition(String appKey, int position) {
+        Logging.out(LOG_TAG, "putAdWithAppKeyToPosition " + appKey + " " + position);
         mAppKeysMap.put(position, appKey);
     }
 
@@ -258,12 +260,14 @@ class NativeVideoController {
 
     private void addItem(LoopMeBanner ad, int itemsCount) {
         int indexOfValue = mAppKeysMap.indexOfValue(ad.getAppKey());
-        int nextIndex = mAppKeysMap.keyAt(indexOfValue);
-        if (nextIndex < itemsCount + getAdsCount()) {
-            mAdsMap.put(nextIndex, ad);
-            Logging.out(LOG_TAG, "add ad to position " + nextIndex);
-            if (mDataChangeListener != null) {
-                mDataChangeListener.onDataSetChanged();
+        if (indexOfValue >= 0 && indexOfValue < mAppKeysMap.size()) {
+            int nextIndex = mAppKeysMap.keyAt(indexOfValue);
+            if (nextIndex < itemsCount + getAdsCount()) {
+                mAdsMap.put(nextIndex, ad);
+                Logging.out(LOG_TAG, "add ad to position " + nextIndex);
+                if (mDataChangeListener != null) {
+                    mDataChangeListener.onDataSetChanged();
+                }
             }
         }
     }
@@ -299,7 +303,6 @@ class NativeVideoController {
 
             if (detector.isAd(adIndex)) {
                 if (adIndex < first || adIndex > last) {
-                    Logging.out(LOG_TAG, "scroll out of viewport");
                     if (mAdsMap.size() == 1) {
                         banner.switchToMinimizedMode();
                     } else {
@@ -307,7 +310,6 @@ class NativeVideoController {
                     }
 
                 } else {
-                    Logging.out(LOG_TAG, "scroll in viewport");
                     int childIndex = adIndex - first;
                     View view = listview.getChildAt(childIndex);
                     banner.switchToNormalMode();
@@ -322,8 +324,6 @@ class NativeVideoController {
                 mAdsMap.size() == 0) {
             return;
         }
-
-        Logging.out(LOG_TAG, "onScroll");
 
         int first = 0;
         int last = 0;
@@ -377,7 +377,6 @@ class NativeVideoController {
 
             if (detector.isAd(adIndex)) {
                 if (adIndex < first || adIndex > last) {
-                    Logging.out(LOG_TAG, "scroll out of viewport");
                     if (mAdsMap.size() == 1) {
                         banner.switchToMinimizedMode();
                     } else {
@@ -385,7 +384,6 @@ class NativeVideoController {
                     }
 
                 } else {
-                    Logging.out(LOG_TAG, "scroll in viewport");
                     int childIndex = adIndex - first;
                     View view = recyclerView.getLayoutManager().getChildAt(childIndex);
                     banner.switchToNormalMode();
@@ -410,11 +408,9 @@ class NativeVideoController {
         if (b) {
 
             if (rectHeight < halfOfView) {
-                Logging.out(LOG_TAG, "invisible");
                 banner.pause();
 
             } else {
-                Logging.out(LOG_TAG, "visible");
                 banner.getViewController().setWebViewState(WebviewState.VISIBLE);
             }
         }

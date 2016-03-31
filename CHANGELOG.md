@@ -1,3 +1,6 @@
+## Version 4.8.0 (31 of March, 2016)
+- Preload 25%
+
 ## Version 4.7.1 (23 of March, 2016)
 - Battery info
 - Bug fixes

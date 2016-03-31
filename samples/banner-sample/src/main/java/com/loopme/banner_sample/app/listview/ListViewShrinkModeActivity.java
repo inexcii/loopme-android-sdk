@@ -55,15 +55,18 @@ public class ListViewShrinkModeActivity extends AppCompatActivity implements Loo
     @Override
     protected void onPause() {
         super.onPause();
+        mNativeVideoAdapter.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        mNativeVideoAdapter.onResume();
     }
 
     @Override
     public void onBackPressed() {
+        mNativeVideoAdapter.destroy();
         super.onBackPressed();
     }
 

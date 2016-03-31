@@ -8,6 +8,7 @@ public class VideoState {
     public static final int PAUSED = 3;
     public static final int COMPLETE = 4;
     public static final int BROKEN = 5;
+    public static final int BUFFERING = 6;
 
     public static String toString(int state) {
         switch (state) {
@@ -28,6 +29,9 @@ public class VideoState {
 
             case COMPLETE:
                 return "COMPLETE";
+
+            case BUFFERING:
+                return "BUFFERING";
 
             default:
                 return "UNKNOWN";

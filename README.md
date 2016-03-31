@@ -262,9 +262,8 @@ Check out our project samples:
 
 ## What's new ##
 
-**Version 4.7.1**
-- Battery info
-- Bug fixes
+**Version 4.8.0**
+- Preload 25%
 
 See [Changelog](CHANGELOG.md)
 

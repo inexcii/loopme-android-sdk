@@ -9,14 +9,8 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Build;
-import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
@@ -31,7 +25,6 @@ import android.widget.RelativeLayout.LayoutParams;
 
 import com.loopme.adview.AdView;
 import com.loopme.adview.Bridge;
-import com.loopme.common.ExecutorHelper;
 import com.loopme.common.MinimizedMode;
 import com.loopme.common.VideoLoader;
 import com.loopme.constants.AdFormat;
@@ -44,13 +37,8 @@ import com.loopme.common.Utils;
 import com.loopme.constants.StretchOption;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
-import com.loopme.debugging.ErrorTracker;
 
-import java.io.IOException;
-
-class ViewController implements TextureView.SurfaceTextureListener,
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnBufferingUpdateListener {
+class ViewController implements TextureView.SurfaceTextureListener {
 
     private static final String LOG_TAG = ViewController.class.getSimpleName();
 
@@ -78,30 +66,20 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     private boolean mIsBackFromExpand;
 
-
-    private Handler mHandler;
-    private Runnable mRunnable;
-
-    private volatile MediaPlayer mPlayer;
-    private int mVideoDuration;
     private VideoLoader mVideoLoader;
-    private boolean mMuteState = false;
     private StretchOption mStretch = StretchOption.NONE;
-    private boolean mWasError;
     private int mVideoWidth;
     private int mVideoHeight;
     private int mResizeWidth;
     private int mResizeHeight;
 
-    private CountDownTimer mBufferingTimer;
-    private int mBufferingValue = -1;
-
-    private boolean mIsSurfaceTextureAvailable;
-    private boolean mPlayerReady;
     private boolean mPostponePlay;
     private int mPostponePlayPosition;
 
     private String mVideoUrl;
+    private String mFileRest;
+
+    private VideoController mVideoController;
 
     public ViewController(BaseAd ad) {
         mAd = ad;
@@ -115,23 +93,38 @@ class ViewController implements TextureView.SurfaceTextureListener,
             }
         });
 
-        mHandler = new Handler(Looper.getMainLooper());
-        initRunnable();
+        VideoController.Callback callback = initVideoControllerCallback();
+        mVideoController = new VideoController(mAdView, callback);
     }
 
-    private void initRunnable() {
-        mRunnable = new Runnable() {
+    private VideoController.Callback initVideoControllerCallback() {
+        return new VideoController.Callback() {
+            @Override
+            public void onVideoReachEnd() {
+                mAd.onAdVideoDidReachEnd();
+            }
 
             @Override
-            public void run() {
-                if (mPlayer == null || mAdView == null) {
-                    return;
-                }
-                int position = mPlayer.getCurrentPosition();
-                mAdView.setVideoCurrentTime(position);
+            public void onFail(LoopMeError error) {
+                mAd.onAdLoadFail(error);
+            }
 
-                if (position < mVideoDuration) {
-                    mHandler.postDelayed(mRunnable, 200);
+            @Override
+            public void onVideoSizeChanged(int width, int height) {
+                mVideoWidth = width;
+                mVideoHeight = height;
+            }
+
+            @Override
+            public void postponePlay(int position) {
+                mPostponePlay = true;
+                mPostponePlayPosition = position;
+            }
+
+            @Override
+            public void playbackFinishedWithError() {
+                if (mAd.getAdFormat() == AdFormat.BANNER) {
+                    ((LoopMeBanner) mAd).playbackFinishedWithError();
                 }
             }
         };
@@ -143,14 +136,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     void destroy() {
         mBridgeListener = null;
-        if (mHandler != null) {
-            mHandler.removeCallbacks(mRunnable);
-        }
-        mRunnable = null;
-        if (mPlayer != null) {
-            mPlayer.release();
-            mPlayer = null;
-        }
+        mVideoController.destroy();
         if (mVideoLoader != null) {
             mVideoLoader.stop();
         }
@@ -294,20 +280,20 @@ class ViewController implements TextureView.SurfaceTextureListener,
         setWebViewState(WebviewState.VISIBLE);
 
         mAdView.setOnTouchListener(new SwipeListener(width,
-                new SwipeListener.Listener() {
-                    @Override
-                    public void onSwipe(boolean toRight) {
-                        mAdView.setWebViewState(WebviewState.HIDDEN);
+            new SwipeListener.Listener() {
+                @Override
+                public void onSwipe(boolean toRight) {
+                    mAdView.setWebViewState(WebviewState.HIDDEN);
 
-                        Animation anim = AnimationUtils.makeOutAnimation(mAd.getContext(),
-                                toRight);
-                        anim.setDuration(200);
-                        mMinimizedView.startAnimation(anim);
+                    Animation anim = AnimationUtils.makeOutAnimation(mAd.getContext(),
+                        toRight);
+                    anim.setDuration(200);
+                    mMinimizedView.startAnimation(anim);
 
-                        switchToNormalMode();
-                        mMinimizedMode = null;
-                    }
-                }));
+                    switchToNormalMode();
+                    mMinimizedMode = null;
+                }
+            }));
     }
 
     private void configMinimizedViewLayoutParams(LoopMeBannerView bannerView) {
@@ -474,7 +460,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
         loadVideoFile(videoUrl, mAd.getContext(), preload);
     }
 
-    private void loadVideoFile(final String videoUrl, Context context, boolean preload) {
+    private void loadVideoFile(final String videoUrl, Context context, final boolean preload) {
 
         mVideoLoader = new VideoLoader(videoUrl, preload, context, new VideoLoader.Callback() {
 
@@ -484,21 +470,26 @@ class ViewController implements TextureView.SurfaceTextureListener,
             }
 
             @Override
-            public void onLoadFromUrl(final String url) {
-                ExecutorHelper.getExecutor().submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        Logging.out(LOG_TAG, "onLoadFromUrl");
-                        preparePlayerFromUrl(url);
-                    }
-                });
-
+            public void onPreviewLoaded(String filePath) {
+                Logging.out(LOG_TAG, "onPreviewLoaded");
+                mVideoController.initPlayerFromFile(filePath);
             }
 
             @Override
-            public void onLoadFromFile(String filePath) {
-                Logging.out(LOG_TAG, "onLoadFromFile");
-                preparePlayerFromFile(filePath);
+            public void onFullVideoLoaded(String filePath) {
+                Log.d("debug2", "onFullVideoLoaded: " + filePath);
+                if (preload) {
+                    if (mAd.isShowing()) {
+                        mFileRest = filePath;
+                        mVideoController.setFileRest(mFileRest);
+                        mVideoController.waitForVideo();
+                    } else {
+                        mVideoController.releasePlayer();
+                        mVideoController.initPlayerFromFile(filePath);
+                    }
+                } else {
+                    mVideoController.initPlayerFromFile(filePath);
+                }
             }
         });
         mVideoLoader.start();
@@ -510,73 +501,17 @@ class ViewController implements TextureView.SurfaceTextureListener,
         }
     }
 
-    private void preparePlayerFromFile(String filePath) {
-        mPlayer = new MediaPlayer();
-        initPlayerListeners();
-        mPlayer.setOnPreparedListener(this);
-
-        try {
-            mPlayer.setDataSource(filePath);
-            mPlayer.prepareAsync();
-
-        } catch (IllegalStateException e) {
-            Logging.out(LOG_TAG, e.getMessage());
-            setVideoState(VideoState.BROKEN);
-
-        } catch (IOException e) {
-            Logging.out(LOG_TAG, e.getMessage());
-            setVideoState(VideoState.BROKEN);
-        }
-    }
-
-    private void preparePlayerFromUrl(String videoUrl) {
-        if (TextUtils.isEmpty(videoUrl)) {
-            return;
-        }
-        mPlayer = MediaPlayer.create(mAdView.getContext(), Uri.parse(videoUrl));
-        initPlayerListeners();
-        mPlayer.setOnBufferingUpdateListener(this);
-        Logging.out(LOG_TAG, "Buffering level for part preload: " + StaticParams.BUFFERING_LEVEL);
-        mPlayer.setVolume(0, 0);
-        mPlayer.start();
-    }
-
-    private void setVideoState(int state) {
-        if (mAdView != null) {
-            mAdView.setVideoState(state);
-        }
-    }
-
-    private void initPlayerListeners() {
-        mPlayer.setLooping(false);
-        mPlayer.setOnErrorListener(this);
-        mPlayer.setOnCompletionListener(this);
-
-        mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-    }
-
     private void handleVideoMute(boolean mute) {
         Logging.out(LOG_TAG, "JS command: video mute " + mute);
 
-        if (mPlayer != null) {
-            mAdView.setVideoMute(mute);
-
-            if (mAdView.getCurrentVideoState() == VideoState.PLAYING) {
-                if (mute) {
-                    mPlayer.setVolume(0f, 0f);
-                } else {
-                    float systemVolume = Utils.getSystemVolume();
-                    mPlayer.setVolume(systemVolume, systemVolume);
-                }
-            }
-            mMuteState = mute;
-        }
+        mAdView.setVideoMute(mute);
+        mVideoController.muteVideo(mute);
     }
 
     private void handleVideoPlay(final int time) {
         Logging.out(LOG_TAG, "JS command: play video " + time);
 
-        playVideo(time);
+        mVideoController.playVideo(time);
 
         if (mDisplayMode == DisplayMode.MINIMIZED) {
             Utils.animateAppear(mMinimizedView);
@@ -585,7 +520,7 @@ class ViewController implements TextureView.SurfaceTextureListener,
 
     private void handleVideoPause(int time) {
         Logging.out(LOG_TAG, "JS command: pause video " + time);
-        pauseVideo(time);
+        mVideoController.pauseVideo();
     }
 
     private void handleClose() {
@@ -616,53 +551,6 @@ class ViewController implements TextureView.SurfaceTextureListener,
         Intent intent = new Intent();
         intent.setAction(StaticParams.DESTROY_INTENT);
         mAd.getContext().sendBroadcast(intent);
-    }
-
-    void pauseVideo(int time) {
-        if (mPlayer != null && mAdView != null && !mWasError) {
-            try {
-                if (mPlayer.isPlaying()) {
-                    Logging.out(LOG_TAG, "Pause video");
-                    mHandler.removeCallbacks(mRunnable);
-                    mPlayer.pause();
-                    mAdView.setVideoState(VideoState.PAUSED);
-                }
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-                Logging.out(LOG_TAG, e.getMessage());
-            }
-        }
-    }
-
-    void playVideo(int time) {
-        if (mPlayer != null && mAdView != null && !mWasError) {
-            try {
-                if (!mIsSurfaceTextureAvailable) {
-                    Logging.out(LOG_TAG, "postpone play (surface not available)");
-                    mPostponePlay = true;
-                    mPostponePlayPosition = time;
-                    return;
-                }
-                if (mPlayer.isPlaying()) {
-                    return;
-                }
-
-                Logging.out(LOG_TAG, "Play video");
-                applyMuteSettings();
-                if (time > 0) {
-                    mPlayer.seekTo(time);
-                }
-
-                mPlayer.start();
-                mAdView.setVideoState(VideoState.PLAYING);
-
-                mHandler.postDelayed(mRunnable, 200);
-
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-                Logging.out(LOG_TAG, e.getMessage());
-            }
-        }
     }
 
     private void switchToFullScreenMode() {
@@ -730,9 +618,9 @@ class ViewController implements TextureView.SurfaceTextureListener,
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         Logging.out(LOG_TAG, "onSurfaceTextureAvailable");
 
-        mIsSurfaceTextureAvailable = true;
+        mVideoController.setSurfaceTextureAvailable(true);
         if (mPostponePlay) {
-            playVideo(mPostponePlayPosition);
+            mVideoController.playVideo(mPostponePlayPosition);
             mPostponePlay = false;
         }
 
@@ -764,13 +652,9 @@ class ViewController implements TextureView.SurfaceTextureListener,
                 break;
         }
 
-        if (mPlayer != null) {
-            Surface s = new Surface(surface);
-            mPlayer.setSurface(s);
-            resizeVideo(mTextureView, viewWidth, viewHeight);
-        } else {
-            Logging.out(LOG_TAG, "mPlayer is null");
-        }
+        Surface s = new Surface(surface);
+        mVideoController.setSurface(s);
+        resizeVideo(mTextureView, viewWidth, viewHeight);
     }
 
     @Override
@@ -781,11 +665,8 @@ class ViewController implements TextureView.SurfaceTextureListener,
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         Logging.out(LOG_TAG, "onSurfaceTextureDestroyed");
-        mIsSurfaceTextureAvailable = false;
-
-        if (mPlayer != null) {
-            mPlayer.setSurface(null);
-        }
+        mVideoController.setSurfaceTextureAvailable(false);
+        mVideoController.setSurface(null);
         return true;
     }
 
@@ -805,165 +686,14 @@ class ViewController implements TextureView.SurfaceTextureListener,
         Logging.out(LOG_TAG, "updateLayoutParams()");
 
         if (mTextureView == null || mResizeWidth == 0 || mResizeHeight == 0
-                || mVideoWidth == 0 || mVideoHeight == 0) {
+            || mVideoWidth == 0 || mVideoHeight == 0) {
             return;
         }
 
         FrameLayout.LayoutParams oldParams = (FrameLayout.LayoutParams) mTextureView.getLayoutParams();
         FrameLayout.LayoutParams params = Utils.calculateNewLayoutParams(oldParams,
-                mVideoWidth, mVideoHeight,
-                mResizeWidth, mResizeHeight, mStretch);
+            mVideoWidth, mVideoHeight,
+            mResizeWidth, mResizeHeight, mStretch);
         mTextureView.setLayoutParams(params);
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        if (mAdView.getCurrentVideoState() != VideoState.COMPLETE) {
-            mHandler.removeCallbacks(mRunnable);
-            mAdView.setVideoCurrentTime(mVideoDuration);
-            mAdView.setVideoState(VideoState.COMPLETE);
-            mAd.onAdVideoDidReachEnd();
-        }
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        Logging.out(LOG_TAG, "onError: " + extra);
-
-        mHandler.removeCallbacks(mRunnable);
-
-        if (mBufferingTimer != null) {
-            mBufferingTimer.cancel();
-        }
-
-        if (mp != null) {
-            mp.setOnErrorListener(null);
-            mp.setOnCompletionListener(null);
-        }
-
-        if (mAdView.getCurrentVideoState() == VideoState.BROKEN ||
-                mAdView.getCurrentVideoState() == VideoState.IDLE) {
-            sendLoadFail(new LoopMeError("Error during video loading"));
-            if (extra == -2147483648) {
-                ErrorTracker.post("Bad asset (probably wrong video encoding) " + mVideoUrl);
-            }
-        } else {
-
-            mAdView.setWebViewState(WebviewState.HIDDEN);
-            mAdView.setVideoState(VideoState.PAUSED);
-
-            if (mAd.getAdFormat() == AdFormat.BANNER) {
-                ((LoopMeBanner) mAd).playbackFinishedWithError();
-            }
-
-            if (mPlayer != null) {
-                mPlayer.reset();
-            }
-            mWasError = true;
-        }
-        return true;
-    }
-
-    @Override
-    public void onBufferingUpdate(final MediaPlayer mp, int percent) {
-        Logging.out(LOG_TAG, "onBufferingUpdate " + percent);
-        if (mp.isPlaying()) {
-            mPlayerReady = true;
-        }
-
-        if (percent >= StaticParams.BUFFERING_LEVEL) {
-
-            if (mPlayerReady && mAdView.getCurrentVideoState() == VideoState.IDLE) {
-                mp.pause();
-                mp.seekTo(10);
-                setVideoState(VideoState.READY);
-                configMediaPlayer(mp);
-            }
-
-            if (mBufferingValue != percent) {
-                if (mAd.isShowing()) {
-                    restartBufferingTimer();
-                }
-            }
-
-            if (percent == 100 && mVideoLoader != null) {
-                stopBufferingTimer();
-                mVideoLoader.downloadVideo();
-                mp.setOnBufferingUpdateListener(null);
-            }
-        }
-        mBufferingValue = percent;
-    }
-
-    private void restartBufferingTimer() {
-        if (mBufferingTimer == null) {
-            mBufferingTimer = new CountDownTimer(StaticParams.BUFFERING_TIMEOUT, 1000) {
-                @Override
-                public void onTick(long millisUntilFinished) {
-
-                }
-
-                @Override
-                public void onFinish() {
-                    Logging.out(LOG_TAG, "Buffering timeout");
-                    String appKey = null;
-                    if (mAd != null) {
-                        appKey = mAd.getAppKey();
-                    }
-                    ErrorTracker.post("Buffering timeout. Url: " + mVideoUrl + ". App key: " + appKey);
-                    if (mAdView != null) {
-                        mAdView.setWebViewState(WebviewState.HIDDEN);
-                        if (mPlayer != null) {
-                            mPlayer.reset();
-                        }
-                    }
-                }
-            };
-            mBufferingTimer.start();
-        } else {
-            mBufferingTimer.cancel();
-            mBufferingTimer.start();
-        }
-    }
-
-    private void stopBufferingTimer() {
-        if (mBufferingTimer != null) {
-            mBufferingTimer.cancel();
-            mBufferingTimer = null;
-        }
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        Logging.out(LOG_TAG, "onPrepared");
-        setVideoState(VideoState.READY);
-        configMediaPlayer(mp);
-    }
-
-    private void configMediaPlayer(MediaPlayer mp) {
-        if (mp != null) {
-            mVideoWidth = mp.getVideoWidth();
-            mVideoHeight = mp.getVideoHeight();
-            configPlayerDuration();
-        }
-    }
-
-    private void configPlayerDuration() {
-        if (mPlayer != null && mAdView != null) {
-            mVideoDuration = mPlayer.getDuration();
-            mAdView.setVideoDuration(mVideoDuration);
-        }
-    }
-
-    private void applyMuteSettings() {
-        if (mPlayer != null) {
-            Logging.out(LOG_TAG, "applyMuteSettings " + mMuteState);
-            if (mMuteState) {
-                mPlayer.setVolume(0f, 0f);
-            } else {
-                float systemVolume = Utils.getSystemVolume();
-                mPlayer.setVolume(systemVolume, systemVolume);
-            }
-        }
     }
 }

@@ -128,7 +128,6 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 
     @Override
     public void sendNativeCallFinished() {
-        Logging.out(LOG_TAG, "sendNativeCallFinished");
         String command = new BridgeCommandBuilder().isNativeCallFinished(true);
         loadUrl(command);
     }

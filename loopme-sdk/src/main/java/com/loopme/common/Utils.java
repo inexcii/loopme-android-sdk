@@ -340,20 +340,6 @@ public class Utils {
     }
 
     public static void clearCache(Context context) {
-        Logging.out(LOG_TAG, "Clear cache");
-        File parentDir = context.getExternalFilesDir(VideoLoader.VIDEO_FOLDER);
-
-        File[] files = parentDir.listFiles();
-        int deletedFilesCounter = 0;
-        for (File file : files) {
-            if (!file.isDirectory()) {
-                if (file.getName().endsWith(VideoLoader.MP4_FORMAT)) {
-                    File f = new File(file.getAbsolutePath());
-                    f.delete();
-                    deletedFilesCounter++;
-                }
-            }
-        }
-        Logging.out(LOG_TAG, "Deleted " + deletedFilesCounter + " file(s)");
+        VideoUtils.clearCache(context);
     }
 }
