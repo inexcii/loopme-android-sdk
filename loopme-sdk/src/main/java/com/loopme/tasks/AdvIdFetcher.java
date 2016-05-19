@@ -16,7 +16,7 @@ public class AdvIdFetcher implements Runnable {
     private String mAdvertisingId;
 
     public interface Listener {
-        void onComplete(String advId);
+        void onComplete(String advId, boolean isLimited);
     }
 
     public AdvIdFetcher(Context context, Listener listener) {
@@ -27,15 +27,17 @@ public class AdvIdFetcher implements Runnable {
     @Override
     public void run() {
         mAdvertisingId = "";
+        boolean isLimited = false;
         try {
             AdvertisingIdClient.AdInfo adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
             mAdvertisingId = adInfo.getId();
+            isLimited = adInfo.isLimitAdTrackingEnabled();
         } catch (Exception e) {
             Logging.out(LOG_TAG, "Exception: " + e.getMessage());
         }
 
         if (mListener != null) {
-            mListener.onComplete(mAdvertisingId);
+            mListener.onComplete(mAdvertisingId, isLimited);
         }
     }
 }

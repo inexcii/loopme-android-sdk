@@ -41,6 +41,8 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_YEAR_OF_BIRTH = "yob";
     private static final String PARAM_GENDER = "gender";
 
+    private static final String PARAM_V360 = "v360";
+
     private final Context mContext;
 
     public AdRequestUrlBuilder(Context context) {
@@ -80,6 +82,7 @@ public class AdRequestUrlBuilder {
                 .appendQueryParameter(PARAM_CONNECTION_TYPE, String.valueOf(provider.getConnectionType(mContext)))
                 .appendQueryParameter(PARAM_LANGUAGE, provider.getLanguage())
                 .appendQueryParameter(PARAM_SDK_VERSION, StaticParams.SDK_VERSION)
+                .appendQueryParameter(PARAM_V360, "1")
                 .appendQueryParameter(PARAM_APP_VERSION, provider.getAppVersion(mContext))
                 .appendQueryParameter(PARAM_MRAID, provider.getMraidSupport())
                 .appendQueryParameter(PARAM_ORIENTATION, provider.getOrientation(mContext))

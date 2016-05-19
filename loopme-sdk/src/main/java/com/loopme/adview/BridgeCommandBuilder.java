@@ -9,6 +9,7 @@ import com.loopme.constants.WebviewState;
 class BridgeCommandBuilder {
 
     private static final String PREFIX = "javascript:window.L.bridge.set";
+    private static final String PREFIX_360 = "javascript:window.L.track";
 
     String isNativeCallFinished(boolean b) {
         StringBuilder builder = new StringBuilder();
@@ -83,6 +84,15 @@ class BridgeCommandBuilder {
                 .append("('webview', {fullscreenMode: ")
                 .append(b)
                 .append("});");
+        return builder.toString();
+    }
+
+    String event360(String event) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(PREFIX_360)
+                .append("({eventType: 'INTERACTION', customEventName: 'video360&mode=")
+                .append(event)
+                .append("'});");
         return builder.toString();
     }
 }

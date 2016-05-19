@@ -8,9 +8,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -21,12 +21,17 @@ import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.WebviewState;
 
+//todo combine VRActivity and AdActivity
 public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     private static final String LOG_TAG = AdActivity.class.getSimpleName();
 
+    private AdController mAdController;
+    private IViewController mIViewController;
+    private int mFormat;
+    private boolean mIs360;
+
     private BaseAd mBaseAd;
-    private ViewController mViewController;
 
     private FrameLayout mLayout;
 
@@ -60,8 +65,8 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
             mAccel = mAccel * 0.9f + delta;
 
             if (delta > 5) {
-                if (mViewController != null) {
-                    mViewController.onAdShake();
+                if (mAdController != null) {
+                    mAdController.onAdShake();
                 }
             }
         }
@@ -74,13 +79,16 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     public final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
         mInitialOrientation = Utils.getScreenOrientation(this);
 
         String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
         if (TextUtils.isEmpty(appKey)) {
             Logging.out(LOG_TAG, "Empty app key");
         }
-        int format = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
+        mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -90,20 +98,25 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
         Logging.out(LOG_TAG, "onCreate");
 
-        if (format == AdFormat.INTERSTITIAL) {
+        if (mFormat == AdFormat.INTERSTITIAL) {
             mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
-        } else if (format == AdFormat.BANNER) {
+
+        } else if (mFormat == AdFormat.BANNER) {
             mBaseAd = LoopMeAdHolder.getBanner(appKey, null);
         }
 
-        if (mBaseAd == null || mBaseAd.getViewController() == null) {
+        if (mBaseAd == null || mBaseAd.getAdController() == null) {
             Logging.out(LOG_TAG, "No ads with app key " + appKey);
             finish();
         } else {
-            mViewController = mBaseAd.getViewController();
+            mIs360 = mBaseAd.getAdParams().isVideo360();
+            mAdController = mBaseAd.getAdController();
+            mIViewController = mAdController.getViewController();
 
-            if (mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
-                applyOrientationFromAdParams();
+            if (mFormat == AdFormat.INTERSTITIAL) {
+                if (!mIs360) {
+                    applyOrientationFromAdParams();
+                }
             } else {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
             }
@@ -114,7 +127,10 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
             initSensor();
             initDestroyReceiver();
 
-            if (mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
+            if (mFormat == AdFormat.INTERSTITIAL) {
+                if (mIs360) {
+                    mIViewController.initVRLibrary(this);
+                }
                 ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialShow((LoopMeInterstitial) mBaseAd);
             }
         }
@@ -130,12 +146,12 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     private FrameLayout buildLayout() {
         mLayout = new FrameLayout(this);
 
-        if (mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
-            if (mViewController != null) {
+        if (mFormat == AdFormat.INTERSTITIAL) {
+            if (mAdController != null) {
                 if (isVideoPresented()) {
-                    mViewController.buildVideoAdView(mLayout);
+                    mAdController.buildVideoAdView(mLayout);
                 } else {
-                    mViewController.buildStaticAdView(mLayout);
+                    mAdController.buildStaticAdView(mLayout);
                 }
             }
         } else {
@@ -143,7 +159,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT);
-            mViewController.rebuildView(banner);
+            mAdController.rebuildView(banner);
             mLayout.addView(banner, params);
         }
 
@@ -151,7 +167,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     }
 
     private boolean isVideoPresented() {
-        return mViewController.isVideoPresented();
+        return mAdController.isVideoPresented();
     }
 
     private void initDestroyReceiver() {
@@ -188,7 +204,10 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         if (mLayout != null) {
             mLayout.removeAllViews();
         }
-        if (mBaseAd != null && mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
+        if (mBaseAd != null && mFormat == AdFormat.INTERSTITIAL) {
+            if (mIs360) {
+                mIViewController.onDestroy();
+            }
             ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialHide((LoopMeInterstitial) mBaseAd);
         }
         super.onDestroy();
@@ -201,13 +220,21 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mSensorListener);
         }
-        if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
-            if (!mReceivedDestroyBroadcast && mViewController != null) {
-                mViewController.setWebViewState(WebviewState.HIDDEN);
+        if (mIViewController != null) {
+            mIViewController.onPause();
+        }
+
+        if (mFormat == AdFormat.BANNER) {
+            if (!mReceivedDestroyBroadcast && mAdController != null) {
+                mAdController.setWebViewState(WebviewState.HIDDEN);
             }
-        } else if (!mKeepAlive && mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
-            if (mViewController != null) {
-                mViewController.setWebViewState(WebviewState.CLOSED);
+
+        } else if (!mKeepAlive && mFormat == AdFormat.INTERSTITIAL) {
+            if (mAdController != null) {
+                mAdController.setWebViewState(WebviewState.CLOSED);
+                if (mIs360) {
+                    mAdController.pauseVideo();
+                }
             }
             finish();
         }
@@ -218,8 +245,11 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         super.onResume();
         Logging.out(LOG_TAG, "onResume");
         mKeepAlive = false;
-        if (mViewController != null) {
-            mViewController.setWebViewState(WebviewState.VISIBLE);
+        if (mAdController != null) {
+            mAdController.setWebViewState(WebviewState.VISIBLE);
+            if (mIViewController != null) {
+                mIViewController.onResume();
+            }
         }
         if (mSensorManager != null) {
             mSensorManager.registerListener(mSensorListener, mSensorManager.getDefaultSensor(
@@ -229,8 +259,8 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     @Override
     public void onBackPressed() {
-        if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
-            mViewController.switchToPreviousMode();
+        if (mFormat == AdFormat.BANNER) {
+            mAdController.switchToPreviousMode();
             super.onBackPressed();
         }
     }
@@ -239,9 +269,9 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     public void onDestroyBroadcast() {
         Logging.out(LOG_TAG, "onDestroyBroadcast");
         mReceivedDestroyBroadcast = true;
-        if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
+        if (mFormat == AdFormat.BANNER) {
             setRequestedOrientation(mInitialOrientation);
-            mViewController.switchToPreviousMode();
+            mAdController.switchToPreviousMode();
         }
         if (mReceiver != null) {
             unregisterReceiver(mReceiver);

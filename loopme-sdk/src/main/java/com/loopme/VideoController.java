@@ -8,6 +8,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 
 import com.loopme.adview.AdView;
@@ -21,7 +22,7 @@ import com.loopme.debugging.ErrorTracker;
 import java.io.IOException;
 
 class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
-    MediaPlayer.OnCompletionListener {
+        MediaPlayer.OnCompletionListener {
 
     private static final String LOG_TAG = VideoController.class.getSimpleName();
 
@@ -46,20 +47,39 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
     private CountDownTimer mBufferingTimer;
 
+    private String mAppKey;
+    private int mFormat;
+
+    private int mQuarter25;
+    private int mQuarter50;
+    private int mQuarter75;
+
+    private boolean mIs360;
+
     public interface Callback {
         void onVideoReachEnd();
+
         void onFail(LoopMeError error);
+
         void onVideoSizeChanged(int width, int height);
+
         void postponePlay(int position);
+
         void playbackFinishedWithError();
     }
 
-    public VideoController(AdView adView, Callback callback) {
+    public VideoController(AdView adView, Callback callback, String appKey, int format) {
         mAdView = adView;
         mCallback = callback;
         mContext = adView.getContext();
+        mAppKey = appKey;
+        mFormat = format;
         mHandler = new Handler(Looper.getMainLooper());
-        initRunnable();
+        initProgressRunnable();
+    }
+
+    void contain360(boolean b) {
+        mIs360 = b;
     }
 
     public void destroy() {
@@ -76,7 +96,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         mSurface = null;
     }
 
-    private void initRunnable() {
+    private void initProgressRunnable() {
         mRunnable = new Runnable() {
 
             @Override
@@ -86,9 +106,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
                 }
                 int position = getCurrentPosition();
                 mAdView.setVideoCurrentTime(position);
+                updateCurrentVolume();
 
                 if (position < mVideoDuration) {
-                    mHandler.postDelayed(mRunnable, 200);
+                    mHandler.postDelayed(mRunnable, 100);
                 }
             }
         };
@@ -105,12 +126,8 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
-    public void initPlayer(String filePath) {
-        mPlayer = MediaPlayer.create(mContext, Uri.parse(filePath));
-        initPlayerListeners();
-    }
-
     public void setSurface(Surface surface) {
+        Log.d(LOG_TAG, "setSurface " + surface);
         mSurface = surface;
         if (mPlayer != null) {
             mPlayer.setSurface(surface);
@@ -126,9 +143,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
             mPlayer.setSurface(mSurface);
 
             if (mAdView.getCurrentWebViewState() == WebviewState.VISIBLE) {
-                startPlay();
+                mPlayer.start();
             }
             seekTo(mVideoPositionWhenError);
+            Logging.out(LOG_TAG, "waitForVideo mHandler.postDelayed");
             mHandler.postDelayed(mRunnable, 200);
 
             setVideoState(VideoState.PLAYING);
@@ -138,12 +156,6 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     public void seekTo(int position) {
         if (mPlayer != null) {
             mPlayer.seekTo(position);
-        }
-    }
-
-    public void startPlay() {
-        if (mPlayer != null) {
-            mPlayer.start();
         }
     }
 
@@ -166,6 +178,11 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
+    private void initPlayer(String filePath) {
+        mPlayer = MediaPlayer.create(mContext, Uri.parse(filePath));
+        initPlayerListeners();
+    }
+
     private void initPlayerListeners() {
         mPlayer.setLooping(false);
         mPlayer.setOnErrorListener(this);
@@ -175,13 +192,11 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     public void muteVideo(boolean mute) {
-        if (mAdView.getCurrentVideoState() == VideoState.PLAYING) {
-            if (mute) {
-                mPlayer.setVolume(0f, 0f);
-            } else {
-                float systemVolume = Utils.getSystemVolume();
-                mPlayer.setVolume(systemVolume, systemVolume);
-            }
+        if (mute) {
+            mPlayer.setVolume(0f, 0f);
+        } else {
+            float systemVolume = Utils.getSystemVolume();
+            mPlayer.setVolume(systemVolume, systemVolume);
         }
         mMuteState = mute;
     }
@@ -193,26 +208,38 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
+    private void updateCurrentVolume() {
+        if (!mMuteState) {
+            float systemVolume = Utils.getSystemVolume();
+            mPlayer.setVolume(systemVolume, systemVolume);
+        }
+    }
+
     public void setSurfaceTextureAvailable(boolean b) {
         mIsSurfaceTextureAvailable = b;
     }
 
-    public void playVideo(int time) {
-        if (mPlayer != null && mAdView != null && !mWasError) {
+    private boolean isPlayerReadyForPlay() {
+        return mPlayer != null && mAdView != null && !mWasError;
+    }
+
+    public void playVideo(int time, boolean is360) {
+        if (isPlayerReadyForPlay()) {
+            if (!is360 && !mIsSurfaceTextureAvailable) {
+                Logging.out(LOG_TAG, "postpone play (surface not available)");
+                mCallback.postponePlay(time);
+                return;
+            }
+
             try {
-                if (!mIsSurfaceTextureAvailable) {
-                    Logging.out(LOG_TAG, "postpone play (surface not available)");
-                    mCallback.postponePlay(time);
-                    return;
-                }
                 if (mPlayer.isPlaying()) {
                     return;
                 }
 
-                Logging.out(LOG_TAG, "Play video");
+                Logging.out(LOG_TAG, "Play video " + time);
                 applyMuteSettings();
-                if (time > 0) {
-                    mPlayer.seekTo(time);
+                if (time == 10) {
+                    mPlayer.seekTo(0);
                 }
 
                 mPlayer.start();
@@ -221,8 +248,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
                 mHandler.postDelayed(mRunnable, 200);
 
             } catch (IllegalStateException e) {
-                e.printStackTrace();
-                Logging.out(LOG_TAG, e.getMessage());
+                Logging.out(LOG_TAG, "playVideo:" + e.getMessage());
             }
         }
     }
@@ -280,6 +306,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
                 mPlayer.start();
                 mPlayer.seekTo(mVideoPositionWhenError);
+                Logging.out(LOG_TAG, "mHandler.postDelayed");
                 mHandler.postDelayed(mRunnable, 200);
 
             } else {
@@ -308,7 +335,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
 
         if (mAdView.getCurrentVideoState() == VideoState.BROKEN ||
-            mAdView.getCurrentVideoState() == VideoState.IDLE) {
+                mAdView.getCurrentVideoState() == VideoState.IDLE) {
             if (mCallback != null) {
                 mCallback.onFail(new LoopMeError("Error during video loading"));
             }
@@ -331,7 +358,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     public void onPrepared(MediaPlayer mp) {
         Logging.out(LOG_TAG, "onPrepared");
         setVideoState(VideoState.READY);
-        configMediaPlayer(mp);
+        extractVideoInfo(mp);
         if (mBufferingTimer != null) {
             mBufferingTimer.cancel();
         }
@@ -343,21 +370,20 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
-    private void configMediaPlayer(MediaPlayer mp) {
+    private void extractVideoInfo(MediaPlayer mp) {
         if (mp != null) {
             int width = mp.getVideoWidth();
             int height = mp.getVideoHeight();
             if (mCallback != null) {
                 mCallback.onVideoSizeChanged(width, height);
             }
-            configPlayerDuration();
-        }
-    }
-
-    private void configPlayerDuration() {
-        if (mPlayer != null && mAdView != null) {
-            mVideoDuration = mPlayer.getDuration();
-            mAdView.setVideoDuration(mVideoDuration);
+            mVideoDuration = mp.getDuration();
+            if (mAdView != null) {
+                mAdView.setVideoDuration(mVideoDuration);
+            }
+            mQuarter25 = mVideoDuration / 4;
+            mQuarter50 = mVideoDuration / 2;
+            mQuarter75 = mQuarter25 + mQuarter50;
         }
     }
 }

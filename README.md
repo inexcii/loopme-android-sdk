@@ -19,8 +19,7 @@ If you have questions please contact us at support@loopmemedia.com.
 
 ## Features ##
 
-* Full-screen image interstitials
-* Full-screen rich media interstitials
+* Full-screen interstitials (image/rich media/video/360 video)
 * Preloaded video ads
 * Banner ads
 * Minimized video mode
@@ -56,8 +55,7 @@ activities and receiver:
 ```xml
 <activity android:name="com.loopme.AdActivity" 
             android:theme="@android:style/Theme.Translucent"
-            android:configChanges="orientation|keyboardHidden|screenSize" 
-            android:hardwareAccelerated="true"/>
+            android:configChanges="orientation|keyboardHidden|screenSize" />
 <activity android:name="com.loopme.AdBrowserActivity" />
 <receiver android:name="com.loopme.data.LoopMeReceiver"/>
 ```
@@ -262,8 +260,9 @@ Check out our project samples:
 
 ## What's new ##
 
-**Version 4.8.0**
-- Preload 25%
+**Version 5.0**
+-  INTRODUCING LOOPME 360 VIDEO, THE ONLY FULL-SCREEN 360 SOLUTION DELIVERING GLOBAL SCALE
+-  Bug fixes (mailto links, sound, etc.)
 
 See [Changelog](CHANGELOG.md)
 

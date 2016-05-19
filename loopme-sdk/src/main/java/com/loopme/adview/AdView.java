@@ -18,7 +18,9 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 
     private static final String LOG_TAG = AdView.class.getSimpleName();
 
-    public static final String DEFAULT_CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36";
+    public static final String DEFAULT_CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 4.4.2; " +
+            "Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 " +
+            "Mobile Safari/537.36";
 
     public static final String CHROME_USER_AGENT = initUserAgent();
 
@@ -39,6 +41,23 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
             agent = DEFAULT_CHROME_USER_AGENT;
         }
         return agent;
+    }
+
+    @Override
+    public void scrollTo(int x, int y) {
+        //nothing
+    }
+
+    @Override
+    public void computeScroll() {
+        //nothing
+    }
+
+    @Override
+    protected boolean overScrollBy(int deltaX, int deltaY, int scrollX, int scrollY,
+                                   int scrollRangeX, int scrollRangeY, int maxOverScrollX,
+                                   int maxOverScrollY, boolean isTouchEvent) {
+        return false;
     }
 
     /**
@@ -89,6 +108,12 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 
     public int getCurrentWebViewState() {
         return mViewState;
+    }
+
+    @Override
+    public void send360Event(String event) {
+        String command = new BridgeCommandBuilder().event360(event);
+        loadUrl(command);
     }
 
     @Override

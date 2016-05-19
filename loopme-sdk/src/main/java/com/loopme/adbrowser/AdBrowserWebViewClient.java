@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -102,7 +103,7 @@ public class AdBrowserWebViewClient extends WebViewClient {
         String scheme = uri.getScheme();
         String host = uri.getHost();
 
-        if (scheme == null || host == null) {
+        if (TextUtils.isEmpty(scheme)) {
             ErrorTracker.post("Wrong redirect (" + url + ")");
             return false;
         }
@@ -201,13 +202,13 @@ public class AdBrowserWebViewClient extends WebViewClient {
     private void leaveApp(String url, Context context) {
 
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         resolveAndStartActivity(intent, context);
         mListener.onLeaveApp();
     }
 
     private void resolveAndStartActivity(Intent intent, Context context) {
         if (isActivityResolved(intent, context)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         } else {
             mListener.onReceiveError();

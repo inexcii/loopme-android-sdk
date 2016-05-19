@@ -8,7 +8,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,6 +83,14 @@ class NativeVideoController {
         Logging.out(LOG_TAG, "destroy");
         for (int i = 0; i < mAppKeysMap.size(); i++) {
             LoopMeBanner banner = LoopMeBanner.getInstance(mAppKeysMap.valueAt(i), null);
+            if (banner.getAdController().isVideoPresented()) {
+                banner.getAdController().pauseVideo();
+            }
+            IViewController viewController = banner.getAdController().getViewController();
+            if (viewController != null) {
+                viewController.onPause();
+                viewController.onDestroy();
+            }
             banner.destroy();
         }
         mViewMap.clear();
@@ -108,8 +115,9 @@ class NativeVideoController {
         if (mAdsMap.size() != 0) {
             if (mAdsMap.size() == 1) {
                 LoopMeBanner banner = mAdsMap.valueAt(0);
-                if (banner.getViewController().getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
-                    banner.getViewController().setWebViewState(WebviewState.VISIBLE);
+                banner.getAdController().getViewController().onResume();
+                if (banner.getAdController().getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
+                    banner.getAdController().setWebViewState(WebviewState.VISIBLE);
                     return;
                 }
             }
@@ -121,8 +129,9 @@ class NativeVideoController {
         if (mAdsMap.size() != 0) {
             if (mAdsMap.size() == 1) {
                 LoopMeBanner banner = mAdsMap.valueAt(0);
-                if (banner.getViewController().getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
-                    banner.getViewController().setWebViewState(WebviewState.VISIBLE);
+                banner.getAdController().getViewController().onResume();
+                if (banner.getAdController().getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
+                    banner.getAdController().setWebViewState(WebviewState.VISIBLE);
                     return;
                 }
             }
@@ -297,7 +306,7 @@ class NativeVideoController {
             int adIndex = mAdsMap.keyAt(i);
 
             LoopMeBanner banner = mAdsMap.get(adIndex);
-            if (banner.getViewController().getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
+            if (banner.getAdController().getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
                 return;
             }
 
@@ -371,7 +380,7 @@ class NativeVideoController {
             int adIndex = mAdsMap.keyAt(i);
 
             LoopMeBanner banner = mAdsMap.get(adIndex);
-            if (banner.getViewController().getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
+            if (banner.getAdController().getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
                 return;
             }
 
@@ -411,7 +420,8 @@ class NativeVideoController {
                 banner.pause();
 
             } else {
-                banner.getViewController().setWebViewState(WebviewState.VISIBLE);
+                banner.getAdController().setWebViewState(WebviewState.VISIBLE);
+                banner.getAdController().getViewController().onResume();
             }
         }
     }

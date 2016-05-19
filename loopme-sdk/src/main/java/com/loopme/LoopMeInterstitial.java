@@ -64,7 +64,7 @@ public final class LoopMeInterstitial extends BaseAd {
         super(context, appKey);
         Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 
-        mViewController = new ViewController(this);
+        mAdController = new AdController(this);
 
         Utils.init(context);
         DebugController.init(context);
@@ -150,7 +150,7 @@ public final class LoopMeInterstitial extends BaseAd {
             if (mAdState != AdState.SHOWING) {
                 mAdState = AdState.SHOWING;
                 stopExpirationTimer();
-                startAdActivity();
+                AdUtils.startAdActivity(this);
             } else {
                 Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
             }
@@ -162,25 +162,13 @@ public final class LoopMeInterstitial extends BaseAd {
         }
     }
 
-    private void startAdActivity() {
-        Logging.out(LOG_TAG, "Starting Ad Activity");
-        LoopMeAdHolder.putAd(this);
-
-        Intent intent = new Intent(getContext(), AdActivity.class);
-        intent.putExtra(StaticParams.APPKEY_TAG, getAppKey());
-        intent.putExtra(StaticParams.FORMAT_TAG, getAdFormat());
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getContext().startActivity(intent);
-    }
-
     @Override
     public int getAdFormat() {
         return AdFormat.INTERSTITIAL;
     }
 
-    ViewController getViewController() {
-        return mViewController;
+    AdController getAdController() {
+        return mAdController;
     }
 
     /**

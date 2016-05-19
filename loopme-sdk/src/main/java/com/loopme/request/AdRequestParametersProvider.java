@@ -35,11 +35,12 @@ public class AdRequestParametersProvider {
     private static AdRequestParametersProvider sProvider;
 
     private volatile String mAdvertisingId;
+    private volatile boolean mDntPresent;
+
     private String mLoopMeId;
 
     private String mAppVersion;
     private String mMraid;
-    private boolean mDntPresent;
     private String mCarrier;
     private boolean mCarrierInited;
 
@@ -57,9 +58,10 @@ public class AdRequestParametersProvider {
         sProvider = null;
     }
 
-    public void setGoogleAdvertisingId(String advId) {
-        Logging.out(LOG_TAG, "Advertising Id = " + advId);
+    public void setGoogleAdvertisingId(String advId, boolean isLimited) {
+        Logging.out(LOG_TAG, "Advertising Id = " + advId + " Limited: " + isLimited);
         mAdvertisingId = advId;
+        mDntPresent = isLimited;
     }
 
     public String getGoogleAdvertisingId() {
@@ -181,7 +183,6 @@ public class AdRequestParametersProvider {
     public String getViewerToken() {
         String advId = mAdvertisingId;
         if (TextUtils.isEmpty(advId)) {
-            mDntPresent = true;
             if (mLoopMeId == null) {
                 String loopmeId = Long.toHexString(Double.doubleToLongBits(Math.random()));
                 Logging.out(LOG_TAG, "LoopMe Id = " + loopmeId);

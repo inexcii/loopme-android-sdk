@@ -110,7 +110,7 @@ public class DataCollector {
             executor.submit(new AdvIdFetcher(context, new AdvIdFetcher.Listener() {
 
                 @Override
-                public void onComplete(String advId) {
+                public void onComplete(String advId, boolean isLimited) {
                     sp.edit().putString(StaticParams.VIEWER_TOKEN, advId).commit();
                 }
             }));
@@ -140,7 +140,7 @@ public class DataCollector {
         executor.submit(new AdvIdFetcher(mContext, new AdvIdFetcher.Listener() {
 
             @Override
-            public void onComplete(String advId) {
+            public void onComplete(String advId, boolean isLimited) {
                 mCurrentId = advId;
                 if (TextUtils.isEmpty(mCurrentId)) {
                     return;

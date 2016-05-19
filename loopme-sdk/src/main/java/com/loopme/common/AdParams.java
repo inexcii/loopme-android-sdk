@@ -23,6 +23,7 @@ public class AdParams {
     private String mToken;
 
     private boolean mPartPreload;
+    private boolean mVideo360;
 
     private AdParams(AdParamsBuilder builder) {
         mFormat = builder.mBuilderFormat;
@@ -34,6 +35,7 @@ public class AdParams {
         mToken = builder.mToken;
 
         mPartPreload = builder.mPartPreload;
+        mVideo360 = builder.mVideo360;
 
         Logging.out(LOG_TAG, "Server response indicates  ad params: "
                 + "format: " + mFormat + ", orientation: " + mOrientation
@@ -42,6 +44,10 @@ public class AdParams {
 
     public boolean getPartPreload() {
         return mPartPreload;
+    }
+
+    public boolean isVideo360() {
+        return mVideo360;
     }
 
     public String getHtml() {
@@ -80,6 +86,7 @@ public class AdParams {
         private String mToken;
 
         private boolean mPartPreload;
+        private boolean mVideo360;
 
         public AdParamsBuilder(String format) {
             mBuilderFormat = format;
@@ -92,6 +99,11 @@ public class AdParams {
 
         public AdParamsBuilder partPreload(boolean preload) {
             mPartPreload = preload;
+            return this;
+        }
+
+        public AdParamsBuilder video360(boolean b) {
+            mVideo360 = b;
             return this;
         }
 

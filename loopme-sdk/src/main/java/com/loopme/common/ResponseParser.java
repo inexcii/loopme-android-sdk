@@ -29,6 +29,8 @@ public class ResponseParser {
     private static final String JSON_TRACKING = "tracking";
     private static final String JSON_ERROR = "error";
 
+    private static final  String JSON_V360 = "v360";
+
     private Listener mListener;
     private int mAdFormat;
 
@@ -100,6 +102,10 @@ public class ResponseParser {
 
         int preloadValue = parseInt(settings, JSON_PART_PRELOAD);
         boolean preload = preloadValue == 1? true : false;
+        StaticParams.PART_PRELOAD = preload;//todo remove. only for tester
+
+        int video360Value = parseInt(settings, JSON_V360);
+        boolean video360 = video360Value == 1 ? true : false;
 
         return new AdParams.AdParamsBuilder(format)
                 .html(parseString(object, JSON_SCRIPT))
@@ -108,6 +114,7 @@ public class ResponseParser {
                 .token(parseString(settings, JSON_TOKEN))
                 .packageIds(parseArray(settings, JSON_PACKAGE_IDS))
                 .partPreload(preload)
+                .video360(video360)
                 .build();
     }
 

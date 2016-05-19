@@ -35,7 +35,7 @@ public abstract class BaseAd implements AdTargeting {
     private Context mContext;
     private String mAppKey;
 
-    protected volatile ViewController mViewController;
+    protected volatile AdController mAdController;
 
     protected Future mFuture;
     protected String mRequestUrl;
@@ -116,8 +116,8 @@ public abstract class BaseAd implements AdTargeting {
             return;
         }
 
-        if (mViewController == null) {
-            mViewController = new ViewController(this);
+        if (mAdController == null) {
+            mAdController = new AdController(this);
         }
 
         mAdState = AdState.LOADING;
@@ -241,8 +241,9 @@ public abstract class BaseAd implements AdTargeting {
             onAdLoadFail(new LoopMeError("Broken response"));
             ErrorTracker.post("Broken response (empty html)");
         } else {
-            if (mViewController != null) {
-                mViewController.preloadHtml(html);
+            if (mAdController != null) {
+                mAdController.initControllers();
+                mAdController.preloadHtml(html);
             } else {
                 onAdLoadFail(new LoopMeError("Html loading error"));
             }
@@ -310,8 +311,8 @@ public abstract class BaseAd implements AdTargeting {
         AdvIdFetcher advTask = new AdvIdFetcher(mContext, new AdvIdFetcher.Listener() {
 
             @Override
-            public void onComplete(String advId) {
-                AdRequestParametersProvider.getInstance().setGoogleAdvertisingId(advId);
+            public void onComplete(String advId, boolean isLimited) {
+                AdRequestParametersProvider.getInstance().setGoogleAdvertisingId(advId, isLimited);
                 fetchAd();
             }
         });
@@ -321,15 +322,15 @@ public abstract class BaseAd implements AdTargeting {
     protected void releaseViewController() {
         Logging.out(LOG_TAG, "Release ViewController");
 
-        if (mViewController != null) {
-            mViewController.destroy();
-            mViewController = null;
+        if (mAdController != null) {
+            mAdController.destroy();
+            mAdController = null;
         }
     }
 
     protected void startExpirationTimer() {
         if (mExpirationTimer != null || mAdParams == null ||
-                mViewController == null || !mViewController.isVideoPresented()) {
+                mAdController == null || !mAdController.isVideoPresented()) {
             return;
         }
         int validTime = mAdParams.getExpiredTime();
@@ -446,7 +447,7 @@ public abstract class BaseAd implements AdTargeting {
         mAdTargetingData.setCustomParameters(param, paramValue);
     }
 
-    ViewController getViewController() {
-        return mViewController;
+    AdController getAdController() {
+        return mAdController;
     }
 }

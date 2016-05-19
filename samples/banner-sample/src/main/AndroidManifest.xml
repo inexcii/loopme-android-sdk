@@ -48,8 +48,8 @@
         <activity
             android:name="com.loopme.AdActivity"
             android:theme="@android:style/Theme.Translucent"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:hardwareAccelerated="true"/>
+            android:configChanges="orientation|keyboardHidden|screenSize"/>
+
         <activity android:name="com.loopme.AdBrowserActivity"/>
         <receiver android:name="com.loopme.data.LoopMeReceiver"/>
         <!--   LoopMe activity end  -->

@@ -7,6 +7,8 @@ public interface BridgeInterface {
 
     void setFullscreenMode(boolean mode);
 
+    void send360Event(String str);
+
     //video commands
     void setVideoState(int state);
 

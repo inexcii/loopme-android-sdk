@@ -72,7 +72,7 @@ public class LoopMeBanner extends BaseAd {
     LoopMeBanner(Context context, String appKey) {
         super(context, appKey);
 
-        mViewController = new ViewController(this);
+        mAdController = new AdController(this);
 
         Utils.init(context);
         DebugController.init(context);
@@ -97,8 +97,8 @@ public class LoopMeBanner extends BaseAd {
     }
 
     private void ensureAdIsVisible() {
-        if (mViewController != null) {
-            mViewController.ensureAdIsVisible(mBannerView);
+        if (mAdController != null) {
+            mAdController.ensureAdIsVisible(mBannerView);
         }
     }
 
@@ -113,8 +113,12 @@ public class LoopMeBanner extends BaseAd {
             mBannerView.removeAllViews();
             mBannerView = null;
         }
-        if (mViewController != null) {
-            mViewController.destroyMinimizedView();
+        if (mAdController != null) {
+            mAdController.destroyMinimizedView();
+            if (mAdController.getViewController() != null) {
+                mAdController.getViewController().onPause();
+                mAdController.getViewController().onDestroy();
+            }
         }
 
         super.destroy();
@@ -135,9 +139,9 @@ public class LoopMeBanner extends BaseAd {
     }
 
     public void setMinimizedMode(MinimizedMode mode) {
-        if (mViewController != null && mode != null) {
+        if (mAdController != null && mode != null) {
             Logging.out(LOG_TAG, "Set minimized mode");
-            mViewController.setMinimizedMode(mode);
+            mAdController.setMinimizedMode(mode);
         }
     }
 
@@ -160,14 +164,17 @@ public class LoopMeBanner extends BaseAd {
      * Needs to be triggered on appropriate Activity life-cycle method "onPause()".
      */
     public void pause() {
-        if (mViewController != null) {
-            if (mViewController.getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
+        if (mAdController != null) {
+            if (mAdController.getViewController() != null) {
+                mAdController.getViewController().onPause();
+            }
+            if (mAdController.getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
                 return;
             }
 
-            if (mViewController.getCurrentVideoState() == VideoState.PLAYING) {
+            if (mAdController.getCurrentVideoState() == VideoState.PLAYING) {
                 Logging.out(LOG_TAG, "pause Ad");
-                mViewController.setWebViewState(WebviewState.HIDDEN);
+                mAdController.setWebViewState(WebviewState.HIDDEN);
             }
         }
     }
@@ -195,11 +202,16 @@ public class LoopMeBanner extends BaseAd {
             return;
         }
         if (isReady() && mBannerView != null) {
-            Logging.out(LOG_TAG, "Banner did start showing ad");
+            Logging.out(LOG_TAG, "Banner did start showing ad (native)");
             mAdState = AdState.SHOWING;
             stopExpirationTimer();
 
-            mViewController.buildVideoAdView(mBannerView);
+            mAdController.buildVideoAdView(mBannerView);
+            if (getAdParams().isVideo360()) {
+                IViewController v360 = mAdController.getViewController();
+                v360.initVRLibrary(getContext());
+                v360.onResume();
+            }
 
             if (mBannerView.getVisibility() != View.VISIBLE) {
                 mBannerView.setVisibility(View.VISIBLE);
@@ -220,7 +232,12 @@ public class LoopMeBanner extends BaseAd {
             mAdState = AdState.SHOWING;
             stopExpirationTimer();
 
-            mViewController.buildVideoAdView(mBannerView);
+            mAdController.buildVideoAdView(mBannerView);
+            if (getAdParams().isVideo360()) {
+                IViewController v360 = mAdController.getViewController();
+                v360.initVRLibrary(getContext());
+                v360.onResume();
+            }
 
             if (mBannerView.getVisibility() != View.VISIBLE) {
                 mBannerView.setVisibility(View.VISIBLE);
@@ -233,8 +250,8 @@ public class LoopMeBanner extends BaseAd {
                         @Override
                         public void onGlobalLayout() {
                             Logging.out(LOG_TAG, "onGlobalLayout");
-                            if (mViewController != null &&
-                                    mViewController.getCurrentDisplayMode() != DisplayMode.FULLSCREEN) {
+                            if (mAdController != null &&
+                                    mAdController.getCurrentDisplayMode() != DisplayMode.FULLSCREEN) {
                                 ensureAdIsVisible();
                             }
                             if (observer.isAlive()) {
@@ -256,20 +273,25 @@ public class LoopMeBanner extends BaseAd {
 
     public void resume() {
         Logging.out(LOG_TAG, "resume");
-        ensureAdIsVisible();
+        if (mAdController != null) {
+            ensureAdIsVisible();
+            if (mAdController.getViewController() != null) {
+                mAdController.getViewController().onResume();
+            }
+        }
     }
 
-    ViewController getViewController() {
-        return mViewController;
+    AdController getAdController() {
+        return mAdController;
     }
 
     void switchToMinimizedMode() {
-        if (mAdState == AdState.SHOWING && mViewController != null && !mIsVideoFinished) {
-            if (mViewController.isBackFromExpand()) {
+        if (mAdState == AdState.SHOWING && mAdController != null && !mIsVideoFinished) {
+            if (mAdController.isBackFromExpand()) {
                 return;
             }
-            if (mViewController.isMinimizedModeEnable() ) {
-                mViewController.switchToMinimizedMode();
+            if (mAdController.isMinimizedModeEnable() ) {
+                mAdController.switchToMinimizedMode();
             } else {
                 pause();
             }
@@ -281,8 +303,8 @@ public class LoopMeBanner extends BaseAd {
     }
 
     void switchToNormalMode() {
-        if (mAdState == AdState.SHOWING && mViewController != null) {
-            mViewController.switchToNormalMode();
+        if (mAdState == AdState.SHOWING && mAdController != null) {
+            mAdController.switchToNormalMode();
         }
     }
 
@@ -304,9 +326,12 @@ public class LoopMeBanner extends BaseAd {
                 mBannerView.setVisibility(View.GONE);
                 mBannerView.removeAllViews();
             }
-            if (mViewController != null) {
-                mViewController.destroyMinimizedView();
-                mViewController.setWebViewState(WebviewState.CLOSED);
+            if (mAdController != null) {
+                mAdController.destroyMinimizedView();
+                mAdController.setWebViewState(WebviewState.CLOSED);
+                if (mAdController.getViewController() != null) {
+                    mAdController.getViewController().onPause();
+                }
             }
             onLoopMeBannerHide();
         } else {
@@ -329,8 +354,8 @@ public class LoopMeBanner extends BaseAd {
         mAdState = AdState.NONE;
         mIsReady = false;
         stopFetcherTimer();
-        if (mViewController != null) {
-            mViewController.resetFullScreenCommandCounter();
+        if (mAdController != null) {
+            mAdController.resetFullScreenCommandCounter();
         }
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLoadFail(this, error);
@@ -415,13 +440,13 @@ public class LoopMeBanner extends BaseAd {
 
             @Override
             public void run() {
-                if (mViewController != null) {
-                    mViewController.switchToNormalMode();
+                if (mAdController != null) {
+                    mAdController.switchToNormalMode();
                 }
             }
         };
         Handler handler = new Handler(Looper.getMainLooper());
-        if (mViewController.getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
+        if (mAdController.getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
             handler.postDelayed(runnable, StaticParams.SHRINK_MODE_KEEP_AFTER_FINISH_TIME);
         }
 
