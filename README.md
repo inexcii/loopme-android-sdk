@@ -34,8 +34,18 @@ Requires `Android` 4.0 and up
 
 ## SDK Integration ##
 
-* Download latest version of loopme-sdk
-* Add dependency to loopme-sdk project
+* Download latest version of loopme-sdk (.aar file) and put it in folder `libs`
+* Add dependency to loopme-sdk in your project (build.gradle file):
+```java
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+dependencies {
+    compile(name:'loopme-sdk-5.0', ext:'aar')
+}
+```
 
 ## Full screen interstitial ads ##
 
