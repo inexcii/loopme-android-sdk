@@ -36,30 +36,9 @@ Requires `Android` 4.0 and up
 
 * Download latest version of loopme-sdk
 * Add dependency to loopme-sdk project
-* Update `AndroidManifest.xml` with perfmissions:
-```xml
-//Required permissions
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-//Optional permissions
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.VIBRATE" />
-<uses-permission android:name="android.permission.GET_ACCOUNTS"/>
-<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-```
-activities and receiver:
-```xml
-<activity android:name="com.loopme.AdActivity" 
-            android:theme="@android:style/Theme.Translucent"
-            android:configChanges="orientation|keyboardHidden|screenSize" />
-<activity android:name="com.loopme.AdBrowserActivity" />
-<receiver android:name="com.loopme.data.LoopMeReceiver"/>
-```
 ## Full screen interstitial ads ##
+
 * Create `LoopMeInterstitial` instance and retrieve ads. For test purposes use `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL` app keys.
 ```java
 public class YourActivity extends Activity implements LoopMeInterstitial.Listener {
