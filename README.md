@@ -6,36 +6,38 @@
 2. **[Features](#features)**
 3. **[Requirements](#requirements)**
 4. **[SDK Integration](#sdk-integration)**
-  * **[Full screen interstitial ads](#full-screen-interstitial-ads)**
+  * **[Interstitial ads](#interstitial-ads)**
   * **[Banner ads](#banner-ads)**
+  * **[Native video ads](#native-video-ads)**
+  * **[Check integration](#check-integration)**
 5. **[Sample projects](#sample-projects)**
-6. **[What's new](#whats-new)**
+6. **[Advanced Settings](#advanced-settings)**
+7. **[FAQ](#faq)**
+8. **[What's new](#whats-new)**
 
 ## Overview ##
 
-LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen video and rich media ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
+LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide. LoopMe’s full-screen and banner ad formats deliver more engaging mobile advertising experiences to consumers on smartphones and tablets.
 
 If you have questions please contact us at support@loopmemedia.com.
 
 ## Features ##
 
-* Full-screen interstitials (image/rich media/video/360 video)
+* Interstitial, banner, native video ad formats
+* Image / Rich media / Video / 360 video
 * Preloaded video ads
-* Banner ads
 * Minimized video mode
 * Expand to fullscreen mode
 * In-app ad reward notifications, including video view completed
 
 ## Requirements ##
 
-An appKey is required to use the `loopme-android-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](http://loopme.me/)**.
-
-Requires `Android` 4.0 and up
+Requires `Android` 4.1 and up
 
 ## SDK Integration ##
 
-* Download latest version of loopme-sdk (.aar file) and put it in folder `libs`
-* Add dependency to loopme-sdk in your project (build.gradle file):
+* Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`
+* Add dependency to `loopme-sdk` in your project (`build.gradle` file):
 ```java
 repositories {
     flatDir {
@@ -43,13 +45,23 @@ repositories {
     }
 }
 dependencies {
-    compile(name:'loopme-sdk-5.0', ext:'aar')
+    compile(name:'loopme-sdk-[version]', ext:'aar')
 }
 ```
+An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](http://loopme.me/)**. <br>
 
-## Full screen interstitial ads ##
+<b>Note</b>: For testing purposes better to use pre-installed app keys:<br>
+For interstitial - `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL`<br>
+For banner and native video - `LoopMeBanner.TEST_MPU`
+<br><br>Then if everything is ok, you can change pre-installed app key to your real app key.
 
-* Create `LoopMeInterstitial` instance and retrieve ads. For test purposes use `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL` app keys.
+<br>Integration instructions for different ad types (Image / Rich media / Video / 360 video) are same.
+
+## Interstitial ads ##
+
+<img src="screenshots/interstitial.png" alt="Interstitial" width="128" align="middle">
+
+* Init and load
 ```java
 public class YourActivity extends Activity implements LoopMeInterstitial.Listener {
   
@@ -59,27 +71,18 @@ public class YourActivity extends Activity implements LoopMeInterstitial.Listene
   protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 
-	/**
-	 * Initialize the interstitial ad
- 	 * using the unique appKey you received when registering your app via the LoopMe Dashboard.
- 	 * For test purposes you can use test appKeys constants defined in LoopMeInterstitial.java
- 	*/
-	mInterstitial = LoopMeInterstitial.getInstance(YOUR_APPKEY, getApplicationContext());
+	mInterstitial = LoopMeInterstitial.getInstance(YOUR_APPKEY, this);
 	mInterstitial.setListener(this);
 	
-	/**
- 	 * Starts loading ad content process.
- 	 * It is recommended triggering it in advance to have interstitial ad ready 
- 	 * and to be able to display instantly in your application.
- 	*/
 	mInterstitial.load();
   }
 }
 ```
 
-* Display interstitial ads
+* Show interstitial ads
 
-Displaying the `LoopMeInterstitial` can be user-initiated (e.g press on button) or publisher-initiated (e.g. end of game level)
+Displaying the `LoopMeInterstitial` can be user-initiated (e.g press on button) or publisher-initiated (e.g. end of game level)<br>
+<b>NOTE:</b> This method should be triggered after receive `onLoopMeInterstitialLoadSuccess()` notification.
 ```java
   mInterstitial.show();
 ```
@@ -102,7 +105,10 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
  * `-onLoopMeInterstitialClicked`: triggered when interstitial ad was clicked
  * `-onLoopMeInterstitialExpired`: triggered when interstitial ad is expired, it is recommended to re-load
 
+
 ## Banner ads ##
+
+<img src="screenshots/banner.png" alt="Banner" width="128">
 
 `LoopMeBanner` class provides facilities to display a custom size ads during natural transition points in your application.
 
@@ -110,9 +116,76 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 ```xml
 <activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
 ```
+* Add `LoopMeBannerView` in layout xml
+* Init `LoopMeBanner`
+```java
+public class SimpleBannerActivity extends AppCompatActivity implements LoopMeBanner.Listener {
 
-### Banner inside ListView/RecyclerView ###
+    private LoopMeBanner mBanner;
+    private LoopMeBannerView mAdSpace;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //some code
+
+        mAdSpace = (LoopMeBannerView) findViewById(R.id.video_ad_spot);
+
+        mBanner = LoopMeBanner.getInstance(YOUR_APPKEY, this);
+        mBanner.setListener(this);
+        mBanner.bindView(mAdSpace);
+        mBanner.load();
+    }
+
+    @Override
+    protected void onPause() {
+        mBanner.pause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        mBanner.resume();
+        super.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        mBanner.destroy();
+        super.onBackPressed();
+    }
+}
+```
+* Display banner
+<br><b>NOTE:</b> This method should be triggered after receive `onLoopMeBannerLoadSuccess()` notification.
+```java
+mBanner.show();
+```
+
+* `LoopMeBanner` notifications:
+
+Implement `LoopMeBanner.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
+ * `-onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
+ * `-onLoopMeBannerLoadFail`: triggered when banner failed to load the ad content
+ * `-onLoopMeBannerShow`: triggered when banner appeared on the screen
+ * `-onLoopMeBannerHide`: triggered when banner disappeared from the screen
+ * `-onLoopMeBannerVideoDidReachEnd`: triggered when video in banner has been completely watched
+ * `-onLoopMeBannerClicked`: triggered when banner was clicked
+ * `-onLoopMeBannerExpired`: triggered when banner is expired, it is recommended to re-load
+ * `-onLoopMeBannerLeaveApp`: triggered if SDK initiated app switching. E.g after click on ad user is redirected to market (or any other native app)
+
+
+## Native video ads ##
+
+<img src="screenshots/normal.png" alt="Native video" width="128">
+
+Native video ads used to show banner inside `ListView`/`RecyclerView`.
+
+* Update `AndroidManifest.xml`:
+```xml
+<activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
+```
 * Create xml layout for ad.
 ```xml  
 list_ad_row.xml
@@ -130,7 +203,8 @@ list_ad_row.xml
 </RelativeLayout>
 ```
 
-* Init `NativeVideoAdapter` (For test purposes you can use test app key constant defined in LoopMeBanner.java). 
+* Init `NativeVideoAdapter`.
+<br>In case of integration in `RecyclerView`, you need to use `NativeVideoRecyclerAdapter` class.
 
 ```java
 public class YourActivity extends Activity implements LoopMeBanner.Listener {
@@ -181,71 +255,58 @@ public class YourActivity extends Activity implements LoopMeBanner.Listener {
 ```
 Ad will be shown automaticly after load complete. 
 
-### Banner in non-scrollable content ###
 
-* Add `LoopMeBannerView` in layout xml
-* Init `LoopMeBanner`
-```java
-public class SimpleBannerActivity extends AppCompatActivity implements LoopMeBanner.Listener {
+## Check integration ##
 
-    private LoopMeBanner mBanner;
-    private LoopMeBannerView mAdSpace;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        //some code
-
-        mAdSpace = (LoopMeBannerView) findViewById(R.id.video_ad_spot);
-
-        mBanner = LoopMeBanner.getInstance(YOUR_APPKEY, this);
-        mBanner.setListener(this);
-        mBanner.bindView(mAdSpace);
-        mBanner.load();
-    }
-
-    @Override
-    protected void onPause() {
-        mBanner.pause();
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        mBanner.resume();
-        super.onResume();
-    }
-
-    @Override
-    public void onBackPressed() {
-        mBanner.destroy();
-        super.onBackPressed();
-    }
-}
-```
-* Display banner
-```java
-mBanner.show();
-```
-
-* `LoopMeBanner` notifications:
-
-Implement `LoopMeBanner.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
- * `-onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
- * `-onLoopMeBannerLoadFail`: triggered when banner failed to load the ad content
- * `-onLoopMeBannerShow`: triggered when banner appeared on the screen
- * `-onLoopMeBannerHide`: triggered when banner disappeared from the screen
- * `-onLoopMeBannerVideoDidReachEnd`: triggered when video in banner has been completely watched
- * `-onLoopMeBannerClicked`: triggered when banner was clicked
- * `-onLoopMeBannerExpired`: triggered when banner is expired, it is recommended to re-load
- * `-onLoopMeBannerLeaveApp`: triggered if SDK initiated app switching. E.g after click on ad user is redirected to market (or any other native app)
+If everything done correctly you will get loadSuccess() notification and see ads. 
+<br>If something wrong check LogCat.
+In case of "No ads found" error - contact to your LoopMe manager (it is about campaign configuration).
 
 ## Sample projects ##
 
 Check out our project samples:
-- `banner-sample` as an example of `LoopMeBanner` integration within `ListView` and `RecyclerView`
-- `interstitial-sample` as an example of `LoopMeInterstitial` integration
+- `banner-sample` as an example of integration banner and native video ads
+- `interstitial-sample` as an example of interstitial integration
+
+## Advanced Settings ##
+
+* <b>Custom request parameters</b><br>
+You can add new parameter(s) in request by calling:
+`addCustomParameter(String param, String paramValue)` method from `LoopMeInterstitial` or `LoopMeBanner` instance.
+
+* <b>Clear cache</b><br>
+For remove all videos ads from cache call `clearCache()` method from `LoopMeInterstitial` or `LoopMeBanner` instance.
+
+* <b>Check current ad status</b><br>
+There are few commands to check current ad status:
+`isLoading()`, `isReady()`, `isShowing()`.
+
+* <b>Change cache storage time</b><br>
+By default, video files stays in cache during 32 hours. If you need to change it call 
+`setVideoCacheTimeInterval(long milliseconds)` value.
+
+* <b>Targeting params</b><br>
+Targeting settings include gender, year of birth and keywords. Define it with `setGender(String gender)`, `setYob(int yob)` and `setKeywords(String keywords)` methods from `LoopMeInterstitial` or `LoopMeBanner` instance.
+They will be added in ad request.
+
+* <b>Config minimized mode</b><br>
+Minimized mode can be configured only for native video ads.
+```java
+// root_view - the root view in layout
+RelativeLayout root = (RelativeLayout) findViewById(R.id.root_view);
+MinimizedMode mode = new MinimizedMode(root);
+mNativeVideoAdapter.setMinimizedMode(mode);
+```
+<img src="screenshots/normal.png" alt="Native video" width="128">
+<img src="screenshots/shrink.png" alt="Minimized mode" width="128">
+
+* <b>Config preloading settings</b><br>
+By default video ad can be loaded only on wi-fi connection. To turn on it also for mobile network you need to call `useMobileNetworkForCaching(true)`
+
+## FAQ ##
+1. <b>Which API supports 'In-app ad reward notifications, including video view completed'?</b>
+<br>For interstitial use `onLoopMeInterstitialVideoDidReachEnd()` notification (triggered when interstitial video ad has been completely watched).<br>
+For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 
 ## What's new ##
 
@@ -254,6 +315,7 @@ Check out our project samples:
 -  Bug fixes (mailto links, sound, etc.)
 
 See [Changelog](CHANGELOG.md)
+
 
 ## License ##
 
