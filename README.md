@@ -36,8 +36,10 @@ Requires `Android` 4.1 and up
 
 ## SDK Integration ##
 
-* Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`
-* Add dependency to `loopme-sdk` in your project (`build.gradle` file):
+<h3>Download</h3>
+There are 2 ways:<br>
+1. Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs` <br>
+Add dependency to `loopme-sdk` in your project (`build.gradle` file):
 ```java
 repositories {
     flatDir {
@@ -46,6 +48,16 @@ repositories {
 }
 dependencies {
     compile(name:'loopme-sdk-[version]', ext:'aar')
+}
+```
+<br>2. LoopMe SDK is available as an AAR via jCenter; to use it, add the following to your `build.gradle`:
+```
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.loopme:loopme-sdk:5.0@aar'
 }
 ```
 An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](http://loopme.me/)**. <br>
