@@ -1,92 +1,93 @@
 package com.mopub.mobileads;
 
-import java.util.Map;
-
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
 import com.loopme.LoopMeInterstitial;
+import com.loopme.common.LoopMeError;
+
+import java.util.Map;
 
 public class LoopMeMopubInterstitial extends CustomEventInterstitial implements LoopMeInterstitial.Listener {
 
-	private static final String LOG_TAG = LoopMeMopubInterstitial.class.getSimpleName();
+    private static final String LOG_TAG = LoopMeMopubInterstitial.class.getSimpleName();
 
-	private LoopMeInterstitial mInterstitial;
+    private LoopMeInterstitial mInterstitial;
     private String mLoopMeAppId;
 
     private CustomEventInterstitialListener mInterstitialListener;
-	private Activity mActivity;
+    private Activity mActivity;
 
     @Override
-	public void loadInterstitial(Context context,
-			CustomEventInterstitialListener mInterstitialListener,
-			Map<String, Object> localExtras, Map<String, String> serverExtras) {
+    public void loadInterstitial(Context context,
+                                 CustomEventInterstitialListener mInterstitialListener,
+                                 Map<String, Object> localExtras, Map<String, String> serverExtras) {
 
         Log.d(LOG_TAG, "Bridge loadInterstitial");
 
-		this.mInterstitialListener = mInterstitialListener;
-		mActivity = null;
-		if (context instanceof Activity) {
-			mActivity = (Activity) context;
-		} else {
-			// You may also pass in an Activity Context in the localExtras map and retrieve it here.
-		}
+        this.mInterstitialListener = mInterstitialListener;
+        mActivity = null;
+        if (context instanceof Activity) {
+            mActivity = (Activity) context;
+        } else {
+            // You may also pass in an Activity Context in the localExtras map and retrieve it here.
+        }
 
         mLoopMeAppId = serverExtras.get("app_key");
 
         mInterstitial = LoopMeInterstitial.getInstance(mLoopMeAppId, mActivity);
         mInterstitial.setListener(this);
         mInterstitial.load();
-	}
+    }
 
-	@Override
-	public void showInterstitial() {
-		Log.d(LOG_TAG, "Bridge showInterstitial");
+    @Override
+    public void showInterstitial() {
+        Log.d(LOG_TAG, "Bridge showInterstitial");
         if (mInterstitial.isReady()) {
             mInterstitial.show();
         }
-	}
+    }
 
-	@Override
-	public void onInvalidate() {
-	}
-	
-	@Override
-	public void onLoopMeInterstitialClicked(LoopMeInterstitial arg0) {
-		mInterstitialListener.onInterstitialClicked();
-	}
+    @Override
+    public void onInvalidate() {
+    }
 
-	@Override
-	public void onLoopMeInterstitialExpired(LoopMeInterstitial arg0) {}
+    @Override
+    public void onLoopMeInterstitialClicked(LoopMeInterstitial arg0) {
+        mInterstitialListener.onInterstitialClicked();
+    }
 
-	@Override
-	public void onLoopMeInterstitialHide(LoopMeInterstitial arg0) {
-		mInterstitialListener.onInterstitialDismissed();
-	}
+    @Override
+    public void onLoopMeInterstitialExpired(LoopMeInterstitial arg0) {
+    }
 
-	@Override
-	public void onLoopMeInterstitialLeaveApp(LoopMeInterstitial arg0) {
-		mInterstitialListener.onLeaveApplication();
-	}
+    @Override
+    public void onLoopMeInterstitialHide(LoopMeInterstitial arg0) {
+        mInterstitialListener.onInterstitialDismissed();
+    }
 
-	@Override
-	public void onLoopMeInterstitialLoadSuccess(LoopMeInterstitial arg0) {
-		mInterstitialListener.onInterstitialLoaded();
-	}
+    @Override
+    public void onLoopMeInterstitialLeaveApp(LoopMeInterstitial arg0) {
+        mInterstitialListener.onLeaveApplication();
+    }
 
-	@Override
-	public void onLoopMeInterstitialLoadFail(LoopMeInterstitial loopMeInterstitial, int i) {
-		mInterstitialListener.onInterstitialFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
-	}
+    @Override
+    public void onLoopMeInterstitialLoadSuccess(LoopMeInterstitial arg0) {
+        mInterstitialListener.onInterstitialLoaded();
+    }
 
-	@Override
-	public void onLoopMeInterstitialShow(LoopMeInterstitial arg0) {
-		mInterstitialListener.onInterstitialShown();
-	}
+    @Override
+    public void onLoopMeInterstitialLoadFail(LoopMeInterstitial loopMeInterstitial, LoopMeError i) {
+        mInterstitialListener.onInterstitialFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
+    }
 
-	@Override
-	public void onLoopMeInterstitialVideoDidReachEnd(
-			LoopMeInterstitial interstitial) {
-	}
+    @Override
+    public void onLoopMeInterstitialShow(LoopMeInterstitial arg0) {
+        mInterstitialListener.onInterstitialShown();
+    }
+
+    @Override
+    public void onLoopMeInterstitialVideoDidReachEnd(LoopMeInterstitial interstitial) {
+    }
 }

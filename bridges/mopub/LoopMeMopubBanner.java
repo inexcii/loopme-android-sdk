@@ -7,9 +7,10 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ListView;
 import android.widget.ScrollView;
-import com.loopme.LoopMeAdapter;
+
 import com.loopme.LoopMeBanner;
 import com.loopme.LoopMeBannerView;
+import com.loopme.common.LoopMeError;
 
 import java.util.Map;
 
@@ -25,7 +26,8 @@ public class LoopMeMopubBanner extends CustomEventBanner implements LoopMeBanner
     private LoopMeBannerView mLoopMeBannerView;
 
     @Override
-    protected void loadBanner(Context context, CustomEventBannerListener customEventBannerListener, Map<String, Object> map, Map<String, String> map1) {
+    protected void loadBanner(Context context, CustomEventBannerListener customEventBannerListener,
+                              Map<String, Object> map, Map<String, String> map1) {
         Log.d(LOG_TAG, "Bridge loadBanner");
 
         mBannerListener = customEventBannerListener;
@@ -58,18 +60,9 @@ public class LoopMeMopubBanner extends CustomEventBanner implements LoopMeBanner
     public void onLoopMeBannerLoadSuccess(LoopMeBanner loopMeBanner) {
         MoPubView view = new MoPubView(mActivity);
         mBannerListener.onBannerLoaded(view);
-
-        mLoopMeBannerView.setVisibility(View.VISIBLE);
-        final ViewTreeObserver observer = mLoopMeBannerView.getViewTreeObserver();
-        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if (mBanner != null) {
-                    mBanner.show();
-                }
-                mLoopMeBannerView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-            }
-        });
+        if (mBanner != null) {
+            mBanner.show();
+        }
     }
 
     public static void pause() {
@@ -80,19 +73,7 @@ public class LoopMeMopubBanner extends CustomEventBanner implements LoopMeBanner
 
     public static void resume() {
         if (mBanner != null) {
-            mBanner.show();
-        }
-    }
-
-    public static void resume(ScrollView scrollview) {
-        if (mBanner != null) {
-            mBanner.showAdIfItVisible(scrollview);
-        }
-    }
-
-    public static void resume(LoopMeAdapter adapter, ListView listview) {
-        if (mBanner != null) {
-            mBanner.showAdIfItVisible(adapter, listview);
+            mBanner.resume();
         }
     }
 
@@ -104,7 +85,7 @@ public class LoopMeMopubBanner extends CustomEventBanner implements LoopMeBanner
     }
 
     @Override
-    public void onLoopMeBannerLoadFail(LoopMeBanner loopMeBanner, int i) {
+    public void onLoopMeBannerLoadFail(LoopMeBanner loopMeBanner, LoopMeError i) {
         mBannerListener.onBannerFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
     }
 
