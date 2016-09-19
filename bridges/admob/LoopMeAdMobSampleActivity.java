@@ -90,7 +90,6 @@ public class LoopMeAdMobSampleActivity extends AppCompatActivity implements View
             mShowButton.setEnabled(false);
 
             AdRequest.Builder builder = new AdRequest.Builder();
-            builder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
             mInterstitialAd.loadAd(builder.build());
 
         } else if (view == mShowButton) {

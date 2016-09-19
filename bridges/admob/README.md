@@ -25,30 +25,15 @@ You will need the app key during next steps of integration.
 
 ## Adding LoopMe Android SDK ##
 
-* Download latest version of `loopme-sdk`
-* Add dependency to `loopme-sdk` project
-* Update `AndroidManifest.xml` with permissions:
-```xml
-//Required permissions
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+* Add the following to your `build.gradle`:
+```java
+repositories {
+    jcenter()
+}
 
-//Optional permissions
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.VIBRATE" />
-<uses-permission android:name="android.permission.GET_ACCOUNTS"/>
-<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-```
-and add the following activities and receiver:
-```xml
-<activity android:name="com.loopme.AdActivity" 
-            android:theme="@android:style/Theme.Translucent"
-            android:configChanges="orientation|keyboardHidden|screenSize" 
-            android:hardwareAccelerated="true"/>
-<activity android:name="com.loopme.AdBrowserActivity" />
-<receiver android:name="com.loopme.data.LoopMeReceiver"/>
+dependencies {
+    compile 'com.loopme:loopme-sdk:5.0@aar'
+}
 ```
 
 ## Adding LoopMe's AdMob Bridge ##
