@@ -7,22 +7,22 @@ import android.os.Looper;
 import android.text.TextUtils;
 
 import com.loopme.common.AdFetcherTimer;
+import com.loopme.common.AdParams;
 import com.loopme.common.EventManager;
 import com.loopme.common.ExecutorHelper;
-import com.loopme.constants.AdFormat;
-import com.loopme.common.AdParams;
-import com.loopme.data.DataCollector;
-import com.loopme.request.AdRequestParametersProvider;
-import com.loopme.request.AdRequestUrlBuilder;
-import com.loopme.request.AdTargeting;
-import com.loopme.request.AdTargetingData;
 import com.loopme.common.ExpirationTimer;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
+import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
+import com.loopme.request.AdRequestParametersProvider;
+import com.loopme.request.AdRequestUrlBuilder;
+import com.loopme.request.AdTargeting;
+import com.loopme.request.AdTargetingData;
 import com.loopme.tasks.AdFetcher;
 import com.loopme.tasks.AdvIdFetcher;
 
@@ -67,7 +67,8 @@ public abstract class BaseAd implements AdTargeting {
         mContext = context;
         mAppKey = appKey;
 
-        DataCollector.getInstance(mContext).start();
+        AdRequestParametersProvider.getInstance().setAppKey(mAppKey);
+        AdRequestParametersProvider.getInstance().detectPackage(mContext);
     }
 
     /**
@@ -130,8 +131,8 @@ public abstract class BaseAd implements AdTargeting {
             return;
         }
 
-        if (Build.VERSION.SDK_INT < 14) {
-            onAdLoadFail(new LoopMeError("Not supported Android version. Expected Android 4.0+"));
+        if (Build.VERSION.SDK_INT < 19) {
+            onAdLoadFail(new LoopMeError("Not supported Android version. Expected Android 4.4+"));
             return;
         }
 
@@ -239,7 +240,7 @@ public abstract class BaseAd implements AdTargeting {
     private void preloadHtmlInWebview(String html) {
         if (TextUtils.isEmpty(html)) {
             onAdLoadFail(new LoopMeError("Broken response"));
-            ErrorTracker.post("Broken response (empty html)");
+            ErrorLog.post("Broken response (empty html)", ErrorType.SERVER);
         } else {
             if (mAdController != null) {
                 mAdController.initControllers();

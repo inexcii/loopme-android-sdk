@@ -2,7 +2,6 @@ package com.loopme;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
@@ -20,7 +19,7 @@ import com.loopme.constants.DisplayMode;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.constants.WebviewState;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +50,7 @@ class NativeVideoController {
         void onDataSetChanged();
     }
 
-    public NativeVideoController(@NonNull Context context) {
+    public NativeVideoController(Context context) {
         mContext = context;
     }
 
@@ -207,7 +206,7 @@ class NativeVideoController {
         mItemCount = itemsCount;
 
         if (mAppKeysMap.size() == 0) {
-            ErrorTracker.post("No ads for loading");
+            ErrorLog.post("No ads for loading");
         }
 
         LoopMeBanner.Listener bannerListener = initBannerListener();

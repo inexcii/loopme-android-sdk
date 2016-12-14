@@ -9,4 +9,6 @@ public class ConnectionType {
     public static final int MOBILE_2G = 4;
     public static final int MOBILE_3G = 5;
     public static final int MOBILE_4G = 6;
+
+    private ConnectionType(){}
 }

@@ -2,7 +2,8 @@ package com.loopme.common;
 
 import android.text.TextUtils;
 
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,10 @@ public class AdParams {
         mFormat = builder.mBuilderFormat;
         mHtml = builder.mBuilderHtml;
         mOrientation = builder.mBuilderOrientation;
-        mExpiredDate = builder.mBuilderExpiredDate;
+
+        mExpiredDate = builder.mBuilderExpiredDate == 0 ?
+            StaticParams.DEFAULT_EXPIRED_TIME :
+            builder.mBuilderExpiredDate;
 
         mPackageIds = builder.mPackageIds;
         mToken = builder.mToken;
@@ -114,7 +118,7 @@ public class AdParams {
 
         public AdParamsBuilder html(String html) {
             if (TextUtils.isEmpty(html)) {
-                ErrorTracker.post("Broken response (empty html");
+                ErrorLog.post("Broken response [empty html]", ErrorType.SERVER);
             }
             mBuilderHtml = html;
             return this;
@@ -125,7 +129,7 @@ public class AdParams {
                 mBuilderOrientation = orientation;
             } else {
                 if (!TextUtils.isEmpty(mBuilderFormat) && mBuilderFormat.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG))
-                ErrorTracker.post("Broken response (invalid orientation: " + orientation + ")");
+                ErrorLog.post("Broken response [invalid orientation: " + orientation + "]", ErrorType.SERVER);
             }
             return this;
         }

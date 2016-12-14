@@ -10,8 +10,8 @@ import com.loopme.common.LoopMeError;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.AdState;
-import com.loopme.debugging.DebugController;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.LiveDebug;
+import com.loopme.debugging.ErrorLog;
 
 /**
  * The `LoopMenterstitial` class provides the facilities to display a full-screen ad
@@ -67,7 +67,7 @@ public final class LoopMeInterstitial extends BaseAd {
         mAdController = new AdController(this);
 
         Utils.init(context);
-        DebugController.init(context);
+        LiveDebug.init(context);
     }
 
     /**
@@ -76,6 +76,7 @@ public final class LoopMeInterstitial extends BaseAd {
      *
      * @param appKey  - your app key
      * @param context - application context
+     * @return instance of LoopMeInterstitial
      */
     public static LoopMeInterstitial getInstance(String appKey, Context context) {
         if (Build.VERSION.SDK_INT >= 14) {
@@ -122,6 +123,7 @@ public final class LoopMeInterstitial extends BaseAd {
 
     /**
      * Sets listener in order to receive notifications during the loading/displaying ad processes
+     * @param listener - Listener
      */
     public void setListener(Listener listener) {
         mAdListener = listener;
@@ -158,7 +160,7 @@ public final class LoopMeInterstitial extends BaseAd {
             mShowWhenAdNotReadyCounter++;
             Logging.out(LOG_TAG, "Interstitial is not ready (" + mShowWhenAdNotReadyCounter +
                     " time(s))");
-            ErrorTracker.post("Interstitial is not ready");
+            ErrorLog.post("Interstitial is not ready");
         }
     }
 

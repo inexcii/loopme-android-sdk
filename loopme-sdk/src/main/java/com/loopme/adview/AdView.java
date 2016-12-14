@@ -1,12 +1,14 @@
 package com.loopme.adview;
 
 import android.content.Context;
+import android.os.Build;
 import android.text.TextUtils;
 import android.webkit.WebSettings;
 import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 
 import com.loopme.common.Logging;
+import com.loopme.common.StaticParams;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
 
@@ -60,9 +62,6 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
         return false;
     }
 
-    /**
-     * Add listener of js commands
-     */
     public void addBridgeListener(Bridge.Listener listener) {
         mBridgeListener = listener;
     }

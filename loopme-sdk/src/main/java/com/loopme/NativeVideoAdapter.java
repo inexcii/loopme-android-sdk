@@ -247,7 +247,7 @@ public class NativeVideoAdapter extends BaseAdapter implements AdChecker,
 
     @Override
     public boolean isAd(int i) {
-        return mNativeVideoController.getNativeVideoAd(i) != null ? true : false;
+        return mNativeVideoController.getNativeVideoAd(i) != null;
     }
 
     @Override

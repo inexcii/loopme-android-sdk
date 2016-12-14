@@ -3,6 +3,7 @@ package com.loopme;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
+import android.os.Build;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.ViewGroup;
@@ -41,7 +42,9 @@ public class ViewController implements TextureView.SurfaceTextureListener, IView
     @Override
     public void buildVideoAdView(Context context, ViewGroup bannerView, AdView adView) {
         mTextureView = new TextureView(context);
-        mTextureView.setBackgroundColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT < 23) {
+            mTextureView.setBackgroundColor(Color.TRANSPARENT);
+        }
         mTextureView.setSurfaceTextureListener(this);
 
         adView.setBackgroundColor(Color.TRANSPARENT);

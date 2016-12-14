@@ -25,11 +25,8 @@ public class LogDbHelper extends SQLiteOpenHelper {
             " (" + ID + " integer primary key autoincrement," +
             LOG + " text not null);";
 
-    private Context mContext;
-
     public LogDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        mContext = context;
     }
 
     @Override
@@ -41,10 +38,6 @@ public class LogDbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         this.onCreate(sqLiteDatabase);
-    }
-
-    Context getContext() {
-        return mContext;
     }
 
     public void putLog(String logMessage) {
@@ -62,7 +55,9 @@ public class LogDbHelper extends SQLiteOpenHelper {
     public int getCount(SQLiteDatabase db) {
         String query = "SELECT  * FROM " + TABLE_NAME;
         Cursor cursor = db.rawQuery(query, null);
-        return cursor.getCount();
+        int count = cursor.getCount();
+        cursor.close();
+        return count;
     }
 
     public List<String> getLogs() {

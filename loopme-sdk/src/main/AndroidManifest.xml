@@ -11,15 +11,13 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <application android:allowBackup="true">
+    <application>
 
         <activity
             android:name="com.loopme.AdActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:hardwareAccelerated="true"/>
         <activity android:name="com.loopme.AdBrowserActivity"/>
-
-        <receiver android:name="com.loopme.data.LoopMeReceiver"/>
 
     </application>
 

@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
@@ -23,23 +21,25 @@ import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.os.Build;
+import android.content.res.Resources;
 
 import com.loopme.constants.StretchOption;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 public class Utils {
 
     private static final String LOG_TAG = Utils.class.getSimpleName();
 
-    private static Context sContext;
     private static WindowManager sWindowManager;
+    private static Resources sResources;
+    private static LocationManager sLocationManager;
+    private static PackageManager sPackageManager;
+    private static AudioManager sAudioManager;
 
     public static boolean isOnline(Context context) {
         boolean isOnline;
@@ -63,13 +63,22 @@ public class Utils {
     }
 
     public static int convertDpToPixel(float dp) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
-                sContext.getResources().getDisplayMetrics());
+        if (sResources != null) {
+            return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                    sResources.getDisplayMetrics());
+        } else {
+            return 0;
+        }
     }
 
     public static void init(Context context) {
-        sContext = context;
-        sWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (context != null) {
+            sWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            sResources = context.getResources();
+            sLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            sPackageManager = context.getPackageManager();
+            sAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        }
     }
 
     public static String getStringFromStream(InputStream inputStream) {
@@ -92,13 +101,12 @@ public class Utils {
     public static Location getLastKnownLocation() {
         Location result;
 
-        LocationManager locationManager = (LocationManager) sContext.getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager == null) {
+        if (sLocationManager == null) {
             return null;
         }
         Location gpsLocation = null;
         try {
-            gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            gpsLocation = sLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         } catch (SecurityException e) {
             Logging.out(LOG_TAG, "Failed to retrieve GPS location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
@@ -107,7 +115,7 @@ public class Utils {
 
         Location networkLocation = null;
         try {
-            networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            networkLocation = sLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         } catch (SecurityException e) {
             Logging.out(LOG_TAG, "Failed to retrieve network location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
@@ -133,22 +141,20 @@ public class Utils {
         return result;
     }
 
-    public static DisplayMetrics getDisplayMetrics(Context context) {
+    public static DisplayMetrics getDisplayMetrics() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        if (windowManager == null) {
+        if (sWindowManager == null) {
             return displayMetrics;
         }
-        windowManager.getDefaultDisplay().getMetrics(displayMetrics);
+        sWindowManager.getDefaultDisplay().getMetrics(displayMetrics);
         return displayMetrics;
     }
 
     public static boolean isPackageInstalled(List<String> packadeId) {
-        if (sContext == null) {
+        if (sPackageManager == null) {
             return false;
         }
-        PackageManager pm = sContext.getPackageManager();
-        List<PackageInfo> packages = pm.getInstalledPackages(0);
+        List<PackageInfo> packages = sPackageManager.getInstalledPackages(0);
 
         for (PackageInfo packageInfo : packages) {
             for (int i = 0; i < packadeId.size(); i++) {
@@ -167,13 +173,9 @@ public class Utils {
     }
 
     public static float getSystemVolume() {
-        if (sContext == null) {
-            return 1.0f;
-        }
-        AudioManager am = (AudioManager) sContext.getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            int volume_level = am.getStreamVolume(AudioManager.STREAM_RING);
-            int max = am.getStreamMaxVolume(AudioManager.STREAM_RING);
+        if (sAudioManager != null) {
+            int volume_level = sAudioManager.getStreamVolume(AudioManager.STREAM_RING);
+            int max = sAudioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
             int percent = Math.round(volume_level * 100 / max);
             return (float) percent / 100;
         } else {
@@ -181,11 +183,11 @@ public class Utils {
         }
     }
 
-    public static int getScreenOrientation(Activity activity) {
+    public static int getScreenOrientation() {
 
-        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        int rotation = sWindowManager.getDefaultDisplay().getRotation();
         DisplayMetrics dm = new DisplayMetrics();
-        activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        sWindowManager.getDefaultDisplay().getMetrics(dm);
         int width = dm.widthPixels;
         int height = dm.heightPixels;
         int orientation;
@@ -242,28 +244,20 @@ public class Utils {
     }
 
     public static int getScreenWidth() {
-        if (sContext == null) {
+        if (sWindowManager == null) {
             return 0;
         }
-        WindowManager wm = (WindowManager) sContext.getSystemService(Context.WINDOW_SERVICE);
-        if (wm == null) {
-            return 0;
-        }
-        Display display = wm.getDefaultDisplay();
+        Display display = sWindowManager.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
         return size.x;
     }
 
     public static int getScreenHeight() {
-        if (sContext == null) {
+        if (sWindowManager == null) {
             return 0;
         }
-        WindowManager wm = (WindowManager) sContext.getSystemService(Context.WINDOW_SERVICE);
-        if (wm == null) {
-            return 0;
-        }
-        Display display = wm.getDefaultDisplay();
+        Display display = sWindowManager.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
         return size.y;
@@ -341,5 +335,12 @@ public class Utils {
 
     public static void clearCache(Context context) {
         VideoUtils.clearCache(context);
+    }
+
+    public static boolean isEmulator() {
+        return Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK")
+                || Build.MANUFACTURER.contains("Genymotion");
     }
 }

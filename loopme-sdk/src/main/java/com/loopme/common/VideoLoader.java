@@ -5,7 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 import com.loopme.request.AdRequestParametersProvider;
 import com.loopme.constants.ConnectionType;
 
@@ -49,6 +50,7 @@ public class VideoLoader {
 
     public void start() {
         Logging.out(LOG_TAG, "start");
+        handleEmulator();
         Logging.out(LOG_TAG, "Use mobile network for caching: " + StaticParams.USE_MOBILE_NETWORK_FOR_CACHING);
         VideoUtils.deleteInvalidVideoFiles(mContext);
 
@@ -78,6 +80,13 @@ public class VideoLoader {
         }
     }
 
+    private void handleEmulator() {
+        if (Utils.isEmulator()) {
+            Logging.out(LOG_TAG, "running on emulator");
+            StaticParams.USE_MOBILE_NETWORK_FOR_CACHING = true;
+        }
+    }
+
     private void load(String filename, boolean preview) {
         if (mStop) {
             return;
@@ -98,7 +107,7 @@ public class VideoLoader {
                 lengthOfFile = mConnection.getContentLength();
                 mConnection.disconnect();
 
-                if(mStop) {
+                if (mStop) {
                     return;
                 }
 
@@ -129,7 +138,7 @@ public class VideoLoader {
                 int length;
 
                 while ((length = stream.read(buffer)) != -1) {
-                    mOutputStream.write(buffer,0, length);
+                    mOutputStream.write(buffer, 0, length);
                     downloaded += length;
                 }
 
@@ -143,12 +152,13 @@ public class VideoLoader {
                 if (mCallback != null) {
                     mCallback.onError(new LoopMeError("Error during loading video"));
                 }
-                ErrorTracker.post("Bad asset: " + mVideoUrl);
+                ErrorLog.post("Bad asset[responseCode == " + mConnection.getResponseCode() + "]:" + mVideoUrl,
+                        ErrorType.BAD_ASSET);
             }
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            ErrorTracker.post("Bad asset: " + mVideoUrl);
+            ErrorLog.post("Bad asset[MalformedURLException]: " + mVideoUrl, ErrorType.BAD_ASSET);
 
         } catch (IOException e) {
             Logging.out(LOG_TAG, "Exception: " + e.getMessage());
@@ -189,7 +199,7 @@ public class VideoLoader {
         }
         Logging.out(LOG_TAG, "reconnect " + downloadedBefore + " " + preview);
         if (downloadedBefore == 0) {
-            ErrorTracker.post("Bad asset: " + mVideoUrl);
+            ErrorLog.post("Bad asset[loaded 0 bytes]: " + mVideoUrl, ErrorType.BAD_ASSET);
             if (mCallback != null) {
                 mCallback.onError(new LoopMeError("Error during video loading"));
             }
@@ -286,7 +296,9 @@ public class VideoLoader {
 
     public interface Callback {
         void onError(LoopMeError error);
+
         void onPreviewLoaded(String filePath);
+
         void onFullVideoLoaded(String filePath);
     }
 }

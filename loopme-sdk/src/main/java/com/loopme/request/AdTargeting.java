@@ -26,6 +26,7 @@ public interface AdTargeting {
      * A string representing a set of keywords
      * Keywords are typically used to target ad campaigns at specific user segments.
      * Keywords should be formatted as comma-separated value (e.g. "keyword1,keyword2").
+     * @param keywords - keywords
      */
     void setKeywords(String keywords);
 

@@ -676,7 +676,11 @@ public class AdController {
     private boolean surfaceTextureDestroyed() {
         Logging.out(LOG_TAG, "onSurfaceTextureDestroyed");
         mVideoController.setSurfaceTextureAvailable(false);
-        mVideoController.setSurface(null);
+        try {
+            mVideoController.setSurface(null);
+        } catch (IllegalStateException e) {
+            //
+        }
         return true;
     }
 }

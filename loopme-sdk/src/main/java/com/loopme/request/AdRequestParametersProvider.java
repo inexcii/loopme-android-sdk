@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -20,6 +21,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.loopme.adview.AdView;
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
 import com.loopme.constants.ConnectionType;
@@ -44,6 +46,9 @@ public class AdRequestParametersProvider {
     private String mCarrier;
     private boolean mCarrierInited;
 
+    private String mAppKey;
+    private String mPackageId;
+
     private AdRequestParametersProvider() {
     }
 
@@ -52,6 +57,22 @@ public class AdRequestParametersProvider {
             sProvider = new AdRequestParametersProvider();
         }
         return sProvider;
+    }
+
+    public void detectPackage(Context context) {
+        mPackageId = context.getPackageName();
+    }
+
+    public String getPackage() {
+        return mPackageId;
+    }
+
+    public void setAppKey(String appKey) {
+        mAppKey = appKey;
+    }
+
+    public String getAppKey() {
+        return mAppKey;
     }
 
     public void reset() {
@@ -146,7 +167,7 @@ public class AdRequestParametersProvider {
         try {
             mAppVersion = context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
-        } catch (NameNotFoundException e) {
+        } catch (NameNotFoundException | NullPointerException e) {
             Logging.out(LOG_TAG, "Can't get app version. Exception: " + e.getMessage());
             mAppVersion = "0.0";
         }
@@ -169,7 +190,7 @@ public class AdRequestParametersProvider {
     }
 
     public String getOrientation(Context context) {
-        if (context == null) {
+        if (context == null || context.getResources() == null) {
             return "";
         }
         int orientation = context.getResources().getConfiguration().orientation;
@@ -303,6 +324,7 @@ public class AdRequestParametersProvider {
     }
 
     /**
+     * @param context - Context
      * @return result[0] - charge level: 0..1
      * result[1] - plugged type: USB,AC,WL,CHRG,NCHRG
      */
@@ -379,4 +401,27 @@ public class AdRequestParametersProvider {
         return result;
     }
 
+    public String getWebViewVersion(Context context) {
+        String result = "unknown";
+        if (context == null) {
+            return result;
+        }
+        PackageManager pm = context.getPackageManager();
+        try {
+            // Android System WebView started from 5.0
+            PackageInfo pi = pm.getPackageInfo("com.google.android.webview", 0);
+            result = pi.versionName;
+            Logging.out(LOG_TAG, "WebView version: " + result);
+        } catch (PackageManager.NameNotFoundException e) {
+            Logging.out(LOG_TAG, "Android System WebView is not found. Trying to get it from user agent");
+            String[] s = AdView.CHROME_USER_AGENT.split(" ");
+            for (int i = 0; i < s.length; i++) {
+                if (s[i].startsWith("Chrome")) {
+                    String[] s2 = s[i].split("/");
+                    result = s2[1];
+                }
+            }
+        }
+        return result;
+    }
 }

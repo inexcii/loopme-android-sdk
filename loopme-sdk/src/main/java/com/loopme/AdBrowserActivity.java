@@ -208,8 +208,7 @@ public final class AdBrowserActivity extends Activity {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
 
                     boolean isActivityResolved = getPackageManager()
-                            .resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY) != null
-                            ? true : false;
+                            .resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY) != null;
                     if (isActivityResolved) {
                         startActivity(browserIntent);
                         mBaseAd.onAdLeaveApp();

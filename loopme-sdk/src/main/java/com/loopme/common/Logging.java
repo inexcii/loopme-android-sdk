@@ -3,8 +3,7 @@ package com.loopme.common;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.loopme.common.StaticParams;
-import com.loopme.debugging.DebugController;
+import com.loopme.debugging.LiveDebug;
 
 public class Logging {
 
@@ -21,6 +20,6 @@ public class Logging {
         if (StaticParams.DEBUG_MODE) {
             Log.i(logTag, text);
         }
-        DebugController.handle(logTag, text);
+        LiveDebug.handle(logTag, text);
     }
 }

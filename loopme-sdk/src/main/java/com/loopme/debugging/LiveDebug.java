@@ -5,6 +5,7 @@ import android.os.CountDownTimer;
 import android.os.Looper;
 import android.os.Handler;
 
+import com.loopme.common.StaticParams;
 import com.loopme.request.AdRequestParametersProvider;
 import com.loopme.common.Logging;
 
@@ -23,23 +24,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DebugController {
+public class LiveDebug {
 
-    private static final String LOG_TAG = DebugController.class.getSimpleName();
-
-    private static final String URL = "http://loopme.me/api/errors";
-    private static final String MSG = "msg";
-    private static final String TOKEN = "token";
-    private static final String PACKAGE = "package";
-    private static final String DEBUG_LOGS = "debug_logs";
-
-    private static final String MSG_VALUE = "sdk_debug";
-
-    private static final String CONTENT_TYPE = "application/x-www-form-urlencoded";
+    private static final String LOG_TAG = LiveDebug.class.getSimpleName();
 
     //default debug time is 5 minutes
     private static final int DEBUG_TIME = 5 * 60 * 1000;
-    private static final int REQUEST_TIMEOUT = 10000;
 
     private static LogDbHelper sLogDbHelper;
     private static ExecutorService sExecutor = Executors.newSingleThreadExecutor();
@@ -100,7 +90,7 @@ public class DebugController {
                 if (sLogDbHelper != null) {
                     Logging.out(LOG_TAG, "send to server");
                     Map<String, String> params = initPostDataParams();
-                    postDataToServer(params);
+                    HttpUtils.postDataToServer(params);
                 }
             }
         });
@@ -110,11 +100,15 @@ public class DebugController {
         String debugLogs = initLogsString();
         AdRequestParametersProvider provider = AdRequestParametersProvider.getInstance();
 
-        Map<String, String> params = new HashMap<>(4);
-        params.put(MSG, MSG_VALUE);
-        params.put(TOKEN, provider.getViewerToken());
-        params.put(PACKAGE, sLogDbHelper.getContext().getPackageName());
-        params.put(DEBUG_LOGS, debugLogs);
+        Map<String, String> params = new HashMap<>();
+        params.put(Params.DEVICE_OS, "android");
+        params.put(Params.SDK_TYPE, "loopme");
+        params.put(Params.SDK_VERSION, StaticParams.SDK_VERSION);
+        params.put(Params.DEVICE_ID, provider.getViewerToken());
+        params.put(Params.PACKAGE_ID, provider.getPackage());
+        params.put(Params.APP_KEY, provider.getAppKey());
+        params.put(Params.MSG, "sdk_debug");
+        params.put(Params.DEBUG_LOGS, debugLogs);
 
         return params;
     }
@@ -131,68 +125,6 @@ public class DebugController {
             return sb.toString();
         }
         return null;
-    }
-
-    private static void postDataToServer(final Map<String, String> params) {
-        URL url;
-        HttpURLConnection urlConnection = null;
-
-        try {
-            url = new URL(URL);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setReadTimeout(REQUEST_TIMEOUT);
-            urlConnection.setConnectTimeout(REQUEST_TIMEOUT);
-            urlConnection.setRequestMethod("POST");
-            urlConnection.setDoInput(true);
-            urlConnection.setDoOutput(true);
-
-            urlConnection.setRequestProperty("Content-Type", CONTENT_TYPE);
-
-            OutputStream os = urlConnection.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(
-                    new OutputStreamWriter(os, "UTF-8"));
-
-            String data = getPostDataString(params);
-            writer.write(data);
-            writer.flush();
-            writer.close();
-            os.close();
-
-            urlConnection.connect();
-
-            int code = urlConnection.getResponseCode();
-            Logging.out(LOG_TAG, "response code : " + code);
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage());
-
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-        }
-    }
-
-    private static String getPostDataString(Map<String, String> params) throws UnsupportedEncodingException{
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        for(Map.Entry<String, String> entry : params.entrySet()){
-            if (first) {
-                first = false;
-            } else {
-                result.append("&");
-            }
-
-            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-        }
-        return result.toString();
     }
 
     private static void saveLog(String logTag, String text) {

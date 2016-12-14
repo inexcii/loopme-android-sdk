@@ -17,8 +17,8 @@ import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
-import com.loopme.debugging.DebugController;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.LiveDebug;
+import com.loopme.debugging.ErrorLog;
 
 /**
  * The `LoopMeBanner` class provides facilities to display a custom size ads
@@ -75,7 +75,7 @@ public class LoopMeBanner extends BaseAd {
         mAdController = new AdController(this);
 
         Utils.init(context);
-        DebugController.init(context);
+        LiveDebug.init(context);
 
         Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey);
     }
@@ -86,6 +86,7 @@ public class LoopMeBanner extends BaseAd {
      *
      * @param appKey  - your app key
      * @param context - Activity context
+     * @return instance of LoopMeBanner
      */
     public static LoopMeBanner getInstance(String appKey, Context context) {
         if (Build.VERSION.SDK_INT >= 14) {
@@ -181,6 +182,7 @@ public class LoopMeBanner extends BaseAd {
 
     /**
      * Sets listener in order to receive notifications during the loading/displaying ad processes
+     * @param listener - Listener
      */
     public void setListener(Listener listener) {
         mAdListener = listener;
@@ -218,7 +220,7 @@ public class LoopMeBanner extends BaseAd {
             }
             onLoopMeBannerShow();
         } else {
-            ErrorTracker.post("Banner is not ready");
+            ErrorLog.post("Banner is not ready");
         }
     }
 
@@ -267,13 +269,13 @@ public class LoopMeBanner extends BaseAd {
 
             onLoopMeBannerShow();
         } else {
-            ErrorTracker.post("Banner is not ready");
+            ErrorLog.post("Banner is not ready");
         }
     }
 
     public void resume() {
         Logging.out(LOG_TAG, "resume");
-        if (mAdController != null) {
+        if (mAdController != null && isReady()) {
             ensureAdIsVisible();
             if (mAdController.getViewController() != null) {
                 mAdController.getViewController().onResume();

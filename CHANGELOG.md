@@ -1,3 +1,7 @@
+## Version 5.1.0 (14 of December, 2016)
+- Updated error log
+- Bug fixes
+
 ## Version 5.0 (19 of May, 2016)
 
 - INTRODUCING LOOPME 360 VIDEO, THE ONLY FULL-SCREEN 360 SOLUTION DELIVERING GLOBAL SCALE

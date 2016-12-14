@@ -32,7 +32,7 @@ If you have questions please contact us at support@loopmemedia.com.
 
 ## Requirements ##
 
-Requires `Android` 4.1 and up
+Requires `Android` 4.4 and up
 
 ## SDK Integration ##
 
@@ -57,9 +57,10 @@ repositories {
 }
 
 dependencies {
-    compile 'com.loopme:loopme-sdk:5.0@aar'
+    compile 'com.loopme:loopme-sdk:5.1.0@aar'
 }
 ```
+
 An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](http://loopme.me/)**. <br>
 
 <b>Note</b>: For testing purposes better to use pre-installed app keys:<br>
@@ -101,7 +102,7 @@ Displaying the `LoopMeInterstitial` can be user-initiated (e.g press on button) 
 
 * Destroy interstitial
 
-Destroy when it is no longer needed to clean up resources
+Destroy when it is no longer needed to clean up resources.
 ```java
   mInterstitial.destroy();
 ```
@@ -322,9 +323,9 @@ For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 
 ## What's new ##
 
-**Version 5.0**
--  INTRODUCING LOOPME 360 VIDEO, THE ONLY FULL-SCREEN 360 SOLUTION DELIVERING GLOBAL SCALE
--  Bug fixes (mailto links, sound, etc.)
+**Version 5.1.0**
+- Updated error log
+- Bug fixes
 
 See [Changelog](CHANGELOG.md)
 

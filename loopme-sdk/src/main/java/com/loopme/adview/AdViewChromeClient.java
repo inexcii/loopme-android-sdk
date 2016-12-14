@@ -5,7 +5,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
 import com.loopme.common.Logging;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 
 public class AdViewChromeClient extends WebChromeClient {
 
@@ -19,7 +20,7 @@ public class AdViewChromeClient extends WebChromeClient {
             Logging.out(LOG_TAG, "Console Message: " + consoleMessage.message());
         }
         if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
-            ErrorTracker.post("Error from js console: " + consoleMessage.message());
+            ErrorLog.post("Error from js console: " + consoleMessage.message(), ErrorType.JS);
         }
         return super.onConsoleMessage(consoleMessage);
     }

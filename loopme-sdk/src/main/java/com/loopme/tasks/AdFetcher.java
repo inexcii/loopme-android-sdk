@@ -7,13 +7,12 @@ import com.loopme.common.LoopMeError;
 import com.loopme.common.ResponseParser;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 
@@ -97,7 +96,7 @@ public class AdFetcher implements Runnable {
             if (status == HttpURLConnection.HTTP_NOT_FOUND) {
                 InputStream errorStream = urlConnection.getErrorStream();
                 String errorString = Utils.getStringFromStream(errorStream);
-                if (errorString != null && errorString.contains(INVALID_APPKEY_MESS)) {
+                if (errorString.contains(INVALID_APPKEY_MESS)) {
                     mLoopMeError = new LoopMeError(INVALID_APPKEY_MESS);
                 } else {
                     mLoopMeError = new LoopMeError(PAGE_NOT_FOUND);
@@ -107,29 +106,14 @@ public class AdFetcher implements Runnable {
 
             if (status == HttpURLConnection.HTTP_OK) {
                 InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                if (in != null) {
-                    result = Utils.getStringFromStream(in);
-                } else {
-                    return null;
-                }
+                result = Utils.getStringFromStream(in);
             }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            mLoopMeError = new LoopMeError("Error during establish connection");
-
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            mLoopMeError = new LoopMeError("Error during establish connection");
-
         } catch (SocketTimeoutException e) {
             mLoopMeError = new LoopMeError("Request timeout");
-            ErrorTracker.post("Timeout");
-
-        } catch (IOException e) {
+            ErrorLog.post("timeout[ad_request]", ErrorType.SERVER);
+        } catch (Exception e) {
             e.printStackTrace();
             mLoopMeError = new LoopMeError("Error during establish connection");
-
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -141,24 +125,16 @@ public class AdFetcher implements Runnable {
 
     private void handleStatusCode(int statusCode) {
         switch (statusCode) {
+            case HttpURLConnection.HTTP_OK:
+                break;
+
             case HttpURLConnection.HTTP_NO_CONTENT:
                 mLoopMeError = new LoopMeError("No ads found");
                 break;
 
-            case HttpURLConnection.HTTP_NOT_FOUND:
-                break;
-
-            case HttpURLConnection.HTTP_OK:
-                break;
-
-            case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-                mLoopMeError = new LoopMeError("Server code " + statusCode);
-                ErrorTracker.post("504");
-                break;
-
             default:
-                mLoopMeError = new LoopMeError("Unknown server code " + statusCode);
-                ErrorTracker.post("Unknown server code " + statusCode);
+                mLoopMeError = new LoopMeError("Server status code: " + statusCode);
+                ErrorLog.post("Server status code: " + statusCode, ErrorType.SERVER);
                 break;
         }
     }

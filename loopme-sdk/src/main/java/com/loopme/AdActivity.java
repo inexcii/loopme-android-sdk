@@ -21,7 +21,6 @@ import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.WebviewState;
 
-//todo combine VRActivity and AdActivity
 public final class AdActivity extends Activity implements AdReceiver.Listener {
 
     private static final String LOG_TAG = AdActivity.class.getSimpleName();
@@ -81,7 +80,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-        mInitialOrientation = Utils.getScreenOrientation(this);
+        mInitialOrientation = Utils.getScreenOrientation();
 
         String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
         if (TextUtils.isEmpty(appKey)) {

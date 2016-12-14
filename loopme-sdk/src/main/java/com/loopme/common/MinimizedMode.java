@@ -20,7 +20,7 @@ public class MinimizedMode {
         }
         mRoot = root;
 
-        DisplayMetrics dm = Utils.getDisplayMetrics(root.getContext());
+        DisplayMetrics dm = Utils.getDisplayMetrics();
         // portrait mode
         if (dm.heightPixels > dm.widthPixels) {
             mWidth = dm.widthPixels / 2;

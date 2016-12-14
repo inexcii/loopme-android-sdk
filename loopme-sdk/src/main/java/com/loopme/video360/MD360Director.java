@@ -241,39 +241,9 @@ public class MD360Director {
         private float mEyeZ = 0f;
         private float mAngle = 0;
         private float mRatio = 1.5f;
-        private float mNear = 0.7f;
+        private float mNear = 0.4f;
         private float mEyeX = 0f;
         private float mLookX = 0f;
-
-        public Builder setLookX(float mLookX) {
-            this.mLookX = mLookX;
-            return this;
-        }
-
-        public Builder setEyeX(float mEyeX) {
-            this.mEyeX = mEyeX;
-            return this;
-        }
-
-        public Builder setEyeZ(float mEyeZ) {
-            this.mEyeZ = mEyeZ;
-            return this;
-        }
-
-        public Builder setAngle(float mAngle) {
-            this.mAngle = mAngle;
-            return this;
-        }
-
-        public Builder setRatio(float mRatio) {
-            this.mRatio = mRatio;
-            return this;
-        }
-
-        public Builder setNear(float mNear) {
-            this.mNear = mNear;
-            return this;
-        }
 
         public MD360Director build(){
             return new MD360Director(this);

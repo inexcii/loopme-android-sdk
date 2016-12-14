@@ -33,6 +33,7 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_WIFI_NAME = "wn";
     private static final String PARAM_CHARGE_LEVEL = "chl";
     private static final String PARAM_PLUGGED = "plg";
+    private static final String PARAM_WEBVIEW_VERSION = "webview";
 
     /**
      * Optional targeting parameters
@@ -52,9 +53,6 @@ public class AdRequestUrlBuilder {
         }
     }
 
-    /**
-     * Build and return request url
-     */
     public String buildRequestUrl(String appKey, AdTargetingData metadata) {
 
         Logging.out(LOG_TAG, "Start build request url");
@@ -87,7 +85,8 @@ public class AdRequestUrlBuilder {
                 .appendQueryParameter(PARAM_MRAID, provider.getMraidSupport())
                 .appendQueryParameter(PARAM_ORIENTATION, provider.getOrientation(mContext))
                 .appendQueryParameter(PARAM_VIEWER_TOKEN, provider.getViewerToken())
-                .appendQueryParameter(PARAM_BUNDLE_ID, mContext.getPackageName());
+                .appendQueryParameter(PARAM_BUNDLE_ID, mContext.getPackageName())
+                .appendQueryParameter(PARAM_WEBVIEW_VERSION, provider.getWebViewVersion(mContext));
 
         String latitude = provider.getLatitude();
         if (latitude != null) {
@@ -126,7 +125,7 @@ public class AdRequestUrlBuilder {
             builder.appendQueryParameter(PARAM_YEAR_OF_BIRTH, String.valueOf(metadata.getYob()));
         }
 
-        if (!metadata.getCustomParameters().isEmpty()) {
+        if (metadata != null && !metadata.getCustomParameters().isEmpty()) {
             for (CustomRequestParameter crp : metadata.getCustomParameters()) {
                 builder.appendQueryParameter(crp.getParamName(), crp.getParamValue());
             }

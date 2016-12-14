@@ -28,7 +28,7 @@ public class MD360Program {
      * 1. create a program handle
      * 2. compileShader
      * 3. link program
-     * 4. get attribute handle && uniform handle
+     * 4. get attribute handle and uniform handle
      * @param context
      */
     public void build(Context context){

@@ -5,7 +5,7 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 import com.loopme.common.Logging;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
 
 public class LoopMeBannerView extends FrameLayout {
 
@@ -56,7 +56,7 @@ public class LoopMeBannerView extends FrameLayout {
         super.onAttachedToWindow();
         if (!isHardwareAccelerated()) {
             Logging.out(LOG_TAG, "Warning: hardware acceleration is off");
-            ErrorTracker.post("Hardware acceleration is off");
+            ErrorLog.post("Hardware acceleration is off");
         }
     }
 }

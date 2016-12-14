@@ -17,7 +17,7 @@ import com.loopme.common.LoopMeError;
 import com.loopme.common.Utils;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
 
 import java.io.IOException;
 
@@ -126,7 +126,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
-    public void setSurface(Surface surface) {
+    public void setSurface(Surface surface) throws IllegalStateException {
         Log.d(LOG_TAG, "setSurface " + surface);
         mSurface = surface;
         if (mPlayer != null) {
@@ -321,7 +321,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
                     @Override
                     public void onFinish() {
-                        ErrorTracker.post("Buffering 2 seconds");
+                        ErrorLog.post("Buffering 2 seconds");
                     }
                 };
                 mBufferingTimer.start();

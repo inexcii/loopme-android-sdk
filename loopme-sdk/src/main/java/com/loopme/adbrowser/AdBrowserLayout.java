@@ -48,7 +48,7 @@ public final class AdBrowserLayout extends RelativeLayout {
         LinearLayout buttonsContainer = new LinearLayout(context);
         configButtonsContainer(buttonsContainer);
 
-        int buttonWidth = Utils.getDisplayMetrics(context).widthPixels / 5;
+        int buttonWidth = Utils.getDisplayMetrics().widthPixels / 5;
         RelativeLayout.LayoutParams buttons_params = new RelativeLayout.LayoutParams(
                 buttonWidth, ViewGroup.LayoutParams.MATCH_PARENT);
 

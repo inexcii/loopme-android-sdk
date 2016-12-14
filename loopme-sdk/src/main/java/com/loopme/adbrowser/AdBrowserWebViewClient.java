@@ -10,7 +10,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.loopme.common.Logging;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 
 import java.net.URISyntaxException;
 
@@ -93,7 +94,7 @@ public class AdBrowserWebViewClient extends WebViewClient {
             uri = Uri.parse(url);
         } catch (NullPointerException ex) {
             ex.printStackTrace();
-            ErrorTracker.post("Wrong redirect (" + url + ")");
+            ErrorLog.post("Wrong redirect (" + url + ")", ErrorType.JS);
             return false;
         }
         if (uri == null) {
@@ -104,7 +105,7 @@ public class AdBrowserWebViewClient extends WebViewClient {
         String host = uri.getHost();
 
         if (TextUtils.isEmpty(scheme)) {
-            ErrorTracker.post("Wrong redirect (" + url + ")");
+            ErrorLog.post("Wrong redirect (" + url + ")", ErrorType.JS);
             return false;
         }
 
@@ -179,7 +180,7 @@ public class AdBrowserWebViewClient extends WebViewClient {
             }
         } catch (Exception e) {
             mListener.onReceiveError();
-            ErrorTracker.post("Wrong redirect (" + url + ")");
+            ErrorLog.post("Wrong redirect (" + url + ")", ErrorType.JS);
         }
     }
 
@@ -195,7 +196,7 @@ public class AdBrowserWebViewClient extends WebViewClient {
             }
         } catch (URISyntaxException e) {
             mListener.onReceiveError();
-            ErrorTracker.post("Wrong redirect (" + url + ")");
+            ErrorLog.post("Wrong redirect (" + url + ")", ErrorType.JS);
         }
     }
 
@@ -239,6 +240,6 @@ public class AdBrowserWebViewClient extends WebViewClient {
         String mess = "onReceivedError: " + description;
         Logging.out(LOG_TAG, mess);
         mListener.onReceiveError();
-        ErrorTracker.post("Wrong redirect " + failingUrl + " (" + description + ")");
+        ErrorLog.post("Wrong redirect " + failingUrl + " (" + description + ")", ErrorType.JS);
     }
 }

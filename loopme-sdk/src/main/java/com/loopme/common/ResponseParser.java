@@ -1,8 +1,9 @@
 package com.loopme.common;
 
 import com.loopme.constants.AdFormat;
-import com.loopme.debugging.DebugController;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorType;
+import com.loopme.debugging.LiveDebug;
+import com.loopme.debugging.ErrorLog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,9 +26,6 @@ public class ResponseParser {
     private static final String JSON_TOKEN = "token";
     private static final String JSON_DEBUG = "debug";
     private static final String JSON_PART_PRELOAD = "preload25";
-
-    private static final String JSON_TRACKING = "tracking";
-    private static final String JSON_ERROR = "error";
 
     private static final  String JSON_V360 = "v360";
 
@@ -56,16 +54,11 @@ public class ResponseParser {
 
         try {
             object = (JSONObject) new JSONTokener(result).nextValue();
-
-            JSONObject tracking = parseJsonObject(object, JSON_TRACKING);
-            String errorUrl = extractTrackingUrl(tracking);
-            ErrorTracker.init(errorUrl);
-
             settings = object.getJSONObject(JSON_SETTINGS);
 
             format = settings.getString(JSON_FORMAT);
             if (!isValidFormat(format)) {
-                ErrorTracker.post("Broken response (wrong format parameter: " + format + ")");
+                ErrorLog.post("Broken response [wrong format parameter: " + format + "]", ErrorType.SERVER);
             }
             String requestedFormat;
             switch (mAdFormat) {
@@ -86,26 +79,26 @@ public class ResponseParser {
 
         } catch (JSONException e) {
             handleParseError("Exception during json parse");
-            ErrorTracker.post("Broken response");
+            ErrorLog.post("Broken response", ErrorType.SERVER);
             return null;
 
         } catch (ClassCastException ex) {
             ex.printStackTrace();
             handleParseError("Exception during json parse");
-            ErrorTracker.post("Broken response");
+            ErrorLog.post("Broken response", ErrorType.SERVER);
             return null;
         }
 
         int debugValue = parseInt(settings, JSON_DEBUG);
-        boolean debug = debugValue == 1 ? true : false;
-        DebugController.setLiveDebug(debug);
+        boolean debug = debugValue == 1;
+        LiveDebug.setLiveDebug(debug);
 
         int preloadValue = parseInt(settings, JSON_PART_PRELOAD);
-        boolean preload = preloadValue == 1? true : false;
+        boolean preload = preloadValue == 1;
         StaticParams.PART_PRELOAD = preload;//todo remove. only for tester
 
         int video360Value = parseInt(settings, JSON_V360);
-        boolean video360 = video360Value == 1 ? true : false;
+        boolean video360 = video360Value == 1;
 
         return new AdParams.AdParamsBuilder(format)
                 .html(parseString(object, JSON_SCRIPT))
@@ -122,11 +115,8 @@ public class ResponseParser {
         if (format == null) {
             return false;
         }
-        if (format.equalsIgnoreCase(StaticParams.BANNER_TAG) ||
-                format.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG)) {
-            return true;
-        }
-        return false;
+        return format.equalsIgnoreCase(StaticParams.BANNER_TAG) ||
+                format.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG);
     }
 
     private void handleParseError(String mess) {
@@ -175,18 +165,6 @@ public class ResponseParser {
             value = object.getInt(jsonParam);
         } catch (JSONException e) {
             Logging.out(LOG_TAG, jsonParam + " absent");
-        }
-        return value;
-    }
-
-    private String extractTrackingUrl(JSONObject tracking) {
-        String value = null;
-        try {
-            if (tracking != null) {
-                value = tracking.getJSONArray(JSON_ERROR).getString(0);
-            }
-        } catch (JSONException e) {
-            Logging.out(LOG_TAG, JSON_ERROR + " absent");
         }
         return value;
     }

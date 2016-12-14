@@ -25,7 +25,7 @@ public class GLUtil {
     /**
      * Check if the system supports OpenGL ES 2.0.
      *
-     * @param context
+     * @param context - Context
      * @return true:supported
      */
     public static boolean supportsEs2(Context context){

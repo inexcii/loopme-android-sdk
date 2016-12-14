@@ -9,7 +9,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.loopme.common.Logging;
-import com.loopme.debugging.ErrorTracker;
+import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.ErrorType;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -78,7 +79,7 @@ public class Bridge extends WebViewClient {
         Logging.out(LOG_TAG, "shouldOverrideUrlLoading " + url);
 
         if (TextUtils.isEmpty(url)) {
-            ErrorTracker.post("Broken redirect in bridge: " + url);
+            ErrorLog.post("Broken redirect in bridge: " + url, ErrorType.JS);
             return false;
         }
 
@@ -89,7 +90,7 @@ public class Bridge extends WebViewClient {
         } catch (URISyntaxException e) {
             Logging.out(LOG_TAG, e.getMessage());
             e.printStackTrace();
-            ErrorTracker.post("Broken redirect in bridge: " + url);
+            ErrorLog.post("Broken redirect in bridge: " + url, ErrorType.JS);
             return false;
         }
 
@@ -157,7 +158,7 @@ public class Bridge extends WebViewClient {
             Uri uri = Uri.parse(url);
             String modeStr = detectQueryParameter(uri, QUERY_PARAM_FULLSCREEN_MODE);
             if (!isValidBooleanParameter(modeStr)) {
-                ErrorTracker.post("Empty parameter in js command: fullscreen mode");
+                ErrorLog.post("Empty parameter in js command: fullscreen mode", ErrorType.JS);
 
             } else {
                 mListener.onJsFullscreenMode(Boolean.parseBoolean(modeStr));
@@ -173,11 +174,7 @@ public class Bridge extends WebViewClient {
         if (TextUtils.isEmpty(modeStr)) {
             return false;
         }
-        if (modeStr.equalsIgnoreCase("true") || modeStr.equalsIgnoreCase("false")) {
-            return true;
-        } else {
-            return false;
-        }
+        return modeStr.equalsIgnoreCase("true") || modeStr.equalsIgnoreCase("false");
     }
 
     private void handleVibrate(Context context) {
@@ -211,7 +208,7 @@ public class Bridge extends WebViewClient {
                 if (!TextUtils.isEmpty(videoUrl)) {
                     mListener.onJsVideoLoad(videoUrl);
                 } else {
-                    ErrorTracker.post("Empty parameter in js command: src");
+                    ErrorLog.post("Empty parameter in js command: src", ErrorType.JS);
                 }
                 break;
 
@@ -220,7 +217,7 @@ public class Bridge extends WebViewClient {
                 if (isValidBooleanParameter(muteStr)) {
                     mListener.onJsVideoMute(Boolean.parseBoolean(muteStr));
                 } else {
-                    ErrorTracker.post("Empty parameter in js command: mute");
+                    ErrorLog.post("Empty parameter in js command: mute", ErrorType.JS);
                 }
                 break;
 

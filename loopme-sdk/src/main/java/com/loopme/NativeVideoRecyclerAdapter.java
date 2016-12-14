@@ -2,7 +2,6 @@ package com.loopme;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,9 +28,13 @@ implements AdChecker, NativeVideoController.DataChangeListener {
 
     private RecyclerView mRecyclerView;
 
-    public NativeVideoRecyclerAdapter(@NonNull RecyclerView.Adapter originAdapter,
-                                      @NonNull Context context,
-                                      @NonNull RecyclerView recyclerView) {
+    public NativeVideoRecyclerAdapter(RecyclerView.Adapter originAdapter,
+                                      Context context,
+                                      RecyclerView recyclerView) {
+
+        if (originAdapter == null || context == null || recyclerView == null) {
+            throw new IllegalArgumentException("Some of parameters is null");
+        }
 
         mContext = context;
         mOriginAdapter = originAdapter;
@@ -214,7 +217,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
 
     @Override
     public boolean isAd(int i) {
-        return mNativeVideoController.getNativeVideoAd(i) != null ? true : false;
+        return mNativeVideoController.getNativeVideoAd(i) != null;
     }
 
     @Override
