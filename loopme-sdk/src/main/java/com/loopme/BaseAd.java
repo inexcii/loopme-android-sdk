@@ -414,7 +414,6 @@ public abstract class BaseAd implements AdTargeting {
      *          false if need to cache video only on wi-fi network.
      */
     public void useMobileNetworkForCaching(boolean b) {
-        StaticParams.USE_MOBILE_NETWORK_FOR_CACHING = b;
     }
 
     /**
