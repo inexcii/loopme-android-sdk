@@ -1,3 +1,6 @@
+## Version 5.1.1 (25 of January, 2017)
+- Bug fixes
+
 ## Version 5.1.0 (14 of December, 2016)
 - Updated error log
 - Bug fixes
