@@ -4,7 +4,7 @@ public class StaticParams {
 
     private StaticParams() {}
 
-    public static final String SDK_VERSION = "5.1.0";
+    public static final String SDK_VERSION = "5.1.1";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
     public static boolean DEBUG_MODE = true;
@@ -25,7 +25,7 @@ public class StaticParams {
 
     public static final int SHRINK_MODE_KEEP_AFTER_FINISH_TIME = 1000;
 
-    public static boolean USE_MOBILE_NETWORK_FOR_CACHING = false;
+    public static final boolean USE_MOBILE_NETWORK_FOR_CACHING = true;
 
     public static final String BANNER_TAG = "banner";
     public static final String INTERSTITIAL_TAG = "interstitial";
