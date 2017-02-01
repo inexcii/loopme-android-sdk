@@ -317,12 +317,12 @@ mNativeVideoAdapter.setMinimizedMode(mode);
 By default video ad can be loaded only on wi-fi connection. To turn on it also for mobile network you need to call `useMobileNetworkForCaching(true)`
 
 * <b>If you use the Android ProGuard tool</b><br>
-
-`-dontwarn com.loopme.**
+```java
+-dontwarn com.loopme.**
 -keep class com.loopme.** {
 *;
 }
-`
+```
 
 ## FAQ ##
 1. <b>Which API supports 'In-app ad reward notifications, including video view completed'?</b>
