@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import com.loopme.IntegrationType;
 import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
 
@@ -34,6 +35,7 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_CHARGE_LEVEL = "chl";
     private static final String PARAM_PLUGGED = "plg";
     private static final String PARAM_WEBVIEW_VERSION = "webview";
+    private static final String PARAM_INTEGRATION_TYPE = "it";
 
     /**
      * Optional targeting parameters
@@ -45,12 +47,18 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_V360 = "v360";
 
     private final Context mContext;
+    private IntegrationType mIntegrationType;
 
     public AdRequestUrlBuilder(Context context) {
         mContext = context;
         if (context == null) {
             Logging.out(LOG_TAG, "Context should not be null. Can't build request url");
         }
+    }
+
+    public String buildRequestUrl(String appKey, AdTargetingData metadata, IntegrationType integrationType) {
+        mIntegrationType = integrationType != null ? integrationType : IntegrationType.NORMAL;
+        return buildRequestUrl(appKey, metadata);
     }
 
     public String buildRequestUrl(String appKey, AdTargetingData metadata) {
@@ -86,7 +94,8 @@ public class AdRequestUrlBuilder {
                 .appendQueryParameter(PARAM_ORIENTATION, provider.getOrientation(mContext))
                 .appendQueryParameter(PARAM_VIEWER_TOKEN, provider.getViewerToken())
                 .appendQueryParameter(PARAM_BUNDLE_ID, mContext.getPackageName())
-                .appendQueryParameter(PARAM_WEBVIEW_VERSION, provider.getWebViewVersion(mContext));
+                .appendQueryParameter(PARAM_WEBVIEW_VERSION, provider.getWebViewVersion(mContext))
+                .appendQueryParameter(PARAM_INTEGRATION_TYPE, mIntegrationType.getType());
 
         String latitude = provider.getLatitude();
         if (latitude != null) {

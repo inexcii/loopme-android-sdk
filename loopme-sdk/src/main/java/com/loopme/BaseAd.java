@@ -56,6 +56,7 @@ public abstract class BaseAd implements AdTargeting {
     protected int mShowWhenAdNotReadyCounter;
 
     private AdParams mAdParams;
+    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
     private AdTargetingData mAdTargetingData = new AdTargetingData();
 
     protected Handler mHandler = new Handler(Looper.getMainLooper());
@@ -104,18 +105,23 @@ public abstract class BaseAd implements AdTargeting {
         return mAdState == AdState.LOADING;
     }
 
+    public void load() {
+        load(IntegrationType.NORMAL);
+    }
+
     /**
      * Starts loading ad content process.
      * It is recommended triggering it in advance to have interstitial/banner ad ready and to be able to display instantly in your
      * application.
      * After its execution, the interstitial/banner notifies whether the loading of the ad content failed or succeded.
      */
-    public void load() {
+    public void load(IntegrationType integrationType) {
         Logging.out(LOG_TAG, "Start loading ad with app key " + mAppKey);
         if (mAdState == AdState.LOADING || mAdState == AdState.SHOWING) {
             Logging.out(LOG_TAG, "Ad already loading or showing");
             return;
         }
+        mIntegrationType = integrationType != null ? integrationType : IntegrationType.NORMAL;
 
         if (mAdController == null) {
             mAdController = new AdController(this);
@@ -385,7 +391,7 @@ public abstract class BaseAd implements AdTargeting {
 
     protected void fetchAd() {
         LoopMeAdHolder.putAd(this);
-        mRequestUrl = new AdRequestUrlBuilder(mContext).buildRequestUrl(mAppKey, mAdTargetingData);
+        mRequestUrl = new AdRequestUrlBuilder(mContext).buildRequestUrl(mAppKey, mAdTargetingData, mIntegrationType);
         if (mRequestUrl == null) {
             onAdLoadFail(new LoopMeError("Error during building ad request url"));
             return;

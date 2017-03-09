@@ -60,7 +60,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeInterstitial(Context context, String appKey) {
+    public LoopMeInterstitial(Context context, String appKey) {
         super(context, appKey);
         Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 

@@ -11,7 +11,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 1
+        versionCode 2
         versionName "5.1"
     }
 
@@ -28,6 +28,8 @@ android {
 }
 
 dependencies {
+    compile fileTree (dir: 'libs', includes: ['*.jar'])
+
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:recyclerview-v7:23.2.1'
     testCompile 'junit:junit:4.12'
@@ -37,3 +39,94 @@ dependencies {
     testCompile 'org.json:json:20140107'
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+    }
+
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'com.android.library'
+    apply plugin: 'com.github.dcendents.android-maven'
+    apply plugin: 'com.jfrog.bintray'
+}
+
+group = 'com.loopme'
+version = '5.1.1'
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                groupId 'com.loopme' // CREATE A GROUP ID FOR YOUR LIBRARY
+                artifactId 'loopme-sdk' // THE NAME OF YOUR MODULE
+
+                name 'LoopMeSDK' // YOUR LIBRARY NAME
+                description 'LoopMe Android SDK LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide.'
+// YOUR LIBRARY DESCRIPTION
+                url 'https://github.com/loopme/loopme-android-sdk.git' // YOUR SITE
+
+                licenses {
+                    license {
+                        name 'LoopMe License'
+                        url 'https://github.com/loopme/loopme-android-sdk/blob/master/LICENSE.md'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'kknyrik' //YOUR ID
+                        name 'Kateryna Knyrik' //YOUR NAME
+                        email 'katerina.knyrik@loopme.com' //YOUR EMAIL
+                    }
+                }
+
+            }
+        }
+    }
+}
+bintray {
+    user = 'loopme'
+    key = '0ff0262e1e8650b56717d33da97d25aeae28300e'
+
+    configurations = ['archives']
+    pkg {
+        repo = 'maven'
+        name = 'loopme-sdk' //YOUR PACKAGE NAME
+        desc = 'LoopMe Android SDK LoopMe is the largest mobile video DSP and Ad Network, reaching over 1 billion consumers world-wide.'
+        // YOUR LIBRARY DESCRIPTION
+
+
+        websiteUrl = 'https://github.com/loopme/loopme-android-sdk' // YOUR SITE
+        vcsUrl = 'https://github.com/loopme/loopme-android-sdk.git'// YOUR GIT REPO
+        licenses = ['Apache-2.0'] // A LIST OF YOUR LICENCES
+        publish = true
+        publicDownloadNumbers = true
+    }
+
+}
+//
+task clearJar(type: Delete) {
+    delete 'build/outputs/loopme-sdk.jar'
+}
+
+task makeJar(type: Copy) {
+    from('build/intermediates/bundles/release/')
+    into('build/outputs/')
+    include('classes.jar')
+    rename ('classes.jar', 'AndroidLoopMeLib.jar')
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
+}

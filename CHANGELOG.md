@@ -1,3 +1,6 @@
+## Version 5.1.2 (9 of March, 2017)
+- Ads delivery performance improvements
+
 ## Version 5.1.1 (25 of January, 2017)
 - Bug fixes
 

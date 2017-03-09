@@ -330,6 +330,9 @@ For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 **Version 5.1.1**
 - Bug fixes
 
+**Version 5.1.2**
+- Ads delivery performance improvements
+
 See [Changelog](CHANGELOG.md)
 
 

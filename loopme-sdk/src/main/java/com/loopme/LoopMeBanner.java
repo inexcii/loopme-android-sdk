@@ -69,7 +69,7 @@ public class LoopMeBanner extends BaseAd {
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeBanner(Context context, String appKey) {
+    public LoopMeBanner(Context context, String appKey) {
         super(context, appKey);
 
         mAdController = new AdController(this);
