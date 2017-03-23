@@ -184,7 +184,9 @@ public class Utils {
     }
 
     public static int getScreenOrientation() {
-
+        if(sWindowManager == null){
+            return 0;
+        }
         int rotation = sWindowManager.getDefaultDisplay().getRotation();
         DisplayMetrics dm = new DisplayMetrics();
         sWindowManager.getDefaultDisplay().getMetrics(dm);
