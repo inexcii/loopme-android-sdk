@@ -4,7 +4,7 @@ public class StaticParams {
 
     private StaticParams() {}
 
-    public static final String SDK_VERSION = "5.1.1";
+    public static final String SDK_VERSION = "5.1.3";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
     public static boolean DEBUG_MODE = true;
