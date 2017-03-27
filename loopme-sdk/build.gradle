@@ -62,7 +62,7 @@ allprojects {
 }
 
 group = 'com.loopme'
-version = '5.1.3'
+version = '5.1.4'
 
 install {
     repositories.mavenInstaller {

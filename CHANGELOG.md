@@ -1,3 +1,6 @@
+## Version 5.1.4 (27 of March, 2017)
+- Added Corona plugin support
+
 ## Version 5.1.3 (23 of March, 2017)
 - Bug fixes
 

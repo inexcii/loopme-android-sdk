@@ -57,7 +57,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.loopme:loopme-sdk:5.1.3@aar'
+    compile 'com.loopme:loopme-sdk:5.1.4@aar'
 }
 ```
 
@@ -332,17 +332,20 @@ For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 
 ## What's new ##
 
-**Version 5.1.0**
-- Updated error log
-- Bug fixes
+**Version 5.1.4**
+- Added Corona plugin support
 
-**Version 5.1.1**
+**Version 5.1.3**
 - Bug fixes
 
 **Version 5.1.2**
 - Ads delivery performance improvements
 
-**Version 5.1.3**
+**Version 5.1.1**
+- Bug fixes
+
+**Version 5.1.0**
+- Updated error log
 - Bug fixes
 
 See [Changelog](CHANGELOG.md)
