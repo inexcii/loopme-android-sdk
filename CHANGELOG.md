@@ -1,3 +1,7 @@
+## Version 5.1.5 (14 of April, 2017)
+- Bug fixing
+- Ads delivery performance improvements
+
 ## Version 5.1.4 (27 of March, 2017)
 - Added Corona plugin support
 

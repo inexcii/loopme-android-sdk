@@ -4,7 +4,12 @@ public class StaticParams {
 
     private StaticParams() {}
 
-    public static final String SDK_VERSION = "5.1.4";
+    /**
+     *      Do not remove toString().
+     *      It was made for disabling javac's inlining of static final variables
+     */
+    public static final String SDK_VERSION = "5.1.5".toString();
+
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
     public static boolean DEBUG_MODE = true;
