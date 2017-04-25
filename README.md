@@ -57,7 +57,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.loopme:loopme-sdk:5.1.5@aar'
+    compile 'com.loopme:loopme-sdk:5.1.6@aar'
 }
 ```
 
@@ -331,6 +331,9 @@ Using ProGuard tool can break LoopMe SDK work. It may look like all works fine i
 For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 
 ## What's new ##
+
+**Version 5.1.6**
+- Bug fixing
 
 **Version 5.1.5**
 - Bug fixing

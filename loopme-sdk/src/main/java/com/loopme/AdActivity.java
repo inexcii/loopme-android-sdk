@@ -78,7 +78,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     public final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        setVolumeControlStream(AudioManager.STREAM_RING);
 
         mInitialOrientation = Utils.getScreenOrientation();
 

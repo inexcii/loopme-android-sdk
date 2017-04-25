@@ -188,7 +188,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         mPlayer.setOnErrorListener(this);
         mPlayer.setOnCompletionListener(this);
 
-        mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mPlayer.setAudioStreamType(AudioManager.STREAM_RING);
     }
 
     public void muteVideo(boolean mute) {

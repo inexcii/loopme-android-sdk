@@ -1,5 +1,7 @@
 package com.loopme.common;
 
+import java.util.Locale;
+
 public class StaticParams {
 
     private StaticParams() {}
@@ -8,7 +10,9 @@ public class StaticParams {
      *      Do not remove toString().
      *      It was made for disabling javac's inlining of static final variables
      */
-    public static final String SDK_VERSION = "5.1.5".toString();
+
+    private static final String VERSION = "5.1.6".toString();
+    public static final String SDK_VERSION =  String.format(Locale.ENGLISH, "%s", VERSION);
 
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
 
