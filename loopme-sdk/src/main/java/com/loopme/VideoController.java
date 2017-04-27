@@ -209,10 +209,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     private void updateCurrentVolume() {
-        if (!mMuteState) {
+//        if (!mMuteState) {
             float systemVolume = Utils.getSystemVolume();
             mPlayer.setVolume(systemVolume, systemVolume);
-        }
+//        }
     }
 
     public void setSurfaceTextureAvailable(boolean b) {
