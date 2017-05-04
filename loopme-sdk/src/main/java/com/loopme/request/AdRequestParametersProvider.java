@@ -15,12 +15,18 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
+import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Toast;
 
+import com.loopme.BaseAd;
+import com.loopme.LoopMeBanner;
+import com.loopme.LoopMeInterstitial;
 import com.loopme.adview.AdView;
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
@@ -30,9 +36,20 @@ import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static com.loopme.common.StaticParams.UNKNOWN_NAME;
+import static com.loopme.constants.DeviceType.PHONE;
+import static com.loopme.constants.DeviceType.TABLET;
+import static com.loopme.constants.DeviceType.UNKNOWN;
+
 public class AdRequestParametersProvider {
 
     private static final String LOG_TAG = AdRequestParametersProvider.class.getSimpleName();
+    private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; " +
+            "LG-K200 Build/MXB48T; wv) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Version/4.0 Chrome/56.0.2924.87 unknown Safari/537.36";
+    private static final CharSequence MOBILE_MARK = "mobile";
+    private static final String DEVICE_BLUETOOTH_NAME = "bluetooth_name";
+
 
     private static AdRequestParametersProvider sProvider;
 
@@ -48,6 +65,13 @@ public class AdRequestParametersProvider {
 
     private String mAppKey;
     private String mPackageId;
+
+    private String mUserAgent;
+    private int mScreenWidth;
+    private int mScreenHeight;
+    private int mAdWidth;
+    private int mAdHeight;
+    private String mDeviceName;
 
     private AdRequestParametersProvider() {
     }
@@ -423,5 +447,92 @@ public class AdRequestParametersProvider {
             }
         }
         return result;
+    }
+    public void setUserAgent(Context context) {
+        if (context == null) {
+            Logging.out(LOG_TAG, "Context should not be null to get user agent");
+        }
+        mUserAgent = new WebView(context).getSettings().getUserAgentString();
+        if (TextUtils.isEmpty(mUserAgent)) {
+            mUserAgent = DEFAULT_USER_AGENT;
+        }
+    }
+
+    public String getUserAgent() {
+        return mUserAgent;
+    }
+
+    public void setScreenSize() {
+        mScreenWidth = Utils.convertPixelToDp(Utils.getScreenWidth());
+        mScreenHeight = Utils.convertPixelToDp(Utils.getScreenHeight());
+    }
+
+    public int getScreenWidth() {
+        return mScreenWidth;
+    }
+
+    public int getScreenHeight() {
+        return mScreenHeight;
+    }
+
+    public String getDeviceType() {
+        if (TextUtils.isEmpty(mUserAgent) || mUserAgent.toLowerCase().contains(UNKNOWN)) {
+            return UNKNOWN;
+        } else if (mUserAgent.toLowerCase().contains(MOBILE_MARK)) {
+            return PHONE;
+        } else {
+            return TABLET;
+        }
+    }
+
+    public int getAdWidth() {
+        return mAdWidth;
+    }
+
+    public int getAdHeight() {
+        return mAdHeight;
+    }
+
+    public void setAdSize(BaseAd baseAd) {
+        if (baseAd instanceof LoopMeInterstitial) {
+            setSize(mScreenWidth, mScreenHeight);
+        } else if (baseAd instanceof LoopMeBanner) {
+            LoopMeBanner banner = (LoopMeBanner) baseAd;
+            ViewGroup.LayoutParams params = Utils.getParamsSafety(banner);
+            if (params != null) {
+                setSize(Utils.convertPixelToDp(params.width),
+                        Utils.convertPixelToDp(params.height));
+            }
+        }
+    }
+
+    private void setSize(int width, int height) {
+        mAdWidth = width;
+        mAdHeight = height;
+    }
+
+    public void init(BaseAd baseAd) {
+        setAppKey(baseAd.getAppKey());
+        detectPackage(baseAd.getContext());
+        setUserAgent(baseAd.getContext());
+        setDeviceName(baseAd.getContext());
+    }
+
+    private void setDeviceName(Context context) {
+        String name = getDeviceNameFromSettings(context);
+        mDeviceName = Utils.getEncryptedString(name);
+        mDeviceName = Utils.getUrlEncodedString(mDeviceName);
+    }
+
+    private String getDeviceNameFromSettings(Context context) {
+        if (context != null) {
+            return Settings.Secure.getString(context.getContentResolver(), DEVICE_BLUETOOTH_NAME);
+        }
+        return UNKNOWN_NAME;
+
+    }
+
+    public String getDeviceName() {
+        return mDeviceName;
     }
 }

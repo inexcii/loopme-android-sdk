@@ -36,6 +36,12 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_PLUGGED = "plg";
     private static final String PARAM_WEBVIEW_VERSION = "webview";
     private static final String PARAM_INTEGRATION_TYPE = "it";
+    private static final String PARAM_SCREEN_WIDTH = "ww";
+    private static final String PARAM_SCREEN_HEIGHT = "wh";
+    private static final String PARAM_AD_WIDTH = "width";
+    private static final String PARAM_AD_HEIGHT = "height";
+    private static final String PARAM_DEVICE_TYPE = "devicetype";
+    private static final String PARAM_DEVICE_NAME = "pn";
 
     /**
      * Optional targeting parameters
@@ -95,7 +101,12 @@ public class AdRequestUrlBuilder {
                 .appendQueryParameter(PARAM_VIEWER_TOKEN, provider.getViewerToken())
                 .appendQueryParameter(PARAM_BUNDLE_ID, mContext.getPackageName())
                 .appendQueryParameter(PARAM_WEBVIEW_VERSION, provider.getWebViewVersion(mContext))
-                .appendQueryParameter(PARAM_INTEGRATION_TYPE, mIntegrationType.getType());
+                .appendQueryParameter(PARAM_INTEGRATION_TYPE, mIntegrationType.getType())
+                .appendQueryParameter(PARAM_SCREEN_WIDTH, String.valueOf(provider.getScreenWidth()))
+                .appendQueryParameter(PARAM_SCREEN_HEIGHT, String.valueOf(provider.getScreenHeight()))
+                .appendQueryParameter(PARAM_AD_WIDTH, String.valueOf(provider.getAdWidth()))
+                .appendQueryParameter(PARAM_AD_HEIGHT, String.valueOf(provider.getAdHeight()))
+                .appendQueryParameter(PARAM_DEVICE_NAME, provider.getDeviceName());
 
         String latitude = provider.getLatitude();
         if (latitude != null) {

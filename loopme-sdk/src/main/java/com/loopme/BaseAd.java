@@ -222,7 +222,7 @@ public abstract class BaseAd implements AdTargeting {
         return mAppKey;
     }
 
-    protected Context getContext() {
+    public Context getContext() {
         return mContext;
     }
 

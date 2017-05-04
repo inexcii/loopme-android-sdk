@@ -15,6 +15,7 @@ public class StaticParams {
     public static final String SDK_VERSION =  String.format(Locale.ENGLISH, "%s", VERSION);
 
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
+    public static final String UNKNOWN_NAME = "unknown";
 
     public static boolean DEBUG_MODE = true;
 

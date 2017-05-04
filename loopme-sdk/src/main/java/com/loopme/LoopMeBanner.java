@@ -146,7 +146,7 @@ public class LoopMeBanner extends BaseAd {
         }
     }
 
-    LoopMeBannerView getBannerView() {
+    public LoopMeBannerView getBannerView() {
         return mBannerView;
     }
 

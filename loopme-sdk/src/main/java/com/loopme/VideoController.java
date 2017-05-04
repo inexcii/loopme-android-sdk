@@ -192,6 +192,9 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     public void muteVideo(boolean mute) {
+        if(mPlayer == null){
+            return;
+        }
         if (mute) {
             mPlayer.setVolume(0f, 0f);
         } else {
@@ -209,10 +212,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     private void updateCurrentVolume() {
-//        if (!mMuteState) {
+        if(mPlayer != null){
             float systemVolume = Utils.getSystemVolume();
             mPlayer.setVolume(systemVolume, systemVolume);
-//        }
+        }
     }
 
     public void setSurfaceTextureAvailable(boolean b) {
@@ -227,6 +230,9 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         if (isPlayerReadyForPlay()) {
             if (!is360 && !mIsSurfaceTextureAvailable) {
                 Logging.out(LOG_TAG, "postpone play (surface not available)");
+                if(mCallback == null){
+                    return;
+                }
                 mCallback.postponePlay(time);
                 return;
             }

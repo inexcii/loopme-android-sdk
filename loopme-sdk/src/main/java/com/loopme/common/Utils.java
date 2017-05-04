@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -19,17 +20,24 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.Surface;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.os.Build;
 import android.content.res.Resources;
 
+import com.loopme.AES;
+import com.loopme.LoopMeBanner;
 import com.loopme.constants.StretchOption;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
+
+import static com.loopme.common.StaticParams.UNKNOWN_NAME;
 
 public class Utils {
 
@@ -344,5 +352,44 @@ public class Utils {
                 || Build.MODEL.contains("Emulator")
                 || Build.MODEL.contains("Android SDK")
                 || Build.MANUFACTURER.contains("Genymotion");
+    }
+
+    public static int convertPixelToDp(int pixels) {
+        if (sResources != null) {
+            return (int) (pixels / sResources.getDisplayMetrics().density);
+        } else {
+            return 0;
+        }
+    }
+
+    public static ViewGroup.LayoutParams getParamsSafety(LoopMeBanner banner) {
+        try {
+            return banner.getBannerView().getLayoutParams();
+        } catch (NullPointerException e) {
+            Logging.out(LOG_TAG, "Warning! Check integration of LoopMeBanner");
+        }
+        return null;
+    }
+
+    private static String deleteLastCharacter(String encryptedString) {
+        if (!TextUtils.isEmpty(encryptedString)) {
+            return encryptedString.substring(0, encryptedString.length() - 1);
+        }
+        return "";
+    }
+
+    public static String getEncryptedString(String name) {
+        AES.setDefaultKey();
+        AES.encrypt(name);
+        return Utils.deleteLastCharacter(AES.getEncryptedString());
+    }
+
+    public static String getUrlEncodedString(String stringToEncode) {
+        try {
+            return URLEncoder.encode(stringToEncode, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return UNKNOWN_NAME;
     }
 }
