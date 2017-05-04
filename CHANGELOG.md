@@ -1,3 +1,6 @@
+## Version 5.1.7 (4 of May, 2017)
+- Ads targeting improvements: better fit to device type and screens
+
 ## Version 5.1.6 (25 of April, 2017)
 - Bug fixes
 

@@ -11,7 +11,7 @@ public class StaticParams {
      *      It was made for disabling javac's inlining of static final variables
      */
 
-    private static final String VERSION = "5.1.6".toString();
+    private static final String VERSION = "5.1.7".toString();
     public static final String SDK_VERSION =  String.format(Locale.ENGLISH, "%s", VERSION);
 
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
