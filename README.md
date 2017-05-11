@@ -317,7 +317,7 @@ mNativeVideoAdapter.setMinimizedMode(mode);
 By default video ad can be loaded only on wi-fi connection. To turn on it also for mobile network you need to call `useMobileNetworkForCaching(true)`
 
 * <b>Merging manifests</b><br>
-In case your application supports API version < 19 you should add
+In case your application supports API version < 19 you should add<br>
 `<uses-sdk tools:overrideLibrary="com.loopme"/>`
 
 * <b>ProGuard tool known issue</b><br>
