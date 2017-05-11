@@ -316,6 +316,10 @@ mNativeVideoAdapter.setMinimizedMode(mode);
 * <b>Config preloading settings</b><br>
 By default video ad can be loaded only on wi-fi connection. To turn on it also for mobile network you need to call `useMobileNetworkForCaching(true)`
 
+* <b>Merging manifests</b><br>
+In case your application supports API version < 19 you should add
+`<uses-sdk tools:overrideLibrary="com.loopme"/>`
+
 * <b>ProGuard tool known issue</b><br>
 Using ProGuard tool can break LoopMe SDK work. It may look like all works fine in debug mode and stops working in production mode. To avoid of such cases please add these lines in the ProGuard configuration file. Also, in case you integrate LoopMe SDK via mediations make sure they are listed here too. The default recomendation is:
 ```java
