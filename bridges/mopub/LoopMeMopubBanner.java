@@ -3,11 +3,8 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewTreeObserver;
-import android.widget.ListView;
-import android.widget.ScrollView;
 
+import com.loopme.IntegrationType;
 import com.loopme.LoopMeBanner;
 import com.loopme.LoopMeBannerView;
 import com.loopme.common.LoopMeError;
@@ -49,7 +46,7 @@ public class LoopMeMopubBanner extends CustomEventBanner implements LoopMeBanner
         mBanner = LoopMeBanner.getInstance(mLoopMeAppId, mActivity);
         mBanner.bindView(mLoopMeBannerView);
         mBanner.setListener(this);
-        mBanner.load();
+        mBanner.load(IntegrationType.MOPUB);
     }
 
     @Override

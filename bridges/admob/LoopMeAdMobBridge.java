@@ -1,15 +1,13 @@
 package com.integration.admob;
 
-import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.mediation.customevent.CustomEventInterstitial;
-import com.google.android.gms.ads.mediation.customevent.CustomEventInterstitialListener;
-import com.google.android.gms.ads.mediation.MediationAdRequest;
-
-import android.app.Activity;
-import android.util.Log;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.google.android.gms.ads.mediation.MediationAdRequest;
+import com.google.android.gms.ads.mediation.customevent.CustomEventInterstitial;
+import com.google.android.gms.ads.mediation.customevent.CustomEventInterstitialListener;
+import com.loopme.IntegrationType;
 import com.loopme.LoopMeInterstitial;
 import com.loopme.common.LoopMeError;
 
@@ -34,13 +32,13 @@ public class LoopMeAdMobBridge implements CustomEventInterstitial {
 
         mInterstitial = LoopMeInterstitial.getInstance(s, activity);
         mInterstitial.setListener(mLoopMeListener);
-        mInterstitial.load();
+        mInterstitial.load(IntegrationType.ADMOB);
     }
 
     @Override
     public void showInterstitial() {
         Log.d(LOG_TAG, "showInterstitial");
-        if (mInterstitial != null) {
+        if (mInterstitial != null && mInterstitial.isReady()) {
             mInterstitial.show();
         }
     }

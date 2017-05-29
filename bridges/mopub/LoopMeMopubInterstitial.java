@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
+import com.loopme.IntegrationType;
 import com.loopme.LoopMeInterstitial;
 import com.loopme.common.LoopMeError;
 
@@ -38,7 +39,7 @@ public class LoopMeMopubInterstitial extends CustomEventInterstitial implements 
 
         mInterstitial = LoopMeInterstitial.getInstance(mLoopMeAppId, mActivity);
         mInterstitial.setListener(this);
-        mInterstitial.load();
+        mInterstitial.load(IntegrationType.MOPUB);
     }
 
     @Override
