@@ -32,7 +32,7 @@ If you have questions please contact us at support@loopmemedia.com.
 
 ## Requirements ##
 
-Requires `Android` 4.4 and up
+Requires `Android` 4.4 and up. If you have lower version please see the "Merging manifests" section.
 
 ## SDK Integration ##
 
