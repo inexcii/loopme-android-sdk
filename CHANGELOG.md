@@ -1,5 +1,6 @@
 ## Version 5.1.8 (19 of June, 2017)
-- Ads targeting improvements: better fit to device type and screens
+- Performance improvements. Bug fixes.
+- MRAID compliancy improvements
 
 ## Version 5.1.7 (4 of May, 2017)
 - Ads targeting improvements: better fit to device type and screens
