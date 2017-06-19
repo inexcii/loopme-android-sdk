@@ -4,20 +4,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import com.loopme.constants.AdFormat;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
+import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
-import com.loopme.debugging.LiveDebug;
 import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.LiveDebug;
 
 /**
  * The `LoopMenterstitial` class provides the facilities to display a full-screen ad
  * during natural transition points in your application.
  * <p>
- * It is recommended to implement `LoopMeInterstitial.Listener`
+ * It is recommended to implement `LoopMeInterstitial.OnMraidBridgeListener`
  * to stay informed about ad state changes,
  * such as when an ad has been loaded or has failed to load its content, when video ad has been watched completely,
  * when an ad has been presented or dismissed from the screen, and when an ad has expired or received a tap.
@@ -60,7 +60,7 @@ public final class LoopMeInterstitial extends BaseAd {
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    public LoopMeInterstitial(Context context, String appKey) {
+    LoopMeInterstitial(Context context, String appKey) {
         super(context, appKey);
         Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 
@@ -123,7 +123,7 @@ public final class LoopMeInterstitial extends BaseAd {
 
     /**
      * Sets listener in order to receive notifications during the loading/displaying ad processes
-     * @param listener - Listener
+     * @param listener - OnMraidBridgeListener
      */
     public void setListener(Listener listener) {
         mAdListener = listener;
@@ -152,7 +152,11 @@ public final class LoopMeInterstitial extends BaseAd {
             if (mAdState != AdState.SHOWING) {
                 mAdState = AdState.SHOWING;
                 stopExpirationTimer();
-                AdUtils.startAdActivity(this);
+                if (!getAdParams().isMraid()) {
+                    AdUtils.startAdActivity(this);
+                } else {
+                    AdUtils.startMraidActivity(this, getAdParams().isOwnCloseButton());
+                }
             } else {
                 Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
             }
@@ -169,7 +173,7 @@ public final class LoopMeInterstitial extends BaseAd {
         return AdFormat.INTERSTITIAL;
     }
 
-    AdController getAdController() {
+    public AdController getAdController() {
         return mAdController;
     }
 
@@ -188,6 +192,7 @@ public final class LoopMeInterstitial extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadSuccess(LoopMeInterstitial.this);
+            Logging.logEvent(getAppKey(), "Ad loaded successfully.");
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -206,6 +211,7 @@ public final class LoopMeInterstitial extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadFail(LoopMeInterstitial.this, error);
+            Logging.logEvent(getAppKey(), "Ad failed to load. " + error.getMessage());
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -220,6 +226,7 @@ public final class LoopMeInterstitial extends BaseAd {
         if (mAdListener != null) {
             Logging.out(LOG_TAG, "Ad appeared on screen");
             mAdListener.onLoopMeInterstitialShow(this);
+            Logging.logEvent("Ad appeared on the screen.");
         }
     }
 
@@ -235,6 +242,7 @@ public final class LoopMeInterstitial extends BaseAd {
         releaseViewController();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialHide(this);
+            Logging.logEvent("Ad closed.");
         }
     }
 
@@ -248,6 +256,7 @@ public final class LoopMeInterstitial extends BaseAd {
         Logging.out(LOG_TAG, "Ad received tap event");
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialClicked(this);
+            Logging.logEvent("User interacts with Ad.");
         }
     }
 

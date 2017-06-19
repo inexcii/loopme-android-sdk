@@ -14,10 +14,10 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 
 import com.loopme.common.AdChecker;
-import com.loopme.common.MinimizedMode;
-import com.loopme.constants.DisplayMode;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
+import com.loopme.common.MinimizedMode;
+import com.loopme.constants.DisplayMode;
 import com.loopme.constants.WebviewState;
 import com.loopme.debugging.ErrorLog;
 
@@ -29,20 +29,16 @@ class NativeVideoController {
 
     private static final String LOG_TAG = NativeVideoController.class.getSimpleName();
 
-    private NativeVideoBinder mBinder;
+    private NativeVideoBinder mNativeBinder;
     private LoopMeBanner.Listener mAdListener;
 
     private SparseArray<View> mViewMap = new SparseArray<>();
     private SparseArray<LoopMeBanner> mAdsMap = new SparseArray<>();
-
     private SparseArray<String> mAppKeysMap = new SparseArray<>();
 
     private boolean mHorizontalScrolling;
-
     private DataChangeListener mDataChangeListener;
-
     private int mItemCount;
-
     private Context mContext;
     private MinimizedMode mMinimizedMode;
 
@@ -79,7 +75,6 @@ class NativeVideoController {
     }
 
     void destroy() {
-        Logging.out(LOG_TAG, "destroy");
         for (int i = 0; i < mAppKeysMap.size(); i++) {
             LoopMeBanner banner = LoopMeBanner.getInstance(mAppKeysMap.valueAt(i), null);
             if (banner.getAdController().isVideoPresented()) {
@@ -139,7 +134,7 @@ class NativeVideoController {
     }
 
     void setViewBinder(NativeVideoBinder binder) {
-        mBinder = binder;
+        mNativeBinder = binder;
     }
 
     void setListener(LoopMeBanner.Listener listener) {
@@ -179,13 +174,13 @@ class NativeVideoController {
         }
         View row;
 
-        if (mBinder == null) {
+        if (mNativeBinder == null) {
             Logging.out(LOG_TAG, "Error: NativeVideoBinder is null. Init and bind it");
             row = null;
 
         } else {
-            row = inflater.inflate(mBinder.getLayout(), parent, false);
-            bindDataToView(row, mBinder, position);
+            row = inflater.inflate(mNativeBinder.getLayout(), parent, false);
+            bindDataToView(row, mNativeBinder, position);
         }
 
         mViewMap.put(position, row);
@@ -205,6 +200,7 @@ class NativeVideoController {
         mDataChangeListener = listener;
         mItemCount = itemsCount;
 
+
         if (mAppKeysMap.size() == 0) {
             ErrorLog.post("No ads for loading");
         }
@@ -213,8 +209,10 @@ class NativeVideoController {
         for (int i = 0; i < mAppKeysMap.size(); i++) {
             String appKey = mAppKeysMap.valueAt(i);
             LoopMeBanner banner = LoopMeBanner.getInstance(appKey, mContext);
-            banner.setListener(bannerListener);
-            banner.load();
+            if (banner != null) {
+                banner.setListener(bannerListener);
+                banner.load();
+            }
         }
     }
 

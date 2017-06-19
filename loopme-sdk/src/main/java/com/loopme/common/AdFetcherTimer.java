@@ -5,6 +5,7 @@ import android.os.CountDownTimer;
 public class AdFetcherTimer extends CountDownTimer {
 
     private static final String LOG_TAG = AdFetcherTimer.class.getSimpleName();
+    private static final int COUNTDOWN_INTERVAL = 1000 * 60;
 
     private Listener mListener;
 
@@ -13,7 +14,7 @@ public class AdFetcherTimer extends CountDownTimer {
     }
 
     public AdFetcherTimer(long millisInFuture, Listener listener) {
-        super(millisInFuture, 1000 * 60);
+        super(millisInFuture, COUNTDOWN_INTERVAL);
         mListener = listener;
         Logging.out(LOG_TAG, "Start fetcher timeout");
     }

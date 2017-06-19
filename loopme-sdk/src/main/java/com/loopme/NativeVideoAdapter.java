@@ -109,7 +109,7 @@ public class NativeVideoAdapter extends BaseAdapter implements AdChecker,
         if (position < mOriginAdapter.getCount()) {
             mNativeVideoController.putAdWithAppKeyToPosition(appKey, position);
         } else {
-            Logging.out(LOG_TAG, "Wrong position " + position);
+            mNativeVideoController.putAdWithAppKeyToPosition(appKey, mOriginAdapter.getCount());
         }
     }
 

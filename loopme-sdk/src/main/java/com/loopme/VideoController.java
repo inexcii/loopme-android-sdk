@@ -8,7 +8,6 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Surface;
 
 import com.loopme.adview.AdView;
@@ -20,13 +19,21 @@ import com.loopme.constants.WebviewState;
 import com.loopme.debugging.ErrorLog;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.loopme.common.EventManager.EVENT_VIDEO_25;
+import static com.loopme.common.EventManager.EVENT_VIDEO_50;
+import static com.loopme.common.EventManager.EVENT_VIDEO_75;
 
 class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
     private static final String LOG_TAG = VideoController.class.getSimpleName();
-
-    private volatile MediaPlayer mPlayer;
+    private static final int BUFFERING_MILLIS_IN_FUTURE = 2000;
+    private static final int BUFFERING_COUNTDOWN_INTERVAL = 1000;
+    private final long DELAY_TIME = 200;
+    private volatile MediaPlayer mMediaPlayer;
     private int mVideoDuration;
     private int mVideoPositionWhenError;
     private boolean mMuteState = false;
@@ -56,6 +63,17 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
     private boolean mIs360;
 
+    private OnMoatEventListener mOnMoatEventListener;
+    private Map<String, Integer> mQuartileEventsMap;
+    private int mCurrentPosition;
+
+    public void resumeVideo() {
+        if (mAdView.getCurrentVideoState() == VideoState.PAUSED) {
+            playVideo(mCurrentPosition, mIs360);
+        }
+    }
+
+
     public interface Callback {
         void onVideoReachEnd();
 
@@ -63,9 +81,9 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
         void onVideoSizeChanged(int width, int height);
 
-        void postponePlay(int position);
+        void onPostponePlay(int position);
 
-        void playbackFinishedWithError();
+        void onPlaybackFinishedWithError();
     }
 
     public VideoController(AdView adView, Callback callback, String appKey, int format) {
@@ -76,6 +94,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         mFormat = format;
         mHandler = new Handler(Looper.getMainLooper());
         initProgressRunnable();
+        mQuartileEventsMap = new HashMap<>();
     }
 
     void contain360(boolean b) {
@@ -84,12 +103,11 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
     public void destroy() {
         Logging.out(LOG_TAG, "destroy");
+        onStopMoatTracking();
         if (mHandler != null) {
             mHandler.removeCallbacks(mRunnable);
         }
-        if (mBufferingTimer != null) {
-            mBufferingTimer.cancel();
-        }
+        stopBuffering();
         mRunnable = null;
         releasePlayer();
         mCallback = null;
@@ -104,154 +122,150 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
                 if (mAdView == null) {
                     return;
                 }
-                int position = getCurrentPosition();
-                mAdView.setVideoCurrentTime(position);
+                mCurrentPosition = getCurrentPosition();
+                mAdView.setVideoCurrentTime(mCurrentPosition);
                 updateCurrentVolume();
-
-                if (position < mVideoDuration) {
-                    mHandler.postDelayed(mRunnable, 100);
+                if (mCurrentPosition < mVideoDuration) {
+                    mHandler.postDelayed(mRunnable, DELAY_TIME);
                 }
             }
         };
     }
 
+    private int roundNumberToHundredth(int number) {
+        return (number / 100) * 100;
+    }
+
     public int getCurrentPosition() {
-        return mPlayer == null ? 0 : mPlayer.getCurrentPosition();
+        return mMediaPlayer == null ? 0 : mMediaPlayer.getCurrentPosition();
     }
 
     public void releasePlayer() {
-        if (mPlayer != null) {
-            mPlayer.reset();
-            mPlayer.release();
+        if (mMediaPlayer != null) {
+            mMediaPlayer.reset();
+            mMediaPlayer.release();
         }
     }
 
     public void setSurface(Surface surface) throws IllegalStateException {
-        Log.d(LOG_TAG, "setSurface " + surface);
+        Logging.out(LOG_TAG, "setSurface " + surface);
         mSurface = surface;
-        if (mPlayer != null) {
-            mPlayer.setSurface(surface);
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setSurface(surface);
         }
     }
 
     public void waitForVideo() {
         if (mWaitForVideo) {
             releasePlayer();
-
             initPlayer(mFileRest);
-
-            mPlayer.setSurface(mSurface);
+            setSurface(mSurface);
 
             if (mAdView.getCurrentWebViewState() == WebviewState.VISIBLE) {
-                mPlayer.start();
+                startMediaPlayer();
             }
             seekTo(mVideoPositionWhenError);
             Logging.out(LOG_TAG, "waitForVideo mHandler.postDelayed");
-            mHandler.postDelayed(mRunnable, 200);
+            mHandler.postDelayed(mRunnable, DELAY_TIME);
 
             setVideoState(VideoState.PLAYING);
         }
     }
 
     public void seekTo(int position) {
-        if (mPlayer != null) {
-            mPlayer.seekTo(position);
+        if (mMediaPlayer != null) {
+            mMediaPlayer.seekTo(position);
         }
     }
 
     public void initPlayerFromFile(String filePath) {
-        mPlayer = new MediaPlayer();
+        mMediaPlayer = new MediaPlayer();
         initPlayerListeners();
-        mPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnPreparedListener(this);
 
         try {
-            mPlayer.setDataSource(filePath);
-            mPlayer.prepareAsync();
+            mMediaPlayer.setDataSource(filePath);
+            mMediaPlayer.prepareAsync();
 
-        } catch (IllegalStateException e) {
-            Logging.out(LOG_TAG, e.getMessage());
-            setVideoState(VideoState.BROKEN);
-
-        } catch (IOException e) {
+        } catch (IllegalStateException | IOException e) {
             Logging.out(LOG_TAG, e.getMessage());
             setVideoState(VideoState.BROKEN);
         }
     }
 
     private void initPlayer(String filePath) {
-        mPlayer = MediaPlayer.create(mContext, Uri.parse(filePath));
+        mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(filePath));
         initPlayerListeners();
     }
 
     private void initPlayerListeners() {
-        mPlayer.setLooping(false);
-        mPlayer.setOnErrorListener(this);
-        mPlayer.setOnCompletionListener(this);
-
-        mPlayer.setAudioStreamType(AudioManager.STREAM_RING);
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setLooping(false);
+            mMediaPlayer.setOnErrorListener(this);
+            mMediaPlayer.setOnCompletionListener(this);
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        }
     }
 
     public void muteVideo(boolean mute) {
-        if(mPlayer == null){
-            return;
-        }
-        if (mute) {
-            mPlayer.setVolume(0f, 0f);
-        } else {
-            float systemVolume = Utils.getSystemVolume();
-            mPlayer.setVolume(systemVolume, systemVolume);
+        if(mMediaPlayer != null){
+            if (mute) {
+                mMediaPlayer.setVolume(0f, 0f);
+                onVolumeChangedMoatTracking();
+
+            } else {
+                float systemVolume = Utils.getSystemVolume();
+                mMediaPlayer.setVolume(systemVolume, systemVolume);
+            }
         }
         mMuteState = mute;
     }
 
     private void applyMuteSettings() {
-        if (mPlayer != null) {
+        if (mMediaPlayer != null) {
             Logging.out(LOG_TAG, "applyMuteSettings " + mMuteState);
             muteVideo(mMuteState);
         }
     }
 
     private void updateCurrentVolume() {
-        if(mPlayer != null){
+        if (!mMuteState && mMediaPlayer != null) {
             float systemVolume = Utils.getSystemVolume();
-            mPlayer.setVolume(systemVolume, systemVolume);
+            mMediaPlayer.setVolume(systemVolume, systemVolume);
         }
     }
 
-    public void setSurfaceTextureAvailable(boolean b) {
-        mIsSurfaceTextureAvailable = b;
+    public void setSurfaceTextureAvailable(boolean isAvailable) {
+        mIsSurfaceTextureAvailable = isAvailable;
     }
 
     private boolean isPlayerReadyForPlay() {
-        return mPlayer != null && mAdView != null && !mWasError;
+        return mMediaPlayer != null && mAdView != null && !mWasError;
     }
 
     public void playVideo(int time, boolean is360) {
         if (isPlayerReadyForPlay()) {
             if (!is360 && !mIsSurfaceTextureAvailable) {
                 Logging.out(LOG_TAG, "postpone play (surface not available)");
-                if(mCallback == null){
-                    return;
+                if(mCallback != null){
+                    mCallback.onPostponePlay(time);
                 }
-                mCallback.postponePlay(time);
                 return;
             }
 
             try {
-                if (mPlayer.isPlaying()) {
+                if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
                     return;
                 }
-
                 Logging.out(LOG_TAG, "Play video " + time);
                 applyMuteSettings();
                 if (time == 10) {
-                    mPlayer.seekTo(0);
+                    mMediaPlayer.seekTo(0);
                 }
-
-                mPlayer.start();
+                startMediaPlayer();
                 mAdView.setVideoState(VideoState.PLAYING);
 
-                mHandler.postDelayed(mRunnable, 200);
+                mHandler.postDelayed(mRunnable, DELAY_TIME);
 
             } catch (IllegalStateException e) {
                 Logging.out(LOG_TAG, "playVideo:" + e.getMessage());
@@ -260,13 +274,17 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     public void pauseVideo() {
-        if (mPlayer != null && mAdView != null && !mWasError) {
+        if (mMediaPlayer != null && mAdView != null && !mWasError) {
             try {
-                if (mPlayer.isPlaying()) {
+                if (mMediaPlayer.isPlaying()) {
+                    onStopMoatTracking();
                     Logging.out(LOG_TAG, "Pause video");
                     mHandler.removeCallbacks(mRunnable);
-                    mPlayer.pause();
+                    mMediaPlayer.pause();
                     mAdView.setVideoState(VideoState.PAUSED);
+                    onStopMoatTracking();
+                } else {
+                    mAdView.setVideoState(VideoState.IDLE);
                 }
             } catch (IllegalStateException e) {
                 e.printStackTrace();
@@ -285,9 +303,15 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
             mHandler.removeCallbacks(mRunnable);
             mAdView.setVideoCurrentTime(mVideoDuration);
             mAdView.setVideoState(VideoState.COMPLETE);
-            if (mCallback != null) {
-                mCallback.onVideoReachEnd();
-            }
+            onVideoReachEnd();
+            onStopMoatTracking();
+            onCompletionMoatTracking();
+        }
+    }
+
+    private void onVideoReachEnd() {
+        if (mCallback != null) {
+            mCallback.onVideoReachEnd();
         }
     }
 
@@ -296,75 +320,95 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         Logging.out(LOG_TAG, "onError: " + extra);
 
         mHandler.removeCallbacks(mRunnable);
-
+        destroyListeners();
         if (extra == MediaPlayer.MEDIA_ERROR_IO) {
             Logging.out(LOG_TAG, "end of preview file");
-            mPlayer.setOnErrorListener(null);
-            mPlayer.setOnCompletionListener(null);
             if (!TextUtils.isEmpty(mFileRest)) {
                 mVideoPositionWhenError = mp.getCurrentPosition();
-                mPlayer.reset();
-                mPlayer.release();
-
-                mPlayer = MediaPlayer.create(mContext, Uri.parse(mFileRest));
-                initPlayerListeners();
-                mPlayer.setSurface(mSurface);
-
-                mPlayer.start();
-                mPlayer.seekTo(mVideoPositionWhenError);
-                Logging.out(LOG_TAG, "mHandler.postDelayed");
-                mHandler.postDelayed(mRunnable, 200);
+                releasePlayer();
+                initPlayer(mFileRest);
+                setSurface(mSurface);
+                startMediaPlayer();
+                mMediaPlayer.seekTo(mVideoPositionWhenError);
+                mHandler.postDelayed(mRunnable, DELAY_TIME);
 
             } else {
                 mWaitForVideo = true;
                 mVideoPositionWhenError = mp.getCurrentPosition();
                 setVideoState(VideoState.BUFFERING);
-
-                mBufferingTimer = new CountDownTimer(2000, 1000) {
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                    }
-
-                    @Override
-                    public void onFinish() {
-                        ErrorLog.post("Buffering 2 seconds");
-                    }
-                };
-                mBufferingTimer.start();
+                startBuffering();
             }
             return true;
         }
-
-        if (mPlayer != null) {
-            mPlayer.setOnErrorListener(null);
-            mPlayer.setOnCompletionListener(null);
-        }
-
         if (mAdView.getCurrentVideoState() == VideoState.BROKEN ||
                 mAdView.getCurrentVideoState() == VideoState.IDLE) {
-            if (mCallback != null) {
-                mCallback.onFail(new LoopMeError("Error during video loading"));
-            }
+            onFail();
         } else {
-
             mAdView.setWebViewState(WebviewState.HIDDEN);
             mAdView.setVideoState(VideoState.PAUSED);
-
-            mCallback.playbackFinishedWithError();
-
-            if (mPlayer != null) {
-                mPlayer.reset();
-            }
+            onPlaybackFinishedWithError();
+            resetMediaPlayer();
             mWasError = true;
         }
         return true;
     }
 
+    private void startMediaPlayer() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.start();
+            onStartMoatTracking(mMediaPlayer, mAdView);
+        }
+    }
+
+    private void destroyListeners() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setOnErrorListener(null);
+            mMediaPlayer.setOnCompletionListener(null);
+        }
+    }
+
+    private void resetMediaPlayer() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.reset();
+        }
+    }
+
+    private void onPlaybackFinishedWithError() {
+        if (mCallback != null) {
+            mCallback.onPlaybackFinishedWithError();
+        }
+    }
+
+    private void startBuffering() {
+        mBufferingTimer = new CountDownTimer(BUFFERING_MILLIS_IN_FUTURE, BUFFERING_COUNTDOWN_INTERVAL) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+
+            }
+
+            @Override
+            public void onFinish() {
+                ErrorLog.post("Buffering 2 seconds");
+            }
+        };
+        mBufferingTimer.start();
+    }
+
+    private void onFail() {
+        if (mCallback != null) {
+            mCallback.onFail(new LoopMeError("Error during video loading"));
+        }
+    }
+
     @Override
-    public void onPrepared(MediaPlayer mp) {
-        Logging.out(LOG_TAG, "onPrepared");
+    public void onPrepared(MediaPlayer mediaPlayer) {
         setVideoState(VideoState.READY);
-        extractVideoInfo(mp);
+        extractVideoInfo(mediaPlayer);
+        stopBuffering();
+//        onPreparedMoatTracking(mMediaPlayer);
+    }
+
+    private void stopBuffering() {
         if (mBufferingTimer != null) {
             mBufferingTimer.cancel();
         }
@@ -376,20 +420,74 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         }
     }
 
-    private void extractVideoInfo(MediaPlayer mp) {
-        if (mp != null) {
-            int width = mp.getVideoWidth();
-            int height = mp.getVideoHeight();
+    private void extractVideoInfo(MediaPlayer mediaPlayer) {
+        if (mediaPlayer != null) {
             if (mCallback != null) {
-                mCallback.onVideoSizeChanged(width, height);
+                mCallback.onVideoSizeChanged(
+                        mediaPlayer.getVideoWidth(),
+                        mediaPlayer.getVideoHeight());
             }
-            mVideoDuration = mp.getDuration();
+            mVideoDuration = mediaPlayer.getDuration();
             if (mAdView != null) {
                 mAdView.setVideoDuration(mVideoDuration);
             }
-            mQuarter25 = mVideoDuration / 4;
-            mQuarter50 = mVideoDuration / 2;
-            mQuarter75 = mQuarter25 + mQuarter50;
+        }
+        mQuarter25 = roundNumberToHundredth(mVideoDuration / 4);
+        mQuarter50 = roundNumberToHundredth(mVideoDuration / 2);
+        mQuarter75 = mQuarter25 + mQuarter50;
+        fillQuartileEventsList();
+    }
+
+    private void fillQuartileEventsList() {
+        mQuartileEventsMap.clear();
+        mQuartileEventsMap.put(EVENT_VIDEO_25, mQuarter25);
+        mQuartileEventsMap.put(EVENT_VIDEO_50, mQuarter50);
+        mQuartileEventsMap.put(EVENT_VIDEO_75, mQuarter75);
+    }
+
+    public interface OnMoatEventListener {
+        void onStartMoatTracking(MediaPlayer mediaPlayer, AdView adView);
+
+        void onStopMoatTracking();
+
+        void onChangeViewMoatTracking(AdView adView);
+
+        void onPreparedMoatTracking(MediaPlayer mediaPlayer, AdView adView);
+
+        void onCompletionMoatTracking(MediaPlayer mediaPlayer);
+
+        void onVolumeChangedMoatTracking(int playerPositionInMillis, double volume);
+
+    }
+
+    public void onStartMoatTracking(MediaPlayer mediaPlayer, AdView adView) {
+        if (mOnMoatEventListener != null) {
+            mOnMoatEventListener.onChangeViewMoatTracking(this.mAdView);
+            mOnMoatEventListener.onStartMoatTracking(mediaPlayer, adView);
+        }
+    }
+
+    public void onStopMoatTracking() {
+        if (mOnMoatEventListener != null) {
+            mOnMoatEventListener.onStopMoatTracking();
+        }
+    }
+
+    public void onVolumeChangedMoatTracking() {
+        if (mOnMoatEventListener != null) {
+            mOnMoatEventListener.onVolumeChangedMoatTracking(mMediaPlayer.getCurrentPosition(), Utils.getSystemVolume());
+        }
+    }
+
+    public void onCompletionMoatTracking() {
+        if (mOnMoatEventListener != null) {
+            mOnMoatEventListener.onCompletionMoatTracking(mMediaPlayer);
+        }
+    }
+
+    private void onPreparedMoatTracking(MediaPlayer mediaPlayer) {
+        if (mOnMoatEventListener != null) {
+            this.mOnMoatEventListener.onPreparedMoatTracking(mediaPlayer, mAdView);
         }
     }
 }

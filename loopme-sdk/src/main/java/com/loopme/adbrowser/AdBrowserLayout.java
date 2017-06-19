@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -39,6 +40,9 @@ public final class AdBrowserLayout extends RelativeLayout {
         setLayoutParams(params);
 
         mAdBrowserWebview = new BrowserWebView(context);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         mAdBrowserWebview.setLayoutParams(params);
         addView(mAdBrowserWebview);
 

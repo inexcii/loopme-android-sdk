@@ -1,9 +1,9 @@
 package com.loopme.common;
 
 import com.loopme.constants.AdFormat;
+import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
 import com.loopme.debugging.LiveDebug;
-import com.loopme.debugging.ErrorLog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +27,10 @@ public class ResponseParser {
     private static final String JSON_DEBUG = "debug";
     private static final String JSON_PART_PRELOAD = "preload25";
 
+//    private static final String JSON_V360 = "v360";
+    private static final String JSON_TRACKING = "measure_partners";
+    private static final String JSON_ERROR = "error";
+    private static final String JSON_MRAID = "mraid";
     private static final  String JSON_V360 = "v360";
 
     private Listener mListener;
@@ -47,13 +51,19 @@ public class ResponseParser {
     public AdParams getAdParams(String result) {
         if (result == null) {
             return null;
+        } else if (result.isEmpty()) {
+            handleParseError("No content");
+            ErrorLog.post("Broken response", ErrorType.SERVER);
+            return null;
         }
+
         String format;
         JSONObject object;
         JSONObject settings;
 
         try {
             object = (JSONObject) new JSONTokener(result).nextValue();
+
             settings = object.getJSONObject(JSON_SETTINGS);
 
             format = settings.getString(JSON_FORMAT);
@@ -73,7 +83,7 @@ public class ResponseParser {
                     break;
             }
             if (!format.equalsIgnoreCase(requestedFormat)) {
-                handleParseError("Wrong Ad format");
+                handleParseError("Wrong Ad format: " + format);
                 return null;
             }
 
@@ -100,14 +110,19 @@ public class ResponseParser {
         int video360Value = parseInt(settings, JSON_V360);
         boolean video360 = video360Value == 1;
 
+        int mraidValue = parseInt(settings, JSON_MRAID);
+        boolean mraid = mraidValue == 1;
+
         return new AdParams.AdParamsBuilder(format)
                 .html(parseString(object, JSON_SCRIPT))
                 .orientation(parseString(settings, JSON_ORIENTATION))
                 .expiredTime(parseInt(settings, JSON_EXPIRED_TIME))
                 .token(parseString(settings, JSON_TOKEN))
                 .packageIds(parseArray(settings, JSON_PACKAGE_IDS))
+                .trackers(parseArray(settings, JSON_TRACKING))
                 .partPreload(preload)
                 .video360(video360)
+                .mraid(mraid)
                 .build();
     }
 
@@ -165,6 +180,18 @@ public class ResponseParser {
             value = object.getInt(jsonParam);
         } catch (JSONException e) {
             Logging.out(LOG_TAG, jsonParam + " absent");
+        }
+        return value;
+    }
+
+    private String extractTrackingUrl(JSONObject tracking) {
+        String value = null;
+        try {
+            if (tracking != null) {
+                value = tracking.getJSONArray(JSON_ERROR).getString(0);
+            }
+        } catch (JSONException e) {
+            Logging.out(LOG_TAG, JSON_ERROR + " absent");
         }
         return value;
     }

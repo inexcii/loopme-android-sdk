@@ -83,6 +83,7 @@ public class VideoLoader {
     private void handleEmulator() {
         if (Utils.isEmulator()) {
             Logging.out(LOG_TAG, "running on emulator");
+            StaticParams.USE_MOBILE_NETWORK_FOR_CACHING = true;
         }
     }
 

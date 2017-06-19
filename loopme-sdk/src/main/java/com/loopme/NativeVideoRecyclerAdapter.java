@@ -138,7 +138,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
         if (position < mOriginAdapter.getItemCount()) {
             mNativeVideoController.putAdWithAppKeyToPosition(appKey, position);
         } else {
-            Logging.out(LOG_TAG, "Wrong position " + position);
+            mNativeVideoController.putAdWithAppKeyToPosition(appKey, mOriginAdapter.getItemCount());
         }
     }
 

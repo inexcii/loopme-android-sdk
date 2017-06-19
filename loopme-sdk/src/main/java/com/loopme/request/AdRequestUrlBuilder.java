@@ -11,6 +11,8 @@ import com.loopme.common.StaticParams;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.loopme.constants.DeviceType.UNKNOWN;
+
 /**
  * Builds request url.
  */
@@ -68,7 +70,6 @@ public class AdRequestUrlBuilder {
     }
 
     public String buildRequestUrl(String appKey, AdTargetingData metadata) {
-
         Logging.out(LOG_TAG, "Start build request url");
 
         if (mContext == null) {
@@ -121,6 +122,11 @@ public class AdRequestUrlBuilder {
         String carrier = provider.getCarrier(mContext);
         if (carrier != null) {
             builder.appendQueryParameter(PARAM_CARRIER, carrier);
+        }
+
+        String deviceType = provider.getDeviceType();
+        if (!TextUtils.equals(deviceType.toLowerCase(), UNKNOWN.toLowerCase())) {
+            builder.appendQueryParameter(PARAM_DEVICE_TYPE, deviceType.toLowerCase());
         }
 
         String dntValue = provider.isDntPresent() ? "1" : "0";

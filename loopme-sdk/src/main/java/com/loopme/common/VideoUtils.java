@@ -25,9 +25,6 @@ class VideoUtils {
 
         int amountOfCachedFiles = 0;
         File[] files = parentDir.listFiles();
-        if(files == null){
-            return;
-        }
         for (File file : files) {
             if (!file.isDirectory()) {
                 if (file.getName().endsWith(MP4_FORMAT)) {
@@ -102,7 +99,11 @@ class VideoUtils {
         Logging.out(LOG_TAG, "Clear cache");
         File parentDir = context.getExternalFilesDir(VIDEO_FOLDER);
 
-        File[] files = parentDir.listFiles();
+        File[] files = new File[0];
+        if (parentDir == null) {
+            return;
+        }
+        files = parentDir.listFiles();
         int deletedFilesCounter = 0;
         for (File file : files) {
             if (!file.isDirectory()) {

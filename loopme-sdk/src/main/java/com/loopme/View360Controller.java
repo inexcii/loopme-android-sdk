@@ -82,27 +82,20 @@ public class View360Controller implements IViewController {
 
     private void checkIsAccelGyroPresented(Context context) {
         SensorManager mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-        List<Sensor> msensorList = mSensorManager.getSensorList(Sensor.TYPE_ALL);
-        boolean supportAccel;
-        boolean supportGyro;
-        for (Sensor s : msensorList) {
+        List<Sensor> mSensorList = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+        for (Sensor s : mSensorList) {
             if (s.getName().contains(ACCEL)) {
-                supportAccel = true;
-                mVRLibrary.setAccelSupported(supportAccel);
+                mVRLibrary.setAccelSupported(true);
             }
             if (s.getName().contains(GYRO)) {
-                supportGyro = true;
-                mVRLibrary.setGyroSupported(supportGyro);
+                mVRLibrary.setGyroSupported(true);
             }
         }
     }
 
     @Override
     public boolean handleTouchEvent(MotionEvent event) {
-        if (mVRLibrary != null) {
-            return mVRLibrary.handleTouchEvent(event);
-        }
-        return false;
+        return mVRLibrary != null && mVRLibrary.handleTouchEvent(event);
     }
 
     @Override

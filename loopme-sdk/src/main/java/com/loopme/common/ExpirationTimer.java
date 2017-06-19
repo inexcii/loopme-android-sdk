@@ -15,7 +15,7 @@ public class ExpirationTimer extends CountDownTimer {
     public ExpirationTimer(long millisInFuture, Listener listener) {
         super(millisInFuture, 1000 * 60);
         if (listener == null) {
-            Logging.out(LOG_TAG, "Listener should not be null");
+            Logging.out(LOG_TAG, "OnMraidBridgeListener should not be null");
         }
         Logging.out(LOG_TAG, "Start schedule expiration");
         mListener = listener;

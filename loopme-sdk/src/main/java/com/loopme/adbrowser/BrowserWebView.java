@@ -15,7 +15,7 @@ public class BrowserWebView extends WebView {
     private void init() {
         WebSettings webSettings = getSettings();
         webSettings.setJavaScriptEnabled(true);
-
+        webSettings.setDomStorageEnabled(true);
         webSettings.setPluginState(PluginState.ON);
 
         webSettings.setBuiltInZoomControls(true);

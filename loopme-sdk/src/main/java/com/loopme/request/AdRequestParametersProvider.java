@@ -5,9 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.ConnectivityManager;
@@ -19,15 +19,12 @@ import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.Toast;
 
 import com.loopme.BaseAd;
 import com.loopme.LoopMeBanner;
 import com.loopme.LoopMeInterstitial;
-import com.loopme.adview.AdView;
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
 import com.loopme.constants.ConnectionType;
@@ -50,7 +47,6 @@ public class AdRequestParametersProvider {
     private static final CharSequence MOBILE_MARK = "mobile";
     private static final String DEVICE_BLUETOOTH_NAME = "bluetooth_name";
 
-
     private static AdRequestParametersProvider sProvider;
 
     private volatile String mAdvertisingId;
@@ -65,13 +61,13 @@ public class AdRequestParametersProvider {
 
     private String mAppKey;
     private String mPackageId;
-
     private String mUserAgent;
     private int mScreenWidth;
     private int mScreenHeight;
     private int mAdWidth;
     private int mAdHeight;
     private String mDeviceName;
+
 
     private AdRequestParametersProvider() {
     }
@@ -207,7 +203,7 @@ public class AdRequestParametersProvider {
     private void initMraidSupport() {
         mMraid = "1";
         try {
-            Class.forName("com.loopme.MraidView");
+            Class.forName("com.loopme.mraid.MraidView");
         } catch (ClassNotFoundException e) {
             mMraid = "0";
         }
@@ -438,7 +434,7 @@ public class AdRequestParametersProvider {
             Logging.out(LOG_TAG, "WebView version: " + result);
         } catch (PackageManager.NameNotFoundException e) {
             Logging.out(LOG_TAG, "Android System WebView is not found. Trying to get it from user agent");
-            String[] s = AdView.CHROME_USER_AGENT.split(" ");
+            String[] s = mUserAgent.split(" ");
             for (int i = 0; i < s.length; i++) {
                 if (s[i].startsWith("Chrome")) {
                     String[] s2 = s[i].split("/");
@@ -448,6 +444,7 @@ public class AdRequestParametersProvider {
         }
         return result;
     }
+
     public void setUserAgent(Context context) {
         if (context == null) {
             Logging.out(LOG_TAG, "Context should not be null to get user agent");

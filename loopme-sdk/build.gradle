@@ -11,7 +11,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 7
+        versionCode 8
         versionName "5.1"
     }
 
@@ -37,6 +37,7 @@ dependencies {
     testCompile 'org.powermock:powermock-api-mockito:1.6.2'
     testCompile 'org.powermock:powermock-module-junit4:1.6.2'
     testCompile 'org.json:json:20140107'
+    compile 'com.android.support:multidex:1.0.1'
 }
 
 buildscript {
@@ -62,7 +63,7 @@ allprojects {
 }
 
 group = 'com.loopme'
-version = '5.1.7'
+version = '5.1.8'
 
 install {
     repositories.mavenInstaller {

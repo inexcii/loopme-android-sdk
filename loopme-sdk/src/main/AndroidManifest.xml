@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.loopme">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.loopme">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -11,13 +12,18 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <application>
+    <application android:name=".App">
 
         <activity
             android:name="com.loopme.AdActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:hardwareAccelerated="true"/>
         <activity android:name="com.loopme.AdBrowserActivity"/>
+        <activity android:name=".MraidActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:hardwareAccelerated="true"/>
+        <activity android:name=".mraid.MraidVideoActivity"
+            android:screenOrientation="landscape"/>
 
     </application>
 

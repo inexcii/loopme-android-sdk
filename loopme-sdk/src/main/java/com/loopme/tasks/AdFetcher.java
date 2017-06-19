@@ -1,6 +1,5 @@
 package com.loopme.tasks;
 
-import com.loopme.constants.AdFormat;
 import com.loopme.common.AdParams;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
@@ -9,8 +8,10 @@ import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
+import com.loopme.request.AdRequestParametersProvider;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
@@ -19,24 +20,16 @@ import java.net.URL;
 public class AdFetcher implements Runnable {
 
     private static final String LOG_TAG = AdFetcher.class.getSimpleName();
+    private static final int RESPONSE_CODE_SUCCESS = 200;
+    private static final int RESPONSE_CODE_UNKNOWN = 0;
 
     private final String mRequestUrl;
     private Listener mListener;
-
     private int mFormat;
-
-    /*
-     * Timeout for response from server 20 seconds
-     */
-    static int TIMEOUT = 20000;
-
-    private static final String USER_AGENT = "User-Agent";
-    private static final String AGENT_PROPERTY = "http.agent";
-
-    private static final String INVALID_APPKEY_MESS = "Missing or invalid app key";
-    private static final String PAGE_NOT_FOUND = "Page not found";
-
     private LoopMeError mLoopMeError;
+    private HttpURLConnection mUrlConnection;
+    private static final String USER_AGENT = "User-Agent";
+
 
     public interface Listener {
         void onComplete(AdParams params, LoopMeError error);
@@ -51,7 +44,10 @@ public class AdFetcher implements Runnable {
     @Override
     public void run() {
         String result = getResponse(mRequestUrl);
+        compete(result);
+    }
 
+    private void compete(String result) {
         if (result == null) {
             complete(null, mLoopMeError);
         } else {
@@ -69,73 +65,49 @@ public class AdFetcher implements Runnable {
         }
     }
 
+    private String getResponse(String url) {
+        int responseCode = 0;
+        try {
+            URL request = new URL(url);
+            mUrlConnection = (HttpURLConnection) request.openConnection();
+            mUrlConnection.setRequestProperty(USER_AGENT, getUserAgent());
+            mUrlConnection.setReadTimeout(StaticParams.REQUEST_TIMEOUT);
+            mUrlConnection.setConnectTimeout(StaticParams.REQUEST_TIMEOUT);
+
+            responseCode = mUrlConnection.getResponseCode();
+            if (responseCode != RESPONSE_CODE_SUCCESS) {
+                throw new IOException();
+            }
+            InputStream in = new BufferedInputStream(mUrlConnection.getInputStream());
+            return Utils.getStringFromStream(in);
+
+        } catch (SocketTimeoutException e) {
+            Logging.out(LOG_TAG + "timeout ad_request", ErrorType.SERVER);
+            mLoopMeError = new LoopMeError("Request timeout");
+            ErrorLog.post("Request timeout", ErrorType.SERVER);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Logging.out(LOG_TAG, e.getMessage());
+            if (responseCode != RESPONSE_CODE_UNKNOWN) {
+                mLoopMeError = new LoopMeError("Server code: " + responseCode);
+                ErrorLog.post("Bad servers response code " + responseCode, ErrorType.SERVER);
+            }
+        } finally {
+            if (mUrlConnection != null) {
+                mUrlConnection.disconnect();
+            }
+        }
+        return null;
+    }
+
+    private String getUserAgent() {
+        AdRequestParametersProvider provider = AdRequestParametersProvider.getInstance();
+        return provider.getUserAgent();
+    }
+
     private void complete(final AdParams params, final LoopMeError error) {
         if (mListener != null) {
             mListener.onComplete(params, error);
-        }
-    }
-
-    public String getResponse(String url) {
-        String result = null;
-        HttpURLConnection urlConnection = null;
-        try {
-            URL request = new URL(url);
-            urlConnection = (HttpURLConnection) request.openConnection();
-            urlConnection.setRequestProperty(USER_AGENT, System.getProperty(AGENT_PROPERTY));
-            urlConnection.setReadTimeout(TIMEOUT);
-            urlConnection.setConnectTimeout(TIMEOUT);
-
-            String type = mFormat == AdFormat.INTERSTITIAL ? StaticParams.INTERSTITIAL_TAG
-                    : StaticParams.BANNER_TAG;
-            Logging.out(LOG_TAG, type + " loads ad with URL: " + url);
-
-            int status = urlConnection.getResponseCode();
-            Logging.out(LOG_TAG, "status code: " + status);
-            handleStatusCode(status);
-
-            if (status == HttpURLConnection.HTTP_NOT_FOUND) {
-                InputStream errorStream = urlConnection.getErrorStream();
-                String errorString = Utils.getStringFromStream(errorStream);
-                if (errorString.contains(INVALID_APPKEY_MESS)) {
-                    mLoopMeError = new LoopMeError(INVALID_APPKEY_MESS);
-                } else {
-                    mLoopMeError = new LoopMeError(PAGE_NOT_FOUND);
-                }
-                return null;
-            }
-
-            if (status == HttpURLConnection.HTTP_OK) {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                result = Utils.getStringFromStream(in);
-            }
-        } catch (SocketTimeoutException e) {
-            mLoopMeError = new LoopMeError("Request timeout");
-            ErrorLog.post("timeout[ad_request]", ErrorType.SERVER);
-        } catch (Exception e) {
-            e.printStackTrace();
-            mLoopMeError = new LoopMeError("Error during establish connection");
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-        }
-
-        return result;
-    }
-
-    private void handleStatusCode(int statusCode) {
-        switch (statusCode) {
-            case HttpURLConnection.HTTP_OK:
-                break;
-
-            case HttpURLConnection.HTTP_NO_CONTENT:
-                mLoopMeError = new LoopMeError("No ads found");
-                break;
-
-            default:
-                mLoopMeError = new LoopMeError("Server status code: " + statusCode);
-                ErrorLog.post("Server status code: " + statusCode, ErrorType.SERVER);
-                break;
         }
     }
 }

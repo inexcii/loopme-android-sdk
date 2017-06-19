@@ -21,10 +21,13 @@ public class AdParams {
     private final int mExpiredDate;
 
     private List<String> mPackageIds = new ArrayList<String>();
+    private List<String> mTrackers = new ArrayList<>();
     private String mToken;
 
     private boolean mPartPreload;
     private boolean mVideo360;
+    private boolean mMraid;
+    private boolean mOwnCloseButton;
 
     private AdParams(AdParamsBuilder builder) {
         mFormat = builder.mBuilderFormat;
@@ -32,18 +35,21 @@ public class AdParams {
         mOrientation = builder.mBuilderOrientation;
 
         mExpiredDate = builder.mBuilderExpiredDate == 0 ?
-            StaticParams.DEFAULT_EXPIRED_TIME :
-            builder.mBuilderExpiredDate;
+                StaticParams.DEFAULT_EXPIRED_TIME :
+                builder.mBuilderExpiredDate;
 
         mPackageIds = builder.mPackageIds;
+        mTrackers = builder.mTrackers;
         mToken = builder.mToken;
 
         mPartPreload = builder.mPartPreload;
         mVideo360 = builder.mVideo360;
 
+        mMraid = builder.mMraid;
+
         Logging.out(LOG_TAG, "Server response indicates  ad params: "
                 + "format: " + mFormat + ", orientation: " + mOrientation
-                + ", expire in: " + mExpiredDate);
+                + ", mraid: " + mMraid + ", expire in: " + mExpiredDate);
     }
 
     public boolean getPartPreload() {
@@ -52,6 +58,10 @@ public class AdParams {
 
     public boolean isVideo360() {
         return mVideo360;
+    }
+
+    public boolean isMraid() {
+        return mMraid;
     }
 
     public String getHtml() {
@@ -74,8 +84,19 @@ public class AdParams {
         return mPackageIds;
     }
 
+    public List<String> getTrackers(){
+        return mTrackers;
+    }
     public String getToken() {
         return mToken;
+    }
+
+    public boolean isOwnCloseButton() {
+        return mOwnCloseButton;
+    }
+
+    public void setOwnCloseButton(boolean hasOwnCloseButton) {
+        mOwnCloseButton = hasOwnCloseButton;
     }
 
     static class AdParamsBuilder {
@@ -91,6 +112,8 @@ public class AdParams {
 
         private boolean mPartPreload;
         private boolean mVideo360;
+        private boolean mMraid;
+        private List<String> mTrackers = new ArrayList<>();
 
         public AdParamsBuilder(String format) {
             mBuilderFormat = format;
@@ -101,6 +124,11 @@ public class AdParams {
             return this;
         }
 
+        public AdParamsBuilder trackers(List<String> trackers) {
+            mTrackers = trackers;
+            return this;
+        }
+
         public AdParamsBuilder partPreload(boolean preload) {
             mPartPreload = preload;
             return this;
@@ -108,6 +136,11 @@ public class AdParams {
 
         public AdParamsBuilder video360(boolean b) {
             mVideo360 = b;
+            return this;
+        }
+
+        public AdParamsBuilder mraid(boolean isMraid) {
+            mMraid = isMraid;
             return this;
         }
 
@@ -129,7 +162,7 @@ public class AdParams {
                 mBuilderOrientation = orientation;
             } else {
                 if (!TextUtils.isEmpty(mBuilderFormat) && mBuilderFormat.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG))
-                ErrorLog.post("Broken response [invalid orientation: " + orientation + "]", ErrorType.SERVER);
+                    ErrorLog.post("Broken response [invalid orientation: " + orientation + "]", ErrorType.SERVER);
             }
             return this;
         }
@@ -151,20 +184,14 @@ public class AdParams {
         }
 
         private boolean isValidFormatValue() {
-            if (mBuilderFormat == null) {
-                return false;
-            }
-
-            return mBuilderFormat.equalsIgnoreCase(StaticParams.BANNER_TAG)
-                    || mBuilderFormat.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG);
+            return mBuilderFormat != null &&
+                    (mBuilderFormat.equalsIgnoreCase(StaticParams.BANNER_TAG) ||
+                            mBuilderFormat.equalsIgnoreCase(StaticParams.INTERSTITIAL_TAG));
         }
 
-        private boolean isValidOrientationValue(String or) {
-            if (or == null) {
-                return false;
-            }
-            return or.equalsIgnoreCase(StaticParams.ORIENTATION_PORT)
-                    || or.equalsIgnoreCase(StaticParams.ORIENTATION_LAND);
+        private boolean isValidOrientationValue(String orientation) {
+            return orientation != null && (orientation.equalsIgnoreCase(StaticParams.ORIENTATION_PORT) ||
+                    orientation.equalsIgnoreCase(StaticParams.ORIENTATION_LAND));
         }
     }
 }

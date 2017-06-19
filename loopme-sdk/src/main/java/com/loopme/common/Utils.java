@@ -1,10 +1,10 @@
 package com.loopme.common;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
@@ -23,8 +24,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.os.Build;
-import android.content.res.Resources;
 
 import com.loopme.AES;
 import com.loopme.LoopMeBanner;
@@ -35,19 +34,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static com.loopme.common.StaticParams.UNKNOWN_NAME;
 
 public class Utils {
 
     private static final String LOG_TAG = Utils.class.getSimpleName();
-
+    private static final String DATE_PATTERN = "dd/MM/yy HH:mm:ss.s";
     private static WindowManager sWindowManager;
     private static Resources sResources;
     private static LocationManager sLocationManager;
     private static PackageManager sPackageManager;
     private static AudioManager sAudioManager;
+    private static SimpleDateFormat sFormatter = new SimpleDateFormat(DATE_PATTERN);
 
     public static boolean isOnline(Context context) {
         boolean isOnline;
@@ -182,8 +187,8 @@ public class Utils {
 
     public static float getSystemVolume() {
         if (sAudioManager != null) {
-            int volume_level = sAudioManager.getStreamVolume(AudioManager.STREAM_RING);
-            int max = sAudioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
+            int volume_level = sAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            int max = sAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
             int percent = Math.round(volume_level * 100 / max);
             return (float) percent / 100;
         } else {
@@ -192,8 +197,8 @@ public class Utils {
     }
 
     public static int getScreenOrientation() {
-        if(sWindowManager == null){
-            return 0;
+        if (sWindowManager == null || sWindowManager.getDefaultDisplay() == null) {
+            return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
         }
         int rotation = sWindowManager.getDefaultDisplay().getRotation();
         DisplayMetrics dm = new DisplayMetrics();
@@ -315,7 +320,7 @@ public class Utils {
                 }
                 break;
 
-            case STRECH:
+            case STRETCH:
                 lp.width = mResizeWidth;
                 lp.height = mResizeHeight;
                 break;
@@ -371,6 +376,10 @@ public class Utils {
         return null;
     }
 
+    public static String getCurrentDate() {
+        return sFormatter.format(new Date());
+    }
+
     private static String deleteLastCharacter(String encryptedString) {
         if (!TextUtils.isEmpty(encryptedString)) {
             return encryptedString.substring(0, encryptedString.length() - 1);
@@ -391,5 +400,11 @@ public class Utils {
             e.printStackTrace();
         }
         return UNKNOWN_NAME;
+    }
+
+    public static void setCacheDirectory(Context context) {
+        if (TextUtils.isEmpty(StaticParams.sCacheDirectory)) {
+            StaticParams.sCacheDirectory = context.getFilesDir().getAbsolutePath();
+        }
     }
 }

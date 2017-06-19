@@ -2,7 +2,6 @@ package com.loopme.debugging;
 
 import com.loopme.common.ExecutorHelper;
 import com.loopme.common.Logging;
-import com.loopme.common.StaticParams;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -54,13 +53,9 @@ class HttpUtils {
             int code = urlConnection.getResponseCode();
             Logging.out(LOG_TAG, "response code : " + code);
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage());
-
         } catch (IOException e) {
             e.printStackTrace();
-            Logging.out(LOG_TAG, e.getMessage());
+            Logging.out(LOG_TAG, String.valueOf(e));
 
         } finally {
             if (urlConnection != null) {
@@ -81,7 +76,7 @@ class HttpUtils {
     private static String getPostDataString(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
         boolean first = true;
-        for(Map.Entry<String, String> entry : params.entrySet()){
+        for (Map.Entry<String, String> entry : params.entrySet()) {
             if (first) {
                 first = false;
             } else {

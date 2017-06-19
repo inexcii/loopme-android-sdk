@@ -25,6 +25,7 @@ import com.loopme.request.AdTargeting;
 import com.loopme.request.AdTargetingData;
 import com.loopme.tasks.AdFetcher;
 import com.loopme.tasks.AdvIdFetcher;
+import com.loopme.tasks.RequestTimer;
 
 import java.util.concurrent.Future;
 
@@ -56,10 +57,16 @@ public abstract class BaseAd implements AdTargeting {
     protected int mShowWhenAdNotReadyCounter;
 
     private AdParams mAdParams;
-    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
     private AdTargetingData mAdTargetingData = new AdTargetingData();
 
+    private RequestTimer mRequestTimer;
+    private volatile RequestTimer.Listener mRequestTimerListener;
+    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
+
     protected Handler mHandler = new Handler(Looper.getMainLooper());
+
+    private boolean mHtmlAd;
+    private boolean mNativeAd;
 
     public BaseAd(Context context, String appKey) {
         if (context == null || TextUtils.isEmpty(appKey)) {
@@ -67,9 +74,8 @@ public abstract class BaseAd implements AdTargeting {
         }
         mContext = context;
         mAppKey = appKey;
-
-        AdRequestParametersProvider.getInstance().setAppKey(mAppKey);
-        AdRequestParametersProvider.getInstance().detectPackage(mContext);
+        AdRequestParametersProvider.getInstance().init(this);
+        Utils.setCacheDirectory(context);
     }
 
     /**
@@ -104,6 +110,7 @@ public abstract class BaseAd implements AdTargeting {
     public boolean isLoading() {
         return mAdState == AdState.LOADING;
     }
+
 
     public void load() {
         load(IntegrationType.NORMAL);
@@ -240,17 +247,19 @@ public abstract class BaseAd implements AdTargeting {
 
     protected void fetchAdComplete(AdParams params) {
         setAdParams(params);
-        preloadHtmlInWebview(params.getHtml());
+        preloadHtmlContent(params.getHtml(), params.isMraid());
     }
 
-    private void preloadHtmlInWebview(String html) {
+    private void preloadHtmlContent(String html, boolean mraid) {
         if (TextUtils.isEmpty(html)) {
             onAdLoadFail(new LoopMeError("Broken response"));
             ErrorLog.post("Broken response (empty html)", ErrorType.SERVER);
+            return;
         } else {
             if (mAdController != null) {
-                mAdController.initControllers();
-                mAdController.preloadHtml(html);
+                mAdController.initControllers(mraid);
+                mAdController.preloadHtml(html, mraid);
+
             } else {
                 onAdLoadFail(new LoopMeError("Html loading error"));
             }
@@ -264,16 +273,13 @@ public abstract class BaseAd implements AdTargeting {
             public void onComplete(final AdParams params,
                                    final LoopMeError error) {
 
+                stopRequestTimer();
                 if (params != null && !params.getPackageIds().isEmpty()) {
-
-                    boolean b = Utils.isPackageInstalled(params.getPackageIds());
-
-                    if (b) {
+                    if (Utils.isPackageInstalled(params.getPackageIds())) {
                         mAdState = AdState.NONE;
                         completeRequest(null, new LoopMeError("No valid ads found"));
                         EventManager eventManager = new EventManager();
                         eventManager.trackSdkEvent(params.getToken());
-
                     } else {
                         completeRequest(params, error);
                     }
@@ -391,6 +397,8 @@ public abstract class BaseAd implements AdTargeting {
 
     protected void fetchAd() {
         LoopMeAdHolder.putAd(this);
+        AdRequestParametersProvider.getInstance().setScreenSize();
+        AdRequestParametersProvider.getInstance().setAdSize(this);
         mRequestUrl = new AdRequestUrlBuilder(mContext).buildRequestUrl(mAppKey, mAdTargetingData, mIntegrationType);
         if (mRequestUrl == null) {
             onAdLoadFail(new LoopMeError("Error during building ad request url"));
@@ -399,6 +407,7 @@ public abstract class BaseAd implements AdTargeting {
 
         mAdFetcherListener = initAdFetcherListener();
         AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, getAdFormat());
+        startRequestTimer();
         mFuture = ExecutorHelper.getExecutor().submit(fetcher);
     }
 
@@ -420,6 +429,7 @@ public abstract class BaseAd implements AdTargeting {
      *          false if need to cache video only on wi-fi network.
      */
     public void useMobileNetworkForCaching(boolean b) {
+        StaticParams.USE_MOBILE_NETWORK_FOR_CACHING = b;
     }
 
     /**
@@ -453,7 +463,53 @@ public abstract class BaseAd implements AdTargeting {
         mAdTargetingData.setCustomParameters(param, paramValue);
     }
 
-    AdController getAdController() {
+    public AdController getAdController() {
         return mAdController;
+    }
+
+    private void startRequestTimer() {
+        mRequestTimerListener = initTimerListener();
+        mRequestTimer = new RequestTimer(StaticParams.REQUEST_TIMEOUT, mRequestTimerListener);
+        mRequestTimer.start();
+    }
+
+    private void stopRequestTimer() {
+        if (mRequestTimer != null && mRequestTimerListener != null) {
+            mRequestTimerListener = null;
+            mRequestTimer.stop();
+        }
+    }
+
+    private RequestTimer.Listener initTimerListener() {
+        return new RequestTimer.Listener() {
+
+            @Override
+            public void onTimeout() {
+                if (mFuture != null && mAdFetcherListener != null) {
+                    mAdFetcherListener = null;
+                    mFuture.cancel(true);
+                    mFuture = null;
+                }
+                onAdLoadFail(new LoopMeError("Request timeout"));
+                ErrorLog.post("Request timeout", ErrorType.CUSTOM);
+                ErrorLog.post("Request timeout", ErrorType.SERVER);
+            }
+        };
+    }
+
+    public boolean isHtmlAd() {
+        return mHtmlAd;
+    }
+
+    public void setHtmlAd(boolean htmlAd) {
+        this.mHtmlAd = htmlAd;
+    }
+
+    public boolean isNativeAd() {
+        return mNativeAd;
+    }
+
+    public void setNativeAd(boolean nativeAd) {
+        this.mNativeAd = nativeAd;
     }
 }

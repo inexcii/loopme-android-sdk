@@ -16,14 +16,12 @@ import com.loopme.constants.WebviewState;
  * Custom ad view.
  * Communicate with javascript.
  */
-public class AdView extends WebView implements BridgeInterface, Bridge.Listener {
+public class AdView extends WebView implements
+        BridgeInterface,
+        Bridge.Listener {
 
     private static final String LOG_TAG = AdView.class.getSimpleName();
-
-    public static final String DEFAULT_CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 4.4.2; " +
-            "Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 " +
-            "Mobile Safari/537.36";
-
+    public static final String DEFAULT_CHROME_USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 7.1.1; Nexus 6P Build/NMF26F)";
     public static final String CHROME_USER_AGENT = initUserAgent();
 
     private Bridge.Listener mBridgeListener;
@@ -34,6 +32,7 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
 
     public AdView(Context context) {
         super(context);
+        Logging.out(LOG_TAG, "AdView created");
         init();
     }
 
@@ -71,16 +70,18 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
         webSettings.setJavaScriptEnabled(true);
 
         webSettings.setPluginState(PluginState.ON);
-
         setVerticalScrollBarEnabled(false);
         setHorizontalScrollBarEnabled(false);
+        //added to tests
+        if (Build.VERSION.SDK_INT >= 19 && StaticParams.DEBUG_MODE) {
+            setWebContentsDebuggingEnabled(true);
+        }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            webSettings.setMediaPlaybackRequiresUserGesture(false);
+        }
         webSettings.setSupportZoom(false);
-
-        webSettings.setUserAgentString(CHROME_USER_AGENT);
-
         setWebChromeClient(new AdViewChromeClient());
-
         mBridge = new Bridge(this);
         setWebViewClient(mBridge);
     }
@@ -93,7 +94,6 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
     public void setWebViewState(int state) {
         if (mViewState != state) {
             mViewState = state;
-            Logging.out(LOG_TAG, "WEBVIEW : " + WebviewState.toString(state));
             String command = new BridgeCommandBuilder().webviewState(mViewState);
             loadUrl(command);
         }
@@ -178,9 +178,9 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
     }
 
     @Override
-    public void onJsFullscreenMode(boolean b) {
+    public void onJsFullscreenMode(boolean isFullScreen) {
         if (mBridgeListener != null) {
-            mBridgeListener.onJsFullscreenMode(b);
+            mBridgeListener.onJsFullscreenMode(isFullScreen);
         }
     }
 
@@ -188,6 +188,13 @@ public class AdView extends WebView implements BridgeInterface, Bridge.Listener 
     public void onNonLoopMe(String url) {
         if (mBridgeListener != null) {
             mBridgeListener.onNonLoopMe(url);
+        }
+    }
+
+    @Override
+    public void onHtmlAdOpens() {
+        if (mBridgeListener != null) {
+            mBridgeListener.onHtmlAdOpens();
         }
     }
 

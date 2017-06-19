@@ -8,6 +8,8 @@ import com.loopme.common.Logging;
 import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
 
+import java.util.Date;
+
 public class AdViewChromeClient extends WebChromeClient {
 
     private static final String LOG_TAG = AdViewChromeClient.class.getSimpleName();

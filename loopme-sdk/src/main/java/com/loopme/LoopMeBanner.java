@@ -7,24 +7,24 @@ import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import com.loopme.common.Logging;
+import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
 import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
 import com.loopme.constants.DisplayMode;
-import com.loopme.common.Logging;
-import com.loopme.common.LoopMeError;
-import com.loopme.common.StaticParams;
-import com.loopme.common.Utils;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
-import com.loopme.debugging.LiveDebug;
 import com.loopme.debugging.ErrorLog;
+import com.loopme.debugging.LiveDebug;
 
 /**
  * The `LoopMeBanner` class provides facilities to display a custom size ads
  * during natural transition points in your application.
  * <p>
- * It is recommended to implement `LoopMeBanner.Listener` to stay informed about ad state changes,
+ * It is recommended to implement `LoopMeBanner.OnMraidBridgeListener` to stay informed about ad state changes,
  * such as when an ad has been loaded or has failed to load its content, when video ad has been watched completely,
  * when an ad has been presented or dismissed from the screen, and when an ad has expired or received a tap.
  */
@@ -69,14 +69,13 @@ public class LoopMeBanner extends BaseAd {
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    public LoopMeBanner(Context context, String appKey) {
+    LoopMeBanner(Context context, String appKey) {
         super(context, appKey);
 
         mAdController = new AdController(this);
 
         Utils.init(context);
         LiveDebug.init(context);
-
         Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey);
     }
 
@@ -182,7 +181,7 @@ public class LoopMeBanner extends BaseAd {
 
     /**
      * Sets listener in order to receive notifications during the loading/displaying ad processes
-     * @param listener - Listener
+     * @param listener - OnMraidBridgeListener
      */
     public void setListener(Listener listener) {
         mAdListener = listener;
@@ -234,11 +233,17 @@ public class LoopMeBanner extends BaseAd {
             mAdState = AdState.SHOWING;
             stopExpirationTimer();
 
-            mAdController.buildVideoAdView(mBannerView);
-            if (getAdParams().isVideo360()) {
-                IViewController v360 = mAdController.getViewController();
-                v360.initVRLibrary(getContext());
-                v360.onResume();
+            if (getAdParams().isMraid()) {
+                mAdController.buildMraidContainer(mBannerView);
+                mAdController.getMraidView().setIsViewable(true);
+                mAdController.getMraidView().notifyStateChange();
+            } else {
+                mAdController.buildVideoAdView(mBannerView);
+                if (getAdParams().isVideo360()) {
+                    IViewController v360 = mAdController.getViewController();
+                    v360.initVRLibrary(getContext());
+                    v360.onResume();
+                }
             }
 
             if (mBannerView.getVisibility() != View.VISIBLE) {
@@ -283,7 +288,7 @@ public class LoopMeBanner extends BaseAd {
         }
     }
 
-    AdController getAdController() {
+    public AdController getAdController() {
         return mAdController;
     }
 
@@ -336,6 +341,7 @@ public class LoopMeBanner extends BaseAd {
                 }
             }
             onLoopMeBannerHide();
+            Logging.logEvent("Ad closed.");
         } else {
             Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
         }
@@ -361,6 +367,7 @@ public class LoopMeBanner extends BaseAd {
         }
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLoadFail(this, error);
+            Logging.logEvent(getAppKey(), "Ad failed to load. " + error.getMessage());
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -379,6 +386,7 @@ public class LoopMeBanner extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLoadSuccess(this);
+            Logging.logEvent(getAppKey(), "Ad loaded successfully.");
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -392,6 +400,7 @@ public class LoopMeBanner extends BaseAd {
         mIsVideoFinished = false;
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerShow(this);
+            Logging.logEvent("Ad appeared on the screen.");
         }
     }
 
@@ -416,6 +425,7 @@ public class LoopMeBanner extends BaseAd {
         Logging.out(LOG_TAG, "Ad received click event");
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerClicked(this);
+            Logging.logEvent("User interacts with Ad.");
         }
     }
 

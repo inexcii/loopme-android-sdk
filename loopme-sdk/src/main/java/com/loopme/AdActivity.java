@@ -15,16 +15,16 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.loopme.constants.AdFormat;
 import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
+import com.loopme.constants.AdFormat;
 import com.loopme.constants.WebviewState;
 
-public final class AdActivity extends Activity implements AdReceiver.Listener {
+public final class AdActivity extends Activity
+        implements AdReceiver.Listener {
 
     private static final String LOG_TAG = AdActivity.class.getSimpleName();
-
     private AdController mAdController;
     private IViewController mIViewController;
     private int mFormat;
@@ -51,6 +51,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     private int mInitialOrientation;
 
     private boolean mReceivedDestroyBroadcast;
+    private boolean mFirstLaunchHtmlAd = true;
 
     private final SensorEventListener mSensorListener = new SensorEventListener() {
 
@@ -78,7 +79,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     public final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setVolumeControlStream(AudioManager.STREAM_RING);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         mInitialOrientation = Utils.getScreenOrientation();
 
@@ -110,6 +111,8 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         } else {
             mIs360 = mBaseAd.getAdParams().isVideo360();
             mAdController = mBaseAd.getAdController();
+            loadHtmlAdToWebView();
+
             mIViewController = mAdController.getViewController();
 
             if (mFormat == AdFormat.INTERSTITIAL) {
@@ -133,6 +136,12 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
                 ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialShow((LoopMeInterstitial) mBaseAd);
             }
         }
+    }
+
+    private void loadHtmlAdToWebView() {
+        String html = mBaseAd.getAdParams().getHtml();
+        boolean mraid = mBaseAd.getAdParams().isMraid();
+        mAdController.loadHtmlAdToWebView(html, mraid);
     }
 
     private void initSensor() {
@@ -165,7 +174,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
         return mLayout;
     }
 
-    private boolean isVideoPresented() {
+    public boolean isVideoPresented() {
         return mAdController.isVideoPresented();
     }
 
@@ -215,7 +224,6 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
     @Override
     protected void onPause() {
         super.onPause();
-        Logging.out(LOG_TAG, "onPause");
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mSensorListener);
         }
@@ -230,21 +238,27 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
 
         } else if (!mKeepAlive && mFormat == AdFormat.INTERSTITIAL) {
             if (mAdController != null) {
-                mAdController.setWebViewState(WebviewState.CLOSED);
-                if (mIs360) {
-                    mAdController.pauseVideo();
+                if (mReceivedDestroyBroadcast) {
+                    mAdController.setWebViewState(WebviewState.CLOSED);
+                } else {
+                    mAdController.setWebViewState(WebviewState.HIDDEN);
                 }
+                mAdController.pauseVideo();
             }
-            finish();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Logging.out(LOG_TAG, "onResume");
         mKeepAlive = false;
         if (mAdController != null) {
+            if (!mAdController.isHtmlAd() | !mFirstLaunchHtmlAd) {
+                mAdController.setWebViewState(WebviewState.VISIBLE);
+            }
+            if (mAdController.getWebViewState() == WebviewState.HIDDEN) {
+                mAdController.resumeVideo();
+            }
             mAdController.setWebViewState(WebviewState.VISIBLE);
             if (mIViewController != null) {
                 mIViewController.onResume();
@@ -254,6 +268,7 @@ public final class AdActivity extends Activity implements AdReceiver.Listener {
             mSensorManager.registerListener(mSensorListener, mSensorManager.getDefaultSensor(
                     Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         }
+        mFirstLaunchHtmlAd = false;
     }
 
     @Override

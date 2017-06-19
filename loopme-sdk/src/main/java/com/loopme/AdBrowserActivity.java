@@ -19,11 +19,10 @@ import android.widget.Button;
 import com.loopme.adbrowser.AdBrowserLayout;
 import com.loopme.adbrowser.AdBrowserWebViewClient;
 import com.loopme.adbrowser.BrowserWebView;
-import com.loopme.constants.AdFormat;
-import com.loopme.common.Logging;
+import com.loopme.common.Base64Drawables;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
-import com.loopme.common.Base64Drawables;
+import com.loopme.constants.AdFormat;
 
 /**
  * Browser Activity. Starts when ad click happened.
@@ -100,7 +99,6 @@ public final class AdBrowserActivity extends Activity {
     @Override
     protected final void onPause() {
         super.onPause();
-        Logging.out(LOG_TAG, "onPause");
         if (mAdBrowserWebview != null) {
             mAdBrowserWebview.onPause();
         }
@@ -108,7 +106,6 @@ public final class AdBrowserActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        Logging.out(LOG_TAG, " onDestroy");
         if (mAdBrowserWebview != null) {
             mAdBrowserWebview.clearCache(true);
         }
@@ -118,7 +115,6 @@ public final class AdBrowserActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        Logging.out(LOG_TAG, "onResume");
         if (mIsBackFromMarket) {
             finish();
         }

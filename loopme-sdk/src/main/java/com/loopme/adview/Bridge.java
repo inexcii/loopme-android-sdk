@@ -41,6 +41,8 @@ public class Bridge extends WebViewClient {
     private static final String QUERY_PARAM_MUTE = "mute";
     private static final String QUERY_PARAM_FULLSCREEN_MODE = "mode";
 
+    private static final int VIBRATE_MILLISECONDS = 500;
+
     private Listener mListener;
 
     public interface Listener {
@@ -51,7 +53,7 @@ public class Bridge extends WebViewClient {
 
         void onJsLoadFail(String mess);
 
-        void onJsFullscreenMode(boolean b);
+        void onJsFullscreenMode(boolean isFullScreen);
 
         void onJsVideoLoad(String videoUrl);
 
@@ -64,6 +66,9 @@ public class Bridge extends WebViewClient {
         void onJsVideoStretch(boolean b);
 
         void onNonLoopMe(String url);
+
+        void onHtmlAdOpens();
+
     }
 
     public Bridge(Bridge.Listener listener) {
@@ -122,11 +127,9 @@ public class Bridge extends WebViewClient {
     }
 
     private void handleWebviewCommands(String command, String url, Context context) {
-
         if (command == null || mListener == null) {
             return;
         }
-
         switch (command) {
             case WEBVIEW_CLOSE:
                 mListener.onJsClose();
@@ -140,13 +143,14 @@ public class Bridge extends WebViewClient {
                 mListener.onJsLoadFail("Ad received specific URL loopme://webview/fail");
                 break;
 
-            case WEBVIEW_SUCCESS:
-                mListener.onJsLoadSuccess();
-                break;
-
             case WEBVIEW_FULLSCREEN:
                 handleFullscreenMode(url);
                 break;
+            case WEBVIEW_SUCCESS: {
+                mListener.onJsLoadSuccess();
+                mListener.onHtmlAdOpens();
+                break;
+            }
 
             default:
                 break;
@@ -163,25 +167,22 @@ public class Bridge extends WebViewClient {
             } else {
                 mListener.onJsFullscreenMode(Boolean.parseBoolean(modeStr));
             }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        } catch (UnsupportedOperationException e) {
+        } catch (NullPointerException | UnsupportedOperationException e) {
             e.printStackTrace();
         }
     }
 
     private boolean isValidBooleanParameter(String modeStr) {
-        if (TextUtils.isEmpty(modeStr)) {
-            return false;
-        }
-        return modeStr.equalsIgnoreCase("true") || modeStr.equalsIgnoreCase("false");
+        return !TextUtils.isEmpty(modeStr) &&
+                (modeStr.equalsIgnoreCase(Boolean.TRUE.toString()) ||
+                        modeStr.equalsIgnoreCase(Boolean.FALSE.toString()));
     }
 
     private void handleVibrate(Context context) {
         try {
-            Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-            if (v != null) {
-                v.vibrate(500);
+            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator != null) {
+                vibrator.vibrate(VIBRATE_MILLISECONDS);
             }
         } catch (Exception e) {
             Logging.out(LOG_TAG, "Missing permission for vibrate");
@@ -256,9 +257,7 @@ public class Bridge extends WebViewClient {
         String result = null;
         try {
             result = uri.getQueryParameter(parameter);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        } catch (UnsupportedOperationException e) {
+        } catch (NullPointerException | UnsupportedOperationException e) {
             e.printStackTrace();
         }
         return result;
@@ -277,4 +276,11 @@ public class Bridge extends WebViewClient {
         Logging.out(LOG_TAG, "onPageStarted");
         super.onPageStarted(view, url, favicon);
     }
+
+    @Override
+    public void onPageFinished(WebView webView, String url) {
+        Logging.out(LOG_TAG, "onPageFinished");
+        super.onPageFinished(webView, url);
+    }
+
 }

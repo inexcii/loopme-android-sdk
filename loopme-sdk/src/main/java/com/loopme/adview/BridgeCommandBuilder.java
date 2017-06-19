@@ -6,9 +6,10 @@ import com.loopme.constants.WebviewState;
 /**
  * Class helper to build LoopMe javascript bridge commands
  */
-class BridgeCommandBuilder {
+public class BridgeCommandBuilder {
 
     private static final String PREFIX = "javascript:window.L.bridge.set";
+    private static final String PREFIX_FUNCTION_BEGIN = "javascript:(function(){ ";
     private static final String PREFIX_360 = "javascript:window.L.track";
 
     String isNativeCallFinished(boolean b) {
@@ -31,12 +32,13 @@ class BridgeCommandBuilder {
         return builder.toString();
     }
 
-    String videoMute(boolean b) {
+    String videoMute(boolean mute) {
         StringBuilder builder = new StringBuilder();
         builder.append(PREFIX)
                 .append("('video', {mute: ")
-                .append(b)
-                .append("});");
+                .append("'")
+                .append(mute)
+                .append("'});");
         return builder.toString();
     }
 
@@ -44,8 +46,9 @@ class BridgeCommandBuilder {
         StringBuilder builder = new StringBuilder();
         builder.append(PREFIX)
                 .append("('video', {currentTime: ")
+                .append("'")
                 .append(time)
-                .append("});");
+                .append("'});");
         return builder.toString();
     }
 
@@ -53,8 +56,9 @@ class BridgeCommandBuilder {
         StringBuilder builder = new StringBuilder();
         builder.append(PREFIX)
                 .append("('video', {duration: ")
+                .append("'")
                 .append(time)
-                .append("});");
+                .append("'});");
         return builder.toString();
     }
 
@@ -68,7 +72,7 @@ class BridgeCommandBuilder {
         return builder.toString();
     }
 
-    String webviewState(int state) {
+    public String webviewState(int state) {
         StringBuilder builder = new StringBuilder();
         builder.append(PREFIX)
                 .append("('webview', {state: ")
@@ -95,4 +99,35 @@ class BridgeCommandBuilder {
                 .append("'});");
         return builder.toString();
     }
+
+    public String unMuteAndPlayVideo() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(PREFIX_FUNCTION_BEGIN)
+                .append(playVideo())
+                .append(unMuteVideo())
+                .append(" })()");
+        return builder.toString();
+    }
+
+    private String playVideo() {
+        return "document.getElementsByTagName('video')[0].play();";
+    }
+
+    private String unMuteVideo() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("setTimeout(function(){")
+                .append("document.getElementById('gwd-video_1').volume = 1;")
+                .append("document.getElementById('gwd-video_1').muted = false;")
+                .append(deleteUnMuteAttribute())
+                .append("}, 0);},0)");
+        return builder.toString();
+    }
+
+    private String deleteUnMuteAttribute() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("setTimeout(function(){")
+                .append("document.getElementById('gwd-video_1').removeAttribute('muted');");
+        return builder.toString();
+    }
 }
+
