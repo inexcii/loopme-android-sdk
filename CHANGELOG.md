@@ -1,3 +1,6 @@
+**Version 5.1.9**
+- Bug fixes. Added AMR support
+
 ## Version 5.1.8 (19 of June, 2017)
 - Performance improvements. Bug fixes.
 - MRAID compliancy improvements

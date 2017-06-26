@@ -11,7 +11,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 8
+        versionCode 9
         versionName "5.1"
     }
 
@@ -63,7 +63,7 @@ allprojects {
 }
 
 group = 'com.loopme'
-version = '5.1.8'
+version = '5.1.9'
 
 install {
     repositories.mavenInstaller {
@@ -125,7 +125,7 @@ task makeJar(type: Copy) {
     from('build/intermediates/bundles/release/')
     into('build/outputs/')
     include('classes.jar')
-    rename ('classes.jar', 'AndroidLoopMeLib.jar')
+    rename ('classes.jar', 'loopme-sdk-5.1.9.jar')
 }
 
 task wrapper(type: Wrapper) {
