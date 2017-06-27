@@ -1,3 +1,6 @@
+## Version 5.1.11 (27 of June, 2017)
+- Ads targeting improvements
+
 ## Version 5.1.10 (27 of June, 2017)
 - Bug fixes
 

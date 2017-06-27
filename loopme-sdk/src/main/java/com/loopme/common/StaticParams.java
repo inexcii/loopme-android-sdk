@@ -6,7 +6,7 @@ public class StaticParams {
     }
     public static final String CACHED_LOG_FILE_NAME = "events_log.txt";
     public static final boolean APPEND_TO_FILE = true;
-    public static final String SDK_VERSION = "5.1.10";
+    public static final String SDK_VERSION = "5.1.11";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
     public static final String UNKNOWN_NAME = "unknown";
     public static String sCacheDirectory = "";

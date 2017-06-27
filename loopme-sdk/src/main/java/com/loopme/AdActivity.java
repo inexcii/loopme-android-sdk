@@ -253,13 +253,13 @@ public final class AdActivity extends Activity
         super.onResume();
         mKeepAlive = false;
         if (mAdController != null) {
-            if (!mAdController.isHtmlAd() | !mFirstLaunchHtmlAd) {
-                mAdController.setWebViewState(WebviewState.VISIBLE);
-            }
             if (mAdController.getWebViewState() == WebviewState.HIDDEN) {
                 mAdController.resumeVideo();
             }
-            mAdController.setWebViewState(WebviewState.VISIBLE);
+            if (!mAdController.isHtmlAd() | !mFirstLaunchHtmlAd) {
+                mAdController.setWebViewState(WebviewState.VISIBLE);
+            }
+
             if (mIViewController != null) {
                 mIViewController.onResume();
             }
