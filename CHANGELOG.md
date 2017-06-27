@@ -1,4 +1,7 @@
-## Version 5.1.9 (27 of June, 2017)
+## Version 5.1.10 (27 of June, 2017)
+- Bug fixes
+
+## Version 5.1.9 (26 of June, 2017)
 - Bug fixes. Added AMR support
 
 ## Version 5.1.8 (19 of June, 2017)

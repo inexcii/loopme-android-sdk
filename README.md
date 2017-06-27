@@ -336,6 +336,9 @@ For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
 
 ## What's new ##
 
+**Version 5.1.10**
+- Bug fixes. Added AMR support
+
 **Version 5.1.9**
 - Bug fixes. Added AMR support
 
