@@ -6,7 +6,8 @@
 4. **[Create Custom Native Network on Mopub dashboard](#create-custom-native-network-on-mopub-dashboard)**
 5. **[Mediate from Mopub Interstitial to LoopMe Interstitial Ad](#mediate-from-mopub-interstitial-to-loopme-interstitial-ad)**
 6. **[Mediate from Mopub banner to LoopMe Native Video Ad](#mediate-from-mopub-banner-to-loopme-native-video-ad)**
-7. **[Sample project](#sample-project)**
+7. **[Mediate from Mopub Rewarded Video to LoopMe Rewarded Video Ad](#mediate-from-mopub-rewarded-video-to-loopme-rewarded-video-ad)**
+8. **[Sample project](#sample-project)**
 
 ## Overview ##
 
@@ -33,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.loopme:loopme-sdk:5.1.7@aar'
+    compile 'com.loopme:loopme-sdk:5.1.11@aar'
 }
 ```
 
@@ -106,7 +107,44 @@ protected void onResume() {
 }
 ```
 
+## Mediate from Mopub Rewarded Video to LoopMe Rewarded Video Ad ##
+<br><b>Configure Custom Native Network on Mopub dashboard </b>
+<p><img src="images/rewarded_dashboard.png"  /></a>
+<br> Instead of <b>test_interstitial_l</b> put your LoopMe app key.
+<br> Instead of <b>bitcoin</b> put your rewarded currency.
+<br> Instead of <b>10</b> put your rewarded amount.
+
+* Download and copy `LoopMeMoPubRewardedVideo` bridge class to the `com.mopub.mobileads` package in your project. 
+* Initialize `MoPubRewardedVideos` in method `onCreate()` of your `Activity.class` 
+```java
+      MoPubRewardedVideos.initializeRewardedVideo(this);
+```
+* implement in your Activity `MoPubRewardedVideoListener` interface and set it to `MoPubRewardedVideos` "
+```java
+        MoPubRewardedVideos.setRewardedVideoListener(this);
+```
+* Load `MoPubRewardedVideos` as below
+```java
+        MoPubRewardedVideos.loadRewardedVideo(AD_UNIT_ID_REWARDED_VIDEO);
+```
+<br> There `AD_UNIT_ID_REWARDED_VIDEO` is your  ad unit id for rewarded video.
+* Show rewarded video ad
+```java
+        MoPubRewardedVideos.showRewardedVideo(AD_UNIT_ID_REWARDED_VIDEO);
+```
+
+<br> If you see in log next warning  while testing your integration  
+```java
+Could not load custom event because Activity reference was null. Call MoPubRewardedVideoManager#updateActivity before requesting more rewarded ads.
+```
+<br> Jast call method  `updateActivity(Activity activity)` before load rewarded video like this:
+```java
+        MoPubRewardedVideoManager.updateActivity(mActivity);
+        MoPubRewardedVideos.loadRewardedVideo(AD_UNIT_ID_REWARDED_VIDEO);
+```
+<br> There `mActivity` is the reference on your Activity.
+
 ## Sample project ##
 
-Check out our `BannerSampleActivity.java` and `InterstitialSampleActivity` as an integration examples.
+Check out our `BannerSampleActivity.java` , `InterstitialSampleActivity` and `RewardedVideoSampleActivity.java` as an integration examples.
 
