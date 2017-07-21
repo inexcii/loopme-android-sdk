@@ -49,24 +49,24 @@ class VideoUtils {
     }
 
 	public static File checkFileNotExists(String filename, Context context) {
-        File parentDir = VideoUtils.getParentDir(context);
-        if (parentDir == null) {
-            return null;
-        }
-        Logging.out(LOG_TAG, “Cache dir: ” + parentDir.getAbsolutePath());
+		File parentDir = VideoUtils.getParentDir(context);
+		if (parentDir == null) {
+			return null;
+		}
+		Logging.out(LOG_TAG, “Cache dir: ” + parentDir.getAbsolutePath());
 
-       File[] files = parentDir.listFiles();
-        if(files == null){
-            return null;
-        }
-        for (File file : files) {
-            if (!file.isDirectory() && file.getName().startsWith(filename)) {
-                return file;
-            }
-        }
-        return null;
-    }
-	
+		File[] files = parentDir.listFiles();
+		if(files == null){
+			return null;
+		}
+		for (File file : files) {
+			if (!file.isDirectory() && file.getName().startsWith(filename)) {
+				return file;
+			}
+		}
+		return null;
+	}
+
     public static String detectFileName(String videoUrl) {
         String fileName = null;
         try {
