@@ -48,14 +48,17 @@ class VideoUtils {
         Logging.out(LOG_TAG, "Cache time: " + cacheHours + " hours");
     }
 
-    public static File checkFileNotExists(String filename, Context context) {
+	public static File checkFileNotExists(String filename, Context context) {
         File parentDir = VideoUtils.getParentDir(context);
         if (parentDir == null) {
             return null;
         }
-        Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath());
+        Logging.out(LOG_TAG, “Cache dir: ” + parentDir.getAbsolutePath());
 
-        File[] files = parentDir.listFiles();
+       File[] files = parentDir.listFiles();
+        if(files == null){
+            return null;
+        }
         for (File file : files) {
             if (!file.isDirectory() && file.getName().startsWith(filename)) {
                 return file;
@@ -63,7 +66,7 @@ class VideoUtils {
         }
         return null;
     }
-
+	
     public static String detectFileName(String videoUrl) {
         String fileName = null;
         try {
