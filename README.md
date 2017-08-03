@@ -57,7 +57,6 @@ To use it, add the following to your `build.gradle` file:<br>
 For interstitial - `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL`<br>
 For banner and native video - `LoopMeBanner.TEST_MPU_BANNER`
 <br><br>Then if everything is ok, you can change pre-installed app key to your real app key.
-
 <br>Integration instructions for different ad types (Image / Rich media / Video / 360 video) are same.
 
 ## Interstitial ads ##
@@ -100,13 +99,13 @@ Destroy when it is no longer needed to clean up resources.
 * Interstitial notifications:
 
 Implement `LoopMeInterstitial.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
- * `-onLoopMeInterstitialLoadSuccess`: triggered when interstitial has been loaded the ad content
- * `-onLoopMeInterstitialLoadFail`: triggered when interstitial failed to load the ad content
- * `-onLoopMeInterstitialShow`: triggered when interstitial ad appeared on the screen
- * `-onLoopMeInterstitialHide`: triggered when interstitial ad disappeared from the screen
- * `-onLoopMeInterstitialVideoDidReachEnd`: triggered when interstitial video ad has been completely watched
- * `-onLoopMeInterstitialClicked`: triggered when interstitial ad was clicked
- * `-onLoopMeInterstitialExpired`: triggered when interstitial ad is expired, it is recommended to re-load
+ * `onLoopMeInterstitialLoadSuccess`: triggered when interstitial has been loaded the ad content
+ * `onLoopMeInterstitialLoadFail`: triggered when interstitial failed to load the ad content
+ * `onLoopMeInterstitialShow`: triggered when interstitial ad appeared on the screen
+ * `onLoopMeInterstitialHide`: triggered when interstitial ad disappeared from the screen
+ * `onLoopMeInterstitialVideoDidReachEnd`: triggered when interstitial video ad has been completely watched
+ * `onLoopMeInterstitialClicked`: triggered when interstitial ad was clicked
+ * `onLoopMeInterstitialExpired`: triggered when interstitial ad is expired, it is recommended to re-load
 
 
 ## Banner ads ##
@@ -182,14 +181,14 @@ mBanner.show();
 * `LoopMeBanner` notifications:
 
 Implement `LoopMeBanner.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
- * `-onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
- * `-onLoopMeBannerLoadFail`: triggered when banner failed to load the ad content
- * `-onLoopMeBannerShow`: triggered when banner appeared on the screen
- * `-onLoopMeBannerHide`: triggered when banner disappeared from the screen
- * `-onLoopMeBannerVideoDidReachEnd`: triggered when video in banner has been completely watched
- * `-onLoopMeBannerClicked`: triggered when banner was clicked
- * `-onLoopMeBannerExpired`: triggered when banner is expired, it is recommended to re-load
- * `-onLoopMeBannerLeaveApp`: triggered if SDK initiated app switching. E.g after click on ad user is redirected to market (or any other native app)
+ * `onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
+ * `onLoopMeBannerLoadFail`: triggered when banner failed to load the ad content
+ * `onLoopMeBannerShow`: triggered when banner appeared on the screen
+ * `onLoopMeBannerHide`: triggered when banner disappeared from the screen
+ * `onLoopMeBannerVideoDidReachEnd`: triggered when video in banner has been completely watched
+ * `onLoopMeBannerClicked`: triggered when banner was clicked
+ * `onLoopMeBannerExpired`: triggered when banner is expired, it is recommended to re-load
+ * `onLoopMeBannerLeaveApp`: triggered if SDK initiated app switching. E.g after click on ad user is redirected to market (or any other native app)
 
 
 ## Native video ads ##
@@ -335,7 +334,13 @@ Using ProGuard tool can break LoopMe SDK work. It may look like all works fine i
 ## FAQ ##
 1. <b>Which API supports 'In-app ad reward notifications, including video view completed'?</b>
 <br>For interstitial use `onLoopMeInterstitialVideoDidReachEnd()` notification (triggered when interstitial video ad has been completely watched).<br>
-For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.
+For banner nad native video - `onLoopMeBannerVideoDidReachEnd()` notification.<br>
+2. <b>When the user is watching a pre-load video, will LoopMe SDK start to request to 2nd ads?<br>
+Can ads play when loading (1 ad)?<br>
+Can an application request a new ad when the user is at 50% of the previous ad? Or it have to wait for the user to finish the previous ad?<br>
+How can a publisher to pre-cache 3-4 ads under Wifi environment?<br>
+Is it possible to precache a few videos at 1 time (and 1 app key)?<br>
+Can a pub set it loading and playing same time?</b>
 
 ## What's new ##
 
