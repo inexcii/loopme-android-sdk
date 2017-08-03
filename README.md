@@ -340,7 +340,18 @@ Can ads play when loading (1 ad)?<br>
 Can an application request a new ad when the user is at 50% of the previous ad? Or it have to wait for the user to finish the previous ad?<br>
 How can a publisher to pre-cache 3-4 ads under Wifi environment?<br>
 Is it possible to precache a few videos at 1 time (and 1 app key)?<br>
-Can a pub set it loading and playing same time?</b>
+Can a pub set it loading and playing same time?</b><br>
+You can have only one ad per appkey preloaded or running.<br>
+So reloading a new ad will cancel the current. However you can have several appkeys for one ad spot thus having several ads preloaded. Or playing one ad while preloading another using a different appkey. Please note that some ads can have own download processes while executed. So downloading other ads can affect on both running and preloading.
+3. <b>Can LoopMe SDK support pre-cache in wifi environment and play without wifi environment?<br>
+If a user watches the video when offline, how can we know if the user has watched it or not?<br> Will all the activities of users be saved and post back to the SDK even if it's offline?</b><br>
+To report display, video or other types of events SDK requires internet connection. SDK does not display the ad if there is no internet connection found.
+4. <b>We can preload video under WIFI. What is the WIFI definition? Only pure wifi or might preload if the user is connecting other people’s hotspot.</b><br>
+We have the only restriction here for mobile carrier internet. Others sources can be used for downloading ads
+5.
+
+
+
 
 ## What's new ##
 
