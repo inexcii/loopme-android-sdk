@@ -382,8 +382,8 @@ External storage<br>
 However if your SDK does not require some of them you can switch them off in your manifest file. The SDK still be able to show ads but some advanced targeting features would be unavailable.<br><br>
 14. <b>How to remove extra permissions that are not required by my application?</b><br>
 You can remove permissions that are stand out from your application permissions. To exclude them please add these kind of lines into your manifest file:<br>
-```xml <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>```
-```xml <uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>```
+```xml <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>```<br>
+```xml <uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>```<br><br>
 15. <b>What is the size of your Android SDK?</b><br>
 250Kb.<br><br>
 16. <b>What type of data collected by your SDK?</b><br>
