@@ -96,7 +96,7 @@ Destroy when it is no longer needed to clean up resources.
   mInterstitial.destroy();
 ```
 
-* Interstitial notifications:
+* Interstitial notifications
 
 Implement `LoopMeInterstitial.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
  * `onLoopMeInterstitialLoadSuccess`: triggered when interstitial has been loaded the ad content
@@ -114,7 +114,7 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 
 `LoopMeBanner` class provides facilities to display a custom size ads during natural transition points in your application.
 
-* Update `AndroidManifest.xml`:
+* Update `AndroidManifest.xml`
 ```xml
 <activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
 ```
@@ -178,7 +178,7 @@ public class SimpleBannerActivity extends AppCompatActivity implements LoopMeBan
 mBanner.show();
 ```
 
-* `LoopMeBanner` notifications:
+* `LoopMeBanner` notifications
 
 Implement `LoopMeBanner.Listener` in order to receive notifications during the loading/displaying ad processes, that you can use to trigger subsequent in-app events:
  * `onLoopMeBannerLoadSuccess`: triggered when banner has been loaded
@@ -197,11 +197,11 @@ Implement `LoopMeBanner.Listener` in order to receive notifications during the l
 
 Native video ads used to show banner inside `ListView`/`RecyclerView`.
 
-* Update `AndroidManifest.xml`:
+* Update `AndroidManifest.xml`
 ```xml
 <activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
 ```
-* Create xml layout for ad.
+* Create xml layout for ad
 ```xml 
 list_ad_row.xml
 
@@ -218,7 +218,7 @@ list_ad_row.xml
 </RelativeLayout>
 ```
 
-* Init `NativeVideoAdapter`.
+* Init `NativeVideoAdapter`
 <br>In case of integration in `RecyclerView`, you need to use `NativeVideoRecyclerAdapter` class.
 
 ```java
@@ -382,8 +382,15 @@ External storage<br>
 However if your SDK does not require some of them you can switch them off in your manifest file. The SDK still be able to show ads but some advanced targeting features would be unavailable.<br><br>
 14. <b>How to remove extra permissions that are not required by my application?</b><br>
 You can remove permissions that are stand out from your application permissions. To exclude them please add these kind of lines into your manifest file:
-```xml <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>``` 
-```xml <uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>```
+
+```xml 
+<uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>
+``` 
+
+```xml 
+<uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>
+```
+
 Just use the permissions names you need to remove.<br><br>
 15. <b>What is the size of your Android SDK?</b><br>
 250Kb.<br><br>
