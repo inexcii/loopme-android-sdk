@@ -57,7 +57,7 @@ Note: you find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information
 <p><img src="Images/ConfigureAdUnits.png"  /></a>
 
 Class Name should be: 'com.integration.admob.LoopMeAdMobBridge'. <br>
-Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. E.g. '298f62c196'.<br><br>
+Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. <br>E.g. '298f62c196'.<br><br>
 
 * Init
 ```java
