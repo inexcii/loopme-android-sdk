@@ -46,7 +46,7 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 <br><b>Configure Ad Network Mediation on AdMob</b>
 <br><b>NOTE:</b> This page assumes you already have account on AdMob and Ad unit(s)
 * Click Edit Mediation for an Ad unit
-<p><img src="images/edit.png"  /></a>
+<p><img src="images/Add Custom Event.png"  /></a>
 
 * Click "New Ad Network"
 <p><img src="images/new.png"  /></a>
