@@ -51,13 +51,13 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 * Click <b>Add Custom Event.</b>
 <p><img src="Images/AddCustomEvent.png" /></a><br>
 Enter the event name and real eCPM that you have got after LoopMe publisher team approval. Click Continue.<br>
-You find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information.
+Note: you find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information.
 
 * Enter the Class Name and Parameter. You will get:
 <p><img src="Images/ConfigureAdUnits.png"  /></a>
 
 Class Name should be: com.integration.admob.LoopMeAdMobBridge. <br>
-Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. E.g. 298f62c196.<br>
+Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. E.g. 298f62c196.<br><br>
 
 * Init
 ```java
