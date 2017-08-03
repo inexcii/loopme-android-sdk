@@ -39,8 +39,10 @@ Requires `Android` 4.4 and up. If you have lower version please see the "Merging
 <h3>Download</h3>
 There are 2 ways:<br><br>
 1. Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`. <br>
-Add dependency to `loopme-sdk` in your project (`build.gradle` file): ```java repositories { flatDir { dirs 'libs' } }``` 
-  <br>
+Add dependency to `loopme-sdk` in your project (`build.gradle` file): 
+```java 
+repositories { flatDir { dirs 'libs' } };``` 
+<br>
 ```java 
   dependencies { 
   	compile ( name: 'loopme-sdk-[version]', ext: 'aar' ) 
