@@ -53,7 +53,7 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 Enter the event name and real eCPM that you have got after LoopMe publisher team approval. Click Continue.<br>
 Note: you find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information.
 
-* Enter the Class Name and Parameter. You will get:
+* Enter the <b>Class Name</b> and <b>Parameter</b>. You will get:
 <p><img src="Images/ConfigureAdUnits.png"  /></a>
 
 Class Name should be: com.integration.admob.LoopMeAdMobBridge. <br>
