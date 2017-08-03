@@ -390,8 +390,7 @@ You can remove permissions that are stand out from your application permissions.
 ```xml 
 <uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>
 ```
-
-Just use the permissions names you need to remove.<br><br>
+<br>
 15. <b>What is the size of your Android SDK?</b><br>
 250Kb.<br><br>
 16. <b>What type of data collected by your SDK?</b><br>
