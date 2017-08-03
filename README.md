@@ -345,30 +345,30 @@ You can have only one ad per appkey preloaded or running.<br>
 So reloading a new ad will cancel the current. However you can have several appkeys for one ad spot thus having several ads preloaded. Or playing one ad while preloading another using a different appkey. Please note that some ads can have own download processes while executed. So downloading other ads can affect on both running and preloading.<br><br>
 3. <b>Can LoopMe SDK support pre-cache in wifi environment and play without wifi environment?<br>
 If a user watches the video when offline, how can we know if the user has watched it or not?<br> Will all the activities of users be saved and post back to the SDK even if it's offline?</b><br>
-To report display, video or other types of events SDK requires internet connection. SDK does not display the ad if there is no internet connection found.<br>
+To report display, video or other types of events SDK requires internet connection. SDK does not display the ad if there is no internet connection found.<br><br>
 4. <b>We can preload video under WIFI. What is the WIFI definition? Only pure wifi or might preload if the user is connecting other people’s hotspot.</b><br>
-We have the only restriction here for mobile carrier internet. Others sources can be used for downloading ads.<br>
+We have the only restriction here for mobile carrier internet. Others sources can be used for downloading ads.<br><br>
 5. <b>What timeouts for ads the SDK has?</b><br>
 Up to 20 sec to get response from the ad Server.<br>
 Up to 3 minutes your application waits for the video to be uploaded from the server.<br>
 Up to 1 hr for the loaded ad to be displayed or else it expires and can not be displayed with Show() method.<br>
-Up to 32 hours a video file is stored in a handset cache and can be reloaded from there.<br>
+Up to 32 hours a video file is stored in a handset cache and can be reloaded from there.<br><br>
 6. <b>if a user completes a video, but stays at the same page, is there a replay button? Or will another video start to play right after the first one?</b><br>
-For interstitial video a reply button appears in the end. No other video is displayed unless a pub prepared another ad to show at this moment.<br>
+For interstitial video a reply button appears in the end. No other video is displayed unless a pub prepared another ad to show at this moment.<br><br>
 7. <b>How does the publisher set rewarded full-screen video? Only in their dashboard or they need to do some technical things in their end?<br>
 If they want to switch to rewarded full-screen video, do they need to update the version? Or just change in dashboard?</b><br>
-A publisher can set this parameter in LoopMe dashboard in hiss account. There are no extra technical efforts required.<br>
+A publisher can set this parameter in LoopMe dashboard in hiss account. There are no extra technical efforts required.<br><br>
 8. <b>Is there any time requirement between the two ads? If one ad has been watched, how long can the ads slots show the second ads?</b><br>
-There are no delays between ads, but you should remember that you need to download next ad first and it takes some time.<br>
+There are no delays between ads, but you should remember that you need to download next ad first and it takes some time.<br><br>
 9. <b>If the user’s system is below Android 4.4(API level 19), can they see video ads?</b><br>
 No. If the minimal requirements provided on github are not met, the integrations is not recommended. But you can see the "Merging manifests" section.<br>
-In this case, you as a developer should specify there all list of libraries on which will be errors from compiler. It should be a list of libraries which require a version bigger than in your app but less than 4.4.<br>
+In this case, you as a developer should specify there all list of libraries on which will be errors from compiler. It should be a list of libraries which require a version bigger than in your app but less than 4.4.<br><br>
 10. <b>Can I ignore the permission WRITE_EXTERNAL_STORAGE?</b><br>
-No. As it uses for video ads preloading.<br>
+No. As it uses for video ads preloading.<br><br>
 11. <b>What is average size of a video file?</b><br>
-Usually it has 5-7Mb.<br>
+Usually it has 5-7Mb.<br><br>
 12. <b>Do you have Mopub or anyone else adapter?</b><br>
-Yes. **[Here](https://loopme.biz/wiki/index.php?title=Supported_In-App_SDK_mediation_networks)** you can find the direct links to all bridges we support.<br>
+Yes. **[Here](https://loopme.biz/wiki/index.php?title=Supported_In-App_SDK_mediation_networks)** you can find the direct links to all bridges we support.<br><br>
 13. <b>What permissions does your SDK ask?</b><br>
 Internet connection<br>
 Network state<br>
@@ -379,18 +379,18 @@ Vibrate option<br>
 Accounts<br>
 Phone state<br>
 External storage<br>
-However if your SDK does not require some of them you can switch them off in your manifest file. The SDK still be able to show ads but some advanced targeting features would be unavailable.<br>
+However if your SDK does not require some of them you can switch them off in your manifest file. The SDK still be able to show ads but some advanced targeting features would be unavailable.<br><br>
 14. <b>How to remove extra permissions that are not required by my application?</b><br>
 You can remove permissions that are stand out from your application permissions. To exclude them please add these kind of lines into your manifest file:
 ```xml <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>``` 
 ```xml <uses-permission android:name="android.permission.GET_ACCOUNTS" tools:node="remove"/>```
-Just use the permissions names you need to remove.<br>
+Just use the permissions names you need to remove.<br><br>
 15. <b>What is the size of your Android SDK?</b><br>
-250Kb.<br>
+250Kb.<br><br>
 16. <b>What type of data collected by your SDK?</b><br>
-The information that allows to identify a device to serve appropriate ads or stop serving ads in case of capping. Device Id, country, language, user agent, COPPA flag, IP address, DNT flag etc. As LoopMe SDK has an open source code -- see the 'loopme-sdk' file.<br>
+The information that allows to identify a device to serve appropriate ads or stop serving ads in case of capping. Device Id, country, language, user agent, COPPA flag, IP address, DNT flag etc. As LoopMe SDK has an open source code -- see the 'loopme-sdk' file.<br><br>
 17. <b>Does your ad request access to device’s connectivity capabilities and geolocation?</b><br>
-Yes. As users should get relevant ads based on the country when they can get the advertised product. This helps avoid confusing ads with a game that is not available on the local Appstore or GooglePlay markets or offline trade networks a user can not find in their country. Also if a user has no internet connection they can not get to the advertised product page or as well as download the ad itself.<br>
+Yes. As users should get relevant ads based on the country when they can get the advertised product. This helps avoid confusing ads with a game that is not available on the local Appstore or GooglePlay markets or offline trade networks a user can not find in their country. Also if a user has no internet connection they can not get to the advertised product page or as well as download the ad itself.<br><br>
 18. <b>Does LoopMe SDK supports native ads?</b><br>
 LoopMe SDK has a small video format Video MPU banner which allows to show video in content. However, it does not support traditional Native ad format with icon, title, description text etc.<br>
 
