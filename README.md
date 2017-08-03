@@ -37,20 +37,22 @@ Requires `Android` 4.4 and up. If you have lower version please see the "Merging
 ## SDK Integration ##
 
 <h3>Download</h3>
-There are 2 ways:<br>
+There are 2 ways:<br><br>
 1. Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`. <br>
 Add dependency to `loopme-sdk` in your project (`build.gradle` file):<br>
 ```java
   repositories { 
   	flatDir { dirs 'libs' } 
-  }``` 
+  }
+``` 
   <br>
-  ```java 
+```java 
   dependencies { 
   	compile ( name: 'loopme-sdk-[version]', ext: 'aar' ) 
-  }```
-<br>
-2. LoopMe SDK is available as an AAR via jCenter; <br>
+  }
+```
+<br><br>
+* 2. LoopMe SDK is available as an AAR via jCenter; <br>
 To use it, add the following to your `build.gradle` file:
 ```java
 repositories {
@@ -63,7 +65,7 @@ dependencies {
 }```
 
 
-An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](http://loopme.me/)**. <br>
+<br>An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](https://app.loopme.com/login/)**, and follow instruction **[instruction](https://docs.google.com/document/d/1mXoWMVMvrfd5URvpWfCnFt89uL96PgT7usisCTa1K34/edit#)**. <br>
 
 <b>Note</b>: For testing purposes better to use pre-installed app keys:<br>
 For interstitial - `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL`<br>
