@@ -39,13 +39,13 @@ Requires `Android` 4.4 and up. If you have lower version please see the "Merging
 <h3>Download</h3>
 There are 2 ways:<br><br>
 1. Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`. <br>
-Add dependency to `loopme-sdk` in your project (`build.gradle` file): 
+Add dependency to `loopme-sdk` in your project (`build.gradle` file):<br>
 ``` repositories { flatDir { dirs 'libs' } }``` 
 <br>
 ``` dependencies { compile ( name: 'loopme-sdk-[version]', ext: 'aar' ) }```
 <br><br>
-* 2. LoopMe SDK is available as an AAR via jCenter; <br>
-To use it, add the following to your `build.gradle` file:
+2. LoopMe SDK is available as an AAR via jCenter.<br>
+To use it, add the following to your `build.gradle` file:<br>
 ```repositories { jcenter () }```
 <br>
 ```dependencies { compile 'com.loopme:loopme-sdk:5.1.11@aar' }```
@@ -55,7 +55,7 @@ To use it, add the following to your `build.gradle` file:
 
 <b>Note</b>: For testing purposes better to use pre-installed app keys:<br>
 For interstitial - `LoopMeInterstitial.TEST_PORT_INTERSTITIAL` and `LoopMeInterstitial.TEST_LAND_INTERSTITIAL`<br>
-For banner and native video - `LoopMeBanner.TEST_MPU`
+For banner and native video - `LoopMeBanner.TEST_MPU_BANNER`
 <br><br>Then if everything is ok, you can change pre-installed app key to your real app key.
 
 <br>Integration instructions for different ad types (Image / Rich media / Video / 360 video) are same.
@@ -120,6 +120,19 @@ Implement `LoopMeInterstitial.Listener` in order to receive notifications during
 <activity android:name="ActivityWhereBannerLocated" android:hardwareAccelerated="true"/>
 ```
 * Add `LoopMeBannerView` in layout xml
+```xml 
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <com.loopme.LoopMeBannerView
+        android:id="@+id/video_ad_spot"
+        android:layout_width="300dp"
+        android:layout_height="250dp"
+        android:layout_centerHorizontal="true" />
+</RelativeLayout>
+```
+
 * Init `LoopMeBanner`
 ```java
 public class SimpleBannerActivity extends AppCompatActivity implements LoopMeBanner.Listener {
