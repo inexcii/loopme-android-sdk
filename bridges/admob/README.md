@@ -43,7 +43,7 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 
 ## Mediate from AdMob Interstitial to LoopMe Interstitial Ad ##
 
-<br><b>Configure Ad Network Mediation on AdMob</b>
+<b>Configure Ad Network Mediation on AdMob</b>
 <br><b>NOTE:</b> This page assumes you already have account on AdMob and Ad unit(s)
 * Click <b>Edit/Create Mediation Group</b>
 <p><img src="Images/EditOrCreateMediationGroup.png" /></a>
