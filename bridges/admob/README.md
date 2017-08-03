@@ -45,17 +45,19 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 
 <br><b>Configure Ad Network Mediation on AdMob</b>
 <br><b>NOTE:</b> This page assumes you already have account on AdMob and Ad unit(s)
-* Click Edit Mediation for an Ad unit
-<p><img src="images/Add Custom Event.png"  /></a>
+* Click <b>Edit/Create Mediation Group</b>
+<p><img src="Images/EditOrCreateMediationGroup.png" /></a>
 
-* Click "New Ad Network"
-<p><img src="images/new.png"  /></a>
+* Click <b>Add Custom Event.</b>
+<p><img src="Images/AddCustomEvent.png" /></a><br>
+Enter the event name and real eCPM that you have got after LoopMe publisher team approval. Click Continue.<br>
+You find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information.
 
-* On next screen select “+ custom event”. You will get:
-<p><img src="images/settings.png"  /></a>
+* Enter the Class Name and Parameter. You will get:
+<p><img src="Images/ConfigureAdUnits.png"  /></a>
 
-<br>Class Name should be: `com.integration.admob.LoopMeAdMobBridge`.
-<br>Parameter: enter the app key value you received after registering your app on the LoopMe dashboard. E.g. 298f62c196
+Class Name should be: com.integration.admob.LoopMeAdMobBridge. <br>
+Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. E.g. 298f62c196.<br>
 
 * Init
 ```java
