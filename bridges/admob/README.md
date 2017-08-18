@@ -20,7 +20,7 @@ If you have questions please contact us at support@loopme.com.
 
 ## Register on LoopMe network ##
 
-To use and setup the SDK bridge, register your app on the LoopMe network via the LoopMe Dashboard to retrieve a unique LoopMe app key for your app. The app key uniquely identifies your app in the LoopMe ad network (Example app key: 51bb33e7cb). 
+To use and setup the SDK bridge, register your app on the LoopMe network via the LoopMe Dashboard to retrieve a unique LoopMe app key for your app. The app key uniquely identifies your app in the LoopMe ad network (Example app key: 51bb33e7cb). To get an appKey visit the **[LoopMe Dashboard](https://app.loopme.com/login/)**, and follow **[instruction](https://docs.google.com/document/d/1No1rVSpD2XLvG6nniwGjRb48Q0kVmYIkSgnlbhRXx5M/edit#)**.<br>
 You will need the app key during next steps of integration.
 
 ## Adding LoopMe Android SDK ##
@@ -43,19 +43,21 @@ NOTE: `LoopMeAdMobSampleActivity` is just a sample how to use `LoopMeAdMobBridge
 
 ## Mediate from AdMob Interstitial to LoopMe Interstitial Ad ##
 
-<br><b>Configure Ad Network Mediation on AdMob</b>
+<b>Configure Ad Network Mediation on AdMob</b>
 <br><b>NOTE:</b> This page assumes you already have account on AdMob and Ad unit(s)
-* Click Edit Mediation for an Ad unit
-<p><img src="images/edit.png"  /></a>
+* Click <b>Edit/Create Mediation Group</b>
+<p><img src="Images/EditOrCreateMediationGroup.png" /></a>
 
-* Click "New Ad Network"
-<p><img src="images/new.png"  /></a>
+* Click <b>Add Custom Event.</b>
+<p><img src="Images/AddCustomEvent.png" /></a><br>
+Enter the event name and real eCPM that you have got after LoopMe publisher team approval. Click Continue.<br>
+Note: you find eCPM on the LoopMe Dashboard > Apps & Sites > Ad Spot information.
 
-* On next screen select “+ custom event”. You will get:
-<p><img src="images/settings.png"  /></a>
+* Enter the <b>Class Name</b> and <b>Parameter</b>. You will get:
+<p><img src="Images/ConfigureAdUnits.png"  /></a>
 
-<br>Class Name should be: `com.integration.admob.LoopMeAdMobBridge`.
-<br>Parameter: enter the app key value you received after registering your app on the LoopMe dashboard. E.g. 298f62c196
+Class Name should be: 'com.integration.admob.LoopMeAdMobBridge'. <br>
+Parameter: enter the app key value you received after registering your Ad Spot on the LoopMe dashboard. <br>E.g. '298f62c196'.<br><br>
 
 * Init
 ```java
