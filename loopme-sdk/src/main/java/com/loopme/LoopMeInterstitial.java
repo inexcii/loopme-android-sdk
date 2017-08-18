@@ -1,6 +1,6 @@
 package com.loopme;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 
@@ -14,7 +14,7 @@ import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.LiveDebug;
 
 /**
- * The `LoopMenterstitial` class provides the facilities to display a full-screen ad
+ * The `LoopMeInterstitial` class provides the facilities to display a full-screen ad
  * during natural transition points in your application.
  * <p>
  * It is recommended to implement `LoopMeInterstitial.OnMraidBridgeListener`
@@ -56,18 +56,18 @@ public final class LoopMeInterstitial extends BaseAd {
     /**
      * Creates new `LoopMeInterstitial` object with the given appKey
      *
-     * @param context - application context
+     * @param activity - application context
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeInterstitial(Context context, String appKey) {
-        super(context, appKey);
+    LoopMeInterstitial(Activity activity, String appKey) {
+        super(activity, appKey);
         Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 
         mAdController = new AdController(this);
 
-        Utils.init(context);
-        LiveDebug.init(context);
+        Utils.init(activity);
+        LiveDebug.init(activity);
     }
 
     /**
@@ -75,12 +75,12 @@ public final class LoopMeInterstitial extends BaseAd {
      * Note: Returns null if Android version under 4.0
      *
      * @param appKey  - your app key
-     * @param context - application context
+     * @param activity - Activity context
      * @return instance of LoopMeInterstitial
      */
-    public static LoopMeInterstitial getInstance(String appKey, Context context) {
+    public static LoopMeInterstitial getInstance(String appKey, Activity activity) {
         if (Build.VERSION.SDK_INT >= 14) {
-            return LoopMeAdHolder.getInterstitial(appKey, context);
+            return LoopMeAdHolder.getInterstitial(appKey, activity);
         } else {
             Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+");
             return null;

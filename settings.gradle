@@ -1,1 +1,2 @@
-include ':loopme-sdk', 'samples:banner-sample', 'samples:interstitial-sample'
+include ':loopme-sdk'
+//,  'samples:banner-sample', 'samples:interstitial-sample'

@@ -48,6 +48,8 @@ repositories {
 }
 dependencies {
     compile(name:'loopme-sdk-[version]', ext:'aar')
+    compile 'com.google.android.gms:play-services-ads:9.6.1'
+
 }
 ```
 <br>2. LoopMe SDK is available as an AAR via jCenter; to use it, add the following to your `build.gradle`:
@@ -58,6 +60,8 @@ repositories {
 
 dependencies {
     compile 'com.loopme:loopme-sdk:5.1.11@aar'
+    compile 'com.google.android.gms:play-services-ads:9.6.1'
+
 }
 ```
 

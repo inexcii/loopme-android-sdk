@@ -14,6 +14,7 @@ import com.loopme.adview.AdView;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.Utils;
+import com.loopme.constants.AdFormat;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
 import com.loopme.debugging.ErrorLog;
@@ -55,7 +56,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     private CountDownTimer mBufferingTimer;
 
     private String mAppKey;
-    private int mFormat;
+    private int mFormat = AdFormat.INTERSTITIAL;
 
     private int mQuarter25;
     private int mQuarter50;
@@ -66,6 +67,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     private OnMoatEventListener mOnMoatEventListener;
     private Map<String, Integer> mQuartileEventsMap;
     private int mCurrentPosition;
+    private boolean mIsFirstLaunch = true;
 
     public void resumeVideo() {
         if (mAdView.getCurrentVideoState() == VideoState.PAUSED) {
@@ -86,13 +88,14 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         void onPlaybackFinishedWithError();
     }
 
-    public VideoController(AdView adView, Callback callback, String appKey, int format) {
+    public VideoController(AdView adView, Callback callback, String appKey, int format, OnMoatEventListener onMoatEventListener) {
         mAdView = adView;
         mCallback = callback;
         mContext = adView.getContext();
         mAppKey = appKey;
         mFormat = format;
         mHandler = new Handler(Looper.getMainLooper());
+        mOnMoatEventListener = onMoatEventListener;
         initProgressRunnable();
         mQuartileEventsMap = new HashMap<>();
     }
@@ -245,6 +248,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
     public void playVideo(int time, boolean is360) {
         if (isPlayerReadyForPlay()) {
+            if(mIsFirstLaunch && mFormat == AdFormat.BANNER){
+                onStartMoatTracking(mMediaPlayer, mAdView);
+                mIsFirstLaunch = false;
+            }
             if (!is360 && !mIsSurfaceTextureAvailable) {
                 Logging.out(LOG_TAG, "postpone play (surface not available)");
                 if(mCallback != null){
@@ -277,12 +284,10 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         if (mMediaPlayer != null && mAdView != null && !mWasError) {
             try {
                 if (mMediaPlayer.isPlaying()) {
-                    onStopMoatTracking();
                     Logging.out(LOG_TAG, "Pause video");
                     mHandler.removeCallbacks(mRunnable);
                     mMediaPlayer.pause();
                     mAdView.setVideoState(VideoState.PAUSED);
-                    onStopMoatTracking();
                 } else {
                     mAdView.setVideoState(VideoState.IDLE);
                 }
@@ -356,7 +361,9 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     private void startMediaPlayer() {
         if (mMediaPlayer != null) {
             mMediaPlayer.start();
-            onStartMoatTracking(mMediaPlayer, mAdView);
+            if(mFormat == AdFormat.INTERSTITIAL){
+                onStartMoatTracking(mMediaPlayer, mAdView);
+            }
         }
     }
 
@@ -458,10 +465,12 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
         void onVolumeChangedMoatTracking(int playerPositionInMillis, double volume);
 
+        void initMoatNativeTracker();
     }
 
     public void onStartMoatTracking(MediaPlayer mediaPlayer, AdView adView) {
         if (mOnMoatEventListener != null) {
+            mOnMoatEventListener.initMoatNativeTracker();
             mOnMoatEventListener.onChangeViewMoatTracking(this.mAdView);
             mOnMoatEventListener.onStartMoatTracking(mediaPlayer, adView);
         }

@@ -56,6 +56,9 @@ class VideoUtils {
         Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath());
 
         File[] files = parentDir.listFiles();
+        if(files == null){
+            return null;
+        }
         for (File file : files) {
             if (!file.isDirectory() && file.getName().startsWith(filename)) {
                 return file;

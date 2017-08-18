@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.support.v7.widget.RecyclerView;
@@ -23,25 +24,25 @@ implements AdChecker, NativeVideoController.DataChangeListener {
 
     private RecyclerView.Adapter mOriginAdapter;
     private NativeVideoController mNativeVideoController;
-    private Context mContext;
+    private Activity mActivity;
     private LayoutInflater mInflater;
 
     private RecyclerView mRecyclerView;
 
     public NativeVideoRecyclerAdapter(RecyclerView.Adapter originAdapter,
-                                      Context context,
+                                      Activity activity,
                                       RecyclerView recyclerView) {
 
-        if (originAdapter == null || context == null || recyclerView == null) {
+        if (originAdapter == null || activity == null || recyclerView == null) {
             throw new IllegalArgumentException("Some of parameters is null");
         }
 
-        mContext = context;
+        mActivity = activity;
         mOriginAdapter = originAdapter;
         mRecyclerView = recyclerView;
 
-        mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mNativeVideoController = new NativeVideoController(mContext);
+        mInflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mNativeVideoController = new NativeVideoController(mActivity);
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -151,7 +152,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
             mNativeVideoController.onLoadFail(error);
             return;
         }
-        if (Utils.isOnline(mContext)) {
+        if (Utils.isOnline(mActivity)) {
             mNativeVideoController.loadAds(mOriginAdapter.getItemCount(), this);
         } else {
             LoopMeError error = new LoopMeError("No connection");

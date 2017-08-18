@@ -1,6 +1,6 @@
 package com.loopme;
 
-import android.content.Context;
+import android.app.Activity;
 import android.text.TextUtils;
 
 import com.loopme.constants.AdFormat;
@@ -29,29 +29,28 @@ public class LoopMeAdHolder {
         }
     }
 
-    public static LoopMeInterstitial getInterstitial(String appKey, Context context) {
+    public static LoopMeInterstitial getInterstitial(String appKey, Activity activity) {
         if (mInterstitialMap.containsKey(appKey)) {
             return mInterstitialMap.get(appKey);
         } else {
-            if (context == null || TextUtils.isEmpty(appKey)) {
+            if (activity == null || TextUtils.isEmpty(appKey)) {
                 return null;
             } else {
-                LoopMeInterstitial interstitial = new LoopMeInterstitial(
-                        context.getApplicationContext(), appKey);
+                LoopMeInterstitial interstitial = new LoopMeInterstitial(activity, appKey);
                 mInterstitialMap.put(appKey, interstitial);
                 return interstitial;
             }
         }
     }
 
-    public static LoopMeBanner getBanner(String appKey, Context context) {
+    public static LoopMeBanner getBanner(String appKey, Activity activity) {
         if (mBannerMap.containsKey(appKey)) {
             return mBannerMap.get(appKey);
         } else {
-            if (context == null || TextUtils.isEmpty(appKey)) {
+            if (activity == null || TextUtils.isEmpty(appKey)) {
                 return null;
             } else {
-                LoopMeBanner banner = new LoopMeBanner(context.getApplicationContext(), appKey);
+                LoopMeBanner banner = new LoopMeBanner(activity, appKey);
                 mBannerMap.put(appKey, banner);
                 return banner;
             }

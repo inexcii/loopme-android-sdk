@@ -43,8 +43,10 @@ public class AdFetcher implements Runnable {
 
     @Override
     public void run() {
+        Logging.out(LOG_TAG, "Start making http request to server...");
         String result = getResponse(mRequestUrl);
         compete(result);
+        Logging.out(LOG_TAG, "Response received.");
     }
 
     private void compete(String result) {

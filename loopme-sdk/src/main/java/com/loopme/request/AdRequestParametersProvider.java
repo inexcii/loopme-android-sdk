@@ -432,7 +432,7 @@ public class AdRequestParametersProvider {
             PackageInfo pi = pm.getPackageInfo("com.google.android.webview", 0);
             result = pi.versionName;
             Logging.out(LOG_TAG, "WebView version: " + result);
-        } catch (PackageManager.NameNotFoundException e) {
+        } catch (NameNotFoundException e) {
             Logging.out(LOG_TAG, "Android System WebView is not found. Trying to get it from user agent");
             String[] s = mUserAgent.split(" ");
             for (int i = 0; i < s.length; i++) {

@@ -1,6 +1,8 @@
 package com.loopme.adview;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Vibrator;
@@ -44,6 +46,7 @@ public class Bridge extends WebViewClient {
     private static final int VIBRATE_MILLISECONDS = 500;
 
     private Listener mListener;
+    private Context mContext;
 
     public interface Listener {
 
@@ -67,13 +70,18 @@ public class Bridge extends WebViewClient {
 
         void onNonLoopMe(String url);
 
-        void onHtmlAdOpens();
+        void onCreateMoatNativeTracker();
+
+        void onCreateMoatWebAdTracker();
+
+        void onLeaveApp();
 
     }
 
-    public Bridge(Bridge.Listener listener) {
-        if (listener != null) {
+    public Bridge(Listener listener, Context context) {
+        if (listener != null  && context!=null) {
             mListener = listener;
+            mContext = context;
         } else {
             Logging.out(LOG_TAG, "VideoBridgeListener should not be null");
         }
@@ -96,7 +104,8 @@ public class Bridge extends WebViewClient {
             Logging.out(LOG_TAG, e.getMessage());
             e.printStackTrace();
             ErrorLog.post("Broken redirect in bridge: " + url, ErrorType.JS);
-            return false;
+            handleExtraUrl(url);
+            return true;
         }
 
         String protocol = redirect.getScheme();
@@ -126,6 +135,32 @@ public class Bridge extends WebViewClient {
         return true;
     }
 
+    private void handleExtraUrl(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (startActivity(intent)) {
+            onLeaveApp();
+        }
+    }
+
+    private void onLeaveApp() {
+        if (mListener != null) {
+            mListener.onLeaveApp();
+        }
+    }
+
+    private boolean startActivity(Intent intent) {
+        try {
+            if (mContext != null) {
+                mContext.startActivity(intent);
+                return true;
+            }
+        } catch (ActivityNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void handleWebviewCommands(String command, String url, Context context) {
         if (command == null || mListener == null) {
             return;
@@ -148,7 +183,7 @@ public class Bridge extends WebViewClient {
                 break;
             case WEBVIEW_SUCCESS: {
                 mListener.onJsLoadSuccess();
-                mListener.onHtmlAdOpens();
+                onCreateMoatWebAdTracker();
                 break;
             }
 
@@ -205,6 +240,7 @@ public class Bridge extends WebViewClient {
 
         switch (command) {
             case VIDEO_LOAD:
+                onCreateMoatNativeTracker();
                 String videoUrl = detectQueryParameter(uri, QUERY_PARAM_SRC);
                 if (!TextUtils.isEmpty(videoUrl)) {
                     mListener.onJsVideoLoad(videoUrl);
@@ -283,4 +319,15 @@ public class Bridge extends WebViewClient {
         super.onPageFinished(webView, url);
     }
 
+    private void onCreateMoatNativeTracker() {
+        if (mListener != null) {
+            mListener.onCreateMoatNativeTracker();
+        }
+    }
+
+    private void onCreateMoatWebAdTracker() {
+        if (mListener != null) {
+            mListener.onCreateMoatWebAdTracker();
+        }
+    }
 }

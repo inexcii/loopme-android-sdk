@@ -1,6 +1,6 @@
 package com.loopme;
 
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Rect;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,15 +39,15 @@ class NativeVideoController {
     private boolean mHorizontalScrolling;
     private DataChangeListener mDataChangeListener;
     private int mItemCount;
-    private Context mContext;
+    private Activity mActivity;
     private MinimizedMode mMinimizedMode;
 
     public interface DataChangeListener {
         void onDataSetChanged();
     }
 
-    public NativeVideoController(Context context) {
-        mContext = context;
+    public NativeVideoController(Activity activity) {
+        mActivity = activity;
     }
 
     void refreshAdPlacement(int itemCount) {
@@ -208,7 +208,7 @@ class NativeVideoController {
         LoopMeBanner.Listener bannerListener = initBannerListener();
         for (int i = 0; i < mAppKeysMap.size(); i++) {
             String appKey = mAppKeysMap.valueAt(i);
-            LoopMeBanner banner = LoopMeBanner.getInstance(appKey, mContext);
+            LoopMeBanner banner = LoopMeBanner.getInstance(appKey, mActivity);
             if (banner != null) {
                 banner.setListener(bannerListener);
                 banner.load();

@@ -20,9 +20,11 @@ import com.loopme.adbrowser.AdBrowserLayout;
 import com.loopme.adbrowser.AdBrowserWebViewClient;
 import com.loopme.adbrowser.BrowserWebView;
 import com.loopme.common.Base64Drawables;
+import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.AdFormat;
+import com.moat.analytics.mobile.loo.WebAdTracker;
 
 /**
  * Browser Activity. Starts when ad click happened.

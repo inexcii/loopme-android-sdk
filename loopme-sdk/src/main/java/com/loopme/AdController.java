@@ -12,21 +12,18 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.media.MediaPlayer;
 import android.os.Build;
-import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
 import com.loopme.adview.AdView;
-import com.loopme.adview.BaseWebView;
 import com.loopme.adview.Bridge;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
@@ -41,14 +38,22 @@ import com.loopme.constants.StretchOption;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
 import com.loopme.mraid.MraidView;
+import com.moat.analytics.mobile.loo.MoatAdEvent;
+import com.moat.analytics.mobile.loo.MoatAdEventType;
+import com.moat.analytics.mobile.loo.MoatFactory;
+import com.moat.analytics.mobile.loo.NativeVideoTracker;
+import com.moat.analytics.mobile.loo.WebAdTracker;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class AdController {
 
     private static final String LOG_TAG = AdController.class.getSimpleName();
+    private static final String MOAT_TOKEN = "loopmeinappvideo302333386816";
+    public static final String MOAT = "moat";
+
+    private NativeVideoTracker mMoatNativeTracker;
 
     private static final String LEVEL1 = "level1";
     private static final String LEVEL2 = "level2";
@@ -89,6 +94,8 @@ public class AdController {
     private volatile Bridge.Listener mBridgeListener;
     private View.OnTouchListener mOnTouchListener;
     private boolean mHtmlAd;
+    private NativeVideoTracker mMoatAdTracker;
+    private WebAdTracker mMoatWebAdTracker;
 
     public AdController(BaseAd ad) {
         mBaseAd = ad;
@@ -98,8 +105,18 @@ public class AdController {
 
         mOnTouchListener = initOnTouchListener();
         mAdView.setOnTouchListener(mOnTouchListener);
-        if (mBaseAd != null) {
-            mBaseAd.setNativeAd(true);
+    }
+
+    public void initTrackers() {
+        Logging.out(LOG_TAG, "MOAT init");
+        if (mBaseAd != null && mBaseAd.getAdParams() != null) {
+            if (mBaseAd.getAdParams().getTrackers() != null) {
+                for (String name : mBaseAd.getAdParams().getTrackers()) {
+                    if (name.equalsIgnoreCase(MOAT)) {
+                        createMoatNativeTracker();
+                    }
+                }
+            }
         }
     }
 
@@ -113,11 +130,93 @@ public class AdController {
         };
     }
 
+
+    public void createMoatNativeTracker() {
+        Logging.out(LOG_TAG, "MOAT Native createMoatNativeTracker");
+        MoatFactory factory = MoatFactory.create();
+        this.mMoatNativeTracker = factory.createNativeVideoTracker(MOAT_TOKEN);
+        Context context = mBaseAd.getContext();
+        if (context != null && context instanceof Activity) {
+            setActivity((Activity) context);
+        }
+        if (mBaseAd != null) {
+            mBaseAd.setNativeAd(true);
+        }
+    }
+
     public void initVideoController() {
         VideoController.Callback callback = initVideoControllerCallback();
 
-        mVideoController = new VideoController(mAdView, callback, mBaseAd.getAppKey(), mBaseAd.getAdFormat());
+        mVideoController = new VideoController(mAdView, callback, mBaseAd.getAppKey(), mBaseAd.getAdFormat(), onMoatEventListener);
     }
+
+    private VideoController.OnMoatEventListener onMoatEventListener = new VideoController.OnMoatEventListener() {
+        @Override
+        public void onStartMoatTracking(MediaPlayer mediaPlayer, AdView adView) {
+            onPreparedMoatTracking(mediaPlayer, adView);
+        }
+
+        @Override
+        public void onStopMoatTracking() {
+            if (mMoatNativeTracker != null) {
+                Logging.out(LOG_TAG, "MOAT Native onStopMoatTracking");
+                mMoatNativeTracker.stopTracking();
+            }
+        }
+
+        @Override
+        public void onChangeViewMoatTracking(AdView adView) {
+            if (mMoatNativeTracker != null) {
+                Logging.out(LOG_TAG, "MOAT Native changeTargetView");
+                mMoatNativeTracker.changeTargetView(adView);
+            }
+        }
+
+        @Override
+        public void onPreparedMoatTracking(MediaPlayer mediaPlayer, AdView adView) {
+            if (mMoatNativeTracker != null) {
+                Logging.out(LOG_TAG, "MOAT Native trackVideoAd ");
+                mMoatNativeTracker.trackVideoAd(getAdIds(), mediaPlayer, adView);
+            }
+        }
+
+        private Map<String, String> getAdIds() {
+            String html = mBaseAd.getAdParams().getHtml();
+            HtmlParser htmlParser = new HtmlParser(html);
+            HashMap<String, String> dataMap = new HashMap<>();
+            dataMap.put(LEVEL1, htmlParser.getAdvertiserId());
+            dataMap.put(LEVEL2, htmlParser.getCampaignId());
+            dataMap.put(LEVEL3, htmlParser.getLineItemId());
+            dataMap.put(LEVEL4, htmlParser.getCreativeId());
+            dataMap.put(SLICER1, htmlParser.getAppId());
+            dataMap.put(SLICER2, htmlParser.getPlacementId());
+            return dataMap;
+        }
+
+        @Override
+        public void onCompletionMoatTracking(MediaPlayer mediaPlayer) {
+            if (mMoatNativeTracker != null) {
+                Logging.out(LOG_TAG, "MOAT Native onCompletionMoatTracking");
+                MoatAdEvent event = new MoatAdEvent(MoatAdEventType.AD_EVT_COMPLETE);
+                mMoatNativeTracker.dispatchEvent(event);
+            }
+        }
+
+        @Override
+        public void onVolumeChangedMoatTracking(int playerPositionInMillis, double volume) {
+            if (mMoatNativeTracker != null) {
+                Logging.out(LOG_TAG, "MOAT Native onVolumeChangedMoatTracking");
+                MoatAdEvent event = new MoatAdEvent(MoatAdEventType.AD_EVT_VOLUME_CHANGE, playerPositionInMillis, volume);
+                mMoatNativeTracker.dispatchEvent(event);
+            }
+
+        }
+
+        @Override
+        public void initMoatNativeTracker(){
+            initTrackers();
+        }
+    };
 
     public void pauseVideo() {
         if (mVideoController != null) {
@@ -163,6 +262,13 @@ public class AdController {
                 }
             }
         };
+    }
+
+    public void setActivity(Activity activity) {
+        if (mMoatNativeTracker != null) {
+            Logging.out(LOG_TAG, "MOAT setActivity");
+            mMoatNativeTracker.setActivity(activity);
+        }
     }
 
     private ViewController.Callback initViewControllerCallback() {
@@ -227,11 +333,13 @@ public class AdController {
         if (mAdView != null) {
             mAdView.stopLoading();
             mAdView.clearCache(true);
+            mAdView.loadUrl("about:blank");
             mAdView = null;
         }
         if (mMraidView != null) {
             mMraidView.stopLoading();
             mMraidView.clearCache(true);
+            mMraidView.loadUrl("about:blank");
             mMraidView = null;
         }
         mMinimizedMode = null;
@@ -448,22 +556,13 @@ public class AdController {
         if (mraid) {
             mMraidView = new MraidView(mBaseAd.getContext(), mMraidController);
             mMraidView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null);
-
+            Logging.out(LOG_TAG, "Start loading mraid html content to WebView...");
         } else {
             if (mAdView != null) {
-                preloadAd(html);
+                loadHtml(html);
             } else {
                 mBaseAd.onAdLoadFail(new LoopMeError("Html loading error"));
             }
-        }
-    }
-
-    private void preloadAd(String html) {
-        if (mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
-            dummyPreloadHtml(html);
-        } else {
-            loadHtml(html);
-
         }
     }
 
@@ -500,7 +599,7 @@ public class AdController {
 
             @Override
             public void onJsLoadSuccess() {
-                handleLoadNoneHtmlAdSuccess();
+                handleLoadSuccess();
             }
 
             @Override
@@ -524,10 +623,21 @@ public class AdController {
             }
 
             @Override
-            public void onHtmlAdOpens() {
-                if (isHtmlAd()) {
-                    setWebViewState(WebviewState.VISIBLE);
+            public void onCreateMoatNativeTracker() {
+                if(mBaseAd != null){
+                    mBaseAd.setNativeAd(true);
+                    mBaseAd.setHtmlAd(false);
                 }
+            }
+
+            @Override
+            public void onLeaveApp() {
+                onAdLeaveApp();
+            }
+
+            @Override
+            public void onCreateMoatWebAdTracker() {
+                createMoatWebAdTracker();
             }
 
             @Override
@@ -537,15 +647,21 @@ public class AdController {
         };
     }
 
-    private void handleLoadHtmlAdSuccess() {
-        if (isHtmlAd()) {
-            handleLoadSuccess();
+    private void onAdLeaveApp() {
+        if (mBaseAd != null) {
+            mBaseAd.onAdLeaveApp();
         }
     }
 
-    private void handleLoadNoneHtmlAdSuccess() {
-        if (!isHtmlAd()) {
-            handleLoadSuccess();
+    private void createMoatWebAdTracker() {
+        if (mBaseAd != null && mBaseAd.isNativeAd()) {
+            return;
+        }
+        Log.i(LOG_TAG, "MOAT Web Ad createMoatWebAdTracker");
+        MoatFactory factory = MoatFactory.create();
+        this.mMoatWebAdTracker = factory.createWebAdTracker(mAdView);
+        if (mBaseAd != null) {
+            mBaseAd.setHtmlAd(true);
         }
     }
 
@@ -619,7 +735,7 @@ public class AdController {
     }
 
     private void handleVideoPlay(final int time) {
-        if(mVideoController != null) {
+        if (mVideoController != null) {
             mVideoController.playVideo(time, mBaseAd.getAdParams().isVideo360());
         }
         if (mDisplayMode == DisplayMode.MINIMIZED) {
@@ -766,71 +882,10 @@ public class AdController {
         return true;
     }
 
-    public void loadHtmlAdToWebView(String html, boolean mraid) {
-        if (!mraid && mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL && isHtmlAd()) {
-            loadHtml(html);
-        }
-    }
-
     private void loadHtml(String html) {
         if (mAdView != null) {
             mAdView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
         }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    private void dummyPreloadHtml(String html) {
-        BaseWebView dummyWebView = new BaseWebView(mBaseAd.getContext());
-        dummyWebView.enableJavascriptCaching();
-        dummyWebView.setWebViewClient(new WebViewClient() {
-
-            private static final String WEBVIEW_HTML_AD = "loopme://webview/success";
-            private static final String WEBVIEW_FAIL = "loopme://webview/fail";
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-                if (TextUtils.equals(url, WEBVIEW_HTML_AD)) {
-                    mHtmlAd = true;
-                    handleLoadHtmlAdSuccess();
-                } else if (TextUtils.equals(url, WEBVIEW_FAIL)) {
-                    handleLoadFail("Ad received specific URL loopme://webview/fail");
-                } else {
-                    loadHtmlRunnable(mBaseAd.getAdParams().getHtml());
-                }
-                webView.stopLoading();
-                return true;
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-            }
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String
-                    failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                if (mBridgeListener != null) {
-                    mBridgeListener.onJsLoadFail("onReceivedError " + description);
-                }
-            }
-        });
-        dummyWebView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
-    }
-
-
-    public boolean isHtmlAd() {
-        return mHtmlAd;
-    }
-
-    private void loadHtmlRunnable(final String html) {
-        mBaseAd.mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                loadHtml(html);
-            }
-        });
-
     }
 
     public AdView getAdView() {
@@ -841,6 +896,26 @@ public class AdController {
         return mMraidController;
     }
 
+    public void setMoatWebAdTrackerActivity(Activity activity) {
+        if (mMoatWebAdTracker != null) {
+            mMoatWebAdTracker.setActivity(activity);
+            Log.i(LOG_TAG, "MOAT setActivity");
+        }
+    }
+
+    public void startMoatWebAdTacking() {
+        if (mBaseAd != null && mBaseAd.isHtmlAd() && mMoatWebAdTracker != null) {
+            Logging.out(LOG_TAG, "MOAT Web Ad onStartMoatWebAdTracking");
+            mMoatWebAdTracker.startTracking();
+        }
+    }
+
+    public void stopMoatWebAdTacking() {
+        if (mBaseAd != null && mBaseAd.isHtmlAd() && mMoatWebAdTracker != null) {
+            Logging.out(LOG_TAG, "MOAT Web Ad stopMoatWebAdTacking");
+            mMoatWebAdTracker.stopTracking();
+        }
+    }
 
     public void resumeVideo() {
         if (mVideoController != null) {

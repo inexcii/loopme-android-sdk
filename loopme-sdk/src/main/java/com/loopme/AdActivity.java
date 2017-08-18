@@ -25,6 +25,7 @@ public final class AdActivity extends Activity
         implements AdReceiver.Listener {
 
     private static final String LOG_TAG = AdActivity.class.getSimpleName();
+
     private AdController mAdController;
     private IViewController mIViewController;
     private int mFormat;
@@ -111,7 +112,7 @@ public final class AdActivity extends Activity
         } else {
             mIs360 = mBaseAd.getAdParams().isVideo360();
             mAdController = mBaseAd.getAdController();
-            loadHtmlAdToWebView();
+            mAdController.setActivity(AdActivity.this);
 
             mIViewController = mAdController.getViewController();
 
@@ -135,13 +136,27 @@ public final class AdActivity extends Activity
                 }
                 ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialShow((LoopMeInterstitial) mBaseAd);
             }
+            startMoatWebAdTacking();
+            setMoatWebAdTrackerActivity();
         }
     }
 
-    private void loadHtmlAdToWebView() {
-        String html = mBaseAd.getAdParams().getHtml();
-        boolean mraid = mBaseAd.getAdParams().isMraid();
-        mAdController.loadHtmlAdToWebView(html, mraid);
+    private void startMoatWebAdTacking() {
+        if (mAdController != null) {
+            mAdController.startMoatWebAdTacking();
+        }
+    }
+
+    private void stopMoatWebAdTacking() {
+        if (mAdController != null) {
+            mAdController.stopMoatWebAdTacking();
+        }
+    }
+
+    private void setMoatWebAdTrackerActivity() {
+        if (mBaseAd != null && mBaseAd.isHtmlAd()) {
+            mAdController.setMoatWebAdTrackerActivity(AdActivity.this);
+        }
     }
 
     private void initSensor() {
@@ -206,8 +221,12 @@ public final class AdActivity extends Activity
     @Override
     protected void onDestroy() {
         Logging.out(LOG_TAG, "onDestroy");
+        stopMoatWebAdTacking();
         if (mReceiver != null) {
             unregisterReceiver(mReceiver);
+        }
+        if (mAdController != null && mBaseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
+            mAdController.setWebViewState(WebviewState.CLOSED);
         }
         if (mLayout != null) {
             mLayout.removeAllViews();
@@ -224,6 +243,7 @@ public final class AdActivity extends Activity
     @Override
     protected void onPause() {
         super.onPause();
+        Logging.out(LOG_TAG, "onPause");
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mSensorListener);
         }
@@ -238,11 +258,7 @@ public final class AdActivity extends Activity
 
         } else if (!mKeepAlive && mFormat == AdFormat.INTERSTITIAL) {
             if (mAdController != null) {
-                if (mReceivedDestroyBroadcast) {
-                    mAdController.setWebViewState(WebviewState.CLOSED);
-                } else {
-                    mAdController.setWebViewState(WebviewState.HIDDEN);
-                }
+                mAdController.setWebViewState(WebviewState.HIDDEN);
                 mAdController.pauseVideo();
             }
         }
@@ -251,14 +267,13 @@ public final class AdActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
+        Logging.out(LOG_TAG, "onResume");
         mKeepAlive = false;
         if (mAdController != null) {
             if (mAdController.getWebViewState() == WebviewState.HIDDEN) {
                 mAdController.resumeVideo();
             }
-            if (!mAdController.isHtmlAd() | !mFirstLaunchHtmlAd) {
-                mAdController.setWebViewState(WebviewState.VISIBLE);
-            }
+            mAdController.setWebViewState(WebviewState.VISIBLE);
 
             if (mIViewController != null) {
                 mIViewController.onResume();

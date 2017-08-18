@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
@@ -26,6 +27,8 @@ import com.loopme.request.AdTargetingData;
 import com.loopme.tasks.AdFetcher;
 import com.loopme.tasks.AdvIdFetcher;
 import com.loopme.tasks.RequestTimer;
+import com.moat.analytics.mobile.loo.MoatAnalytics;
+import com.moat.analytics.mobile.loo.MoatOptions;
 
 import java.util.concurrent.Future;
 
@@ -33,7 +36,7 @@ public abstract class BaseAd implements AdTargeting {
 
     private static final String LOG_TAG = BaseAd.class.getSimpleName();
 
-    private Context mContext;
+    private Activity mContext;
     private String mAppKey;
 
     protected volatile AdController mAdController;
@@ -68,14 +71,26 @@ public abstract class BaseAd implements AdTargeting {
     private boolean mHtmlAd;
     private boolean mNativeAd;
 
-    public BaseAd(Context context, String appKey) {
-        if (context == null || TextUtils.isEmpty(appKey)) {
+    public BaseAd(Activity activity, String appKey) {
+        if (activity == null || TextUtils.isEmpty(appKey)) {
             throw new IllegalArgumentException("Wrong parameters");
         }
-        mContext = context;
+        mContext = activity;
         mAppKey = appKey;
         AdRequestParametersProvider.getInstance().init(this);
-        Utils.setCacheDirectory(context);
+        Utils.setCacheDirectory(activity);
+
+//        MoatAnalytics.getInstance().start(mContext.getApplication());
+        initMoatAnalytics();
+
+    }
+
+    private void initMoatAnalytics() {
+        MoatOptions options = new MoatOptions();
+        options.disableAdIdCollection = true;
+        Logging.out(LOG_TAG, "initMoatAnalytics");
+        MoatAnalytics.getInstance().start(mContext.getApplication());
+
     }
 
     /**

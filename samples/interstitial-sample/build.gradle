@@ -1,4 +1,10 @@
 apply plugin: 'com.android.application'
+repositories {
+    jcenter()
+    flatDir {
+        dirs 'libs'
+    }
+}
 
 android {
     compileSdkVersion 25

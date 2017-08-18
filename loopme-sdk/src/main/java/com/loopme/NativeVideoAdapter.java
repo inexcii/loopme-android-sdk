@@ -1,5 +1,6 @@
 package com.loopme;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.os.Build;
@@ -22,7 +23,7 @@ public class NativeVideoAdapter extends BaseAdapter implements AdChecker,
     private static final String LOG_TAG = NativeVideoAdapter.class.getSimpleName();
 
     private BaseAdapter mOriginAdapter;
-    private Context mContext;
+    private Activity mActivity;
     private NativeVideoController mNativeVideoController;
     private LayoutInflater mInflater;
     private AbsListView.OnScrollListener mOriginScrollListener;
@@ -30,15 +31,15 @@ public class NativeVideoAdapter extends BaseAdapter implements AdChecker,
     private AbsListView mListView;
 
     public NativeVideoAdapter(@NonNull BaseAdapter originAdapter,
-                              @NonNull Context context,
+                              @NonNull Activity activity,
                               @NonNull AbsListView listView) {
 
         mOriginAdapter = originAdapter;
-        mContext = context.getApplicationContext();
+        mActivity = activity;
         mListView = listView;
 
-        mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mNativeVideoController = new NativeVideoController(mContext);
+        mInflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mNativeVideoController = new NativeVideoController(mActivity);
 
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
@@ -122,7 +123,7 @@ public class NativeVideoAdapter extends BaseAdapter implements AdChecker,
             mNativeVideoController.onLoadFail(error);
             return;
         }
-        if (Utils.isOnline(mContext)) {
+        if (Utils.isOnline(mActivity)) {
             mNativeVideoController.loadAds(mOriginAdapter.getCount(), this);
         } else {
             LoopMeError error = new LoopMeError("No connection");

@@ -35,16 +35,18 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static com.loopme.common.StaticParams.UNKNOWN_NAME;
 
 public class Utils {
 
+    private static final String CHROME = "Chrome";
+    private static final String CHROME_SHORTCUT = "Chrm";
     private static final String LOG_TAG = Utils.class.getSimpleName();
     private static final String DATE_PATTERN = "dd/MM/yy HH:mm:ss.s";
     private static WindowManager sWindowManager;
@@ -395,7 +397,7 @@ public class Utils {
 
     public static String getUrlEncodedString(String stringToEncode) {
         try {
-            return URLEncoder.encode(stringToEncode, "UTF-8");
+            return URLEncoder.encode(stringToEncode, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -405,6 +407,14 @@ public class Utils {
     public static void setCacheDirectory(Context context) {
         if (TextUtils.isEmpty(StaticParams.sCacheDirectory)) {
             StaticParams.sCacheDirectory = context.getFilesDir().getAbsolutePath();
+        }
+    }
+
+    public static String makeChromeShortCut(String userString) {
+        if (!TextUtils.isEmpty(userString) && userString.contains(CHROME)) {
+            return userString.replace(CHROME, CHROME_SHORTCUT);
+        } else {
+            return userString;
         }
     }
 }

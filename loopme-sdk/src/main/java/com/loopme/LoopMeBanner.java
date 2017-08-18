@@ -1,6 +1,6 @@
 package com.loopme;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -65,17 +65,17 @@ public class LoopMeBanner extends BaseAd {
     /**
      * Creates new `LoopMeBanner` object with the given appKey
      *
-     * @param context - application context
+     * @param activity - application context
      * @param appKey  - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeBanner(Context context, String appKey) {
-        super(context, appKey);
+    LoopMeBanner(Activity activity, String appKey) {
+        super(activity, appKey);
 
         mAdController = new AdController(this);
 
-        Utils.init(context);
-        LiveDebug.init(context);
+        Utils.init(activity);
+        LiveDebug.init(activity);
         Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey);
     }
 
@@ -84,12 +84,12 @@ public class LoopMeBanner extends BaseAd {
      * Note: Returns null if Android version under 4.0
      *
      * @param appKey  - your app key
-     * @param context - Activity context
+     * @param activity - Activity context
      * @return instance of LoopMeBanner
      */
-    public static LoopMeBanner getInstance(String appKey, Context context) {
+    public static LoopMeBanner getInstance(String appKey, Activity activity) {
         if (Build.VERSION.SDK_INT >= 14) {
-            return LoopMeAdHolder.getBanner(appKey, context);
+            return LoopMeAdHolder.getBanner(appKey, activity);
         } else {
             Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+");
             return null;
@@ -238,7 +238,12 @@ public class LoopMeBanner extends BaseAd {
                 mAdController.getMraidView().setIsViewable(true);
                 mAdController.getMraidView().notifyStateChange();
             } else {
-                mAdController.buildVideoAdView(mBannerView);
+                if (isVideoPresented()) {
+                    mAdController.buildVideoAdView(mBannerView);
+                } else {
+                    mAdController.buildStaticAdView(mBannerView);
+                    mAdController.getAdView().setVideoState(VideoState.PLAYING);
+                }
                 if (getAdParams().isVideo360()) {
                     IViewController v360 = mAdController.getViewController();
                     v360.initVRLibrary(getContext());
@@ -278,6 +283,10 @@ public class LoopMeBanner extends BaseAd {
         }
     }
 
+    private boolean isVideoPresented() {
+        return mAdController.isVideoPresented();
+    }
+
     public void resume() {
         Logging.out(LOG_TAG, "resume");
         if (mAdController != null && isReady()) {
@@ -285,6 +294,7 @@ public class LoopMeBanner extends BaseAd {
             if (mAdController.getViewController() != null) {
                 mAdController.getViewController().onResume();
             }
+            mAdController.setWebViewState(WebviewState.VISIBLE);
         }
     }
 

@@ -34,7 +34,7 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     public AdBrowserLayout(Context context) {
         super(context);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+        LayoutParams params = new LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         setLayoutParams(params);
@@ -53,11 +53,11 @@ public final class AdBrowserLayout extends RelativeLayout {
         configButtonsContainer(buttonsContainer);
 
         int buttonWidth = Utils.getDisplayMetrics().widthPixels / 5;
-        RelativeLayout.LayoutParams buttons_params = new RelativeLayout.LayoutParams(
+        LayoutParams buttons_params = new LayoutParams(
                 buttonWidth, ViewGroup.LayoutParams.MATCH_PARENT);
 
         int size = Utils.convertDpToPixel(HEADER_HEIGHT_DP) / 2;
-        RelativeLayout.LayoutParams pb_params = new RelativeLayout.LayoutParams(size, size);
+        LayoutParams pb_params = new LayoutParams(size, size);
         pb_params.addRule(RelativeLayout.CENTER_IN_PARENT);
 
         mProgressBar = new ProgressBar(context);
@@ -80,8 +80,8 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     private void configProgressButton(Context context,
                                       LinearLayout buttonsContainer,
-                                      RelativeLayout.LayoutParams buttons_params,
-                                      RelativeLayout.LayoutParams pb_params) {
+                                      LayoutParams buttons_params,
+                                      LayoutParams pb_params) {
         RelativeLayout progressLayout = new RelativeLayout(context);
         progressLayout.setLayoutParams(buttons_params);
         mProgressBar.setLayoutParams(pb_params);
@@ -98,8 +98,8 @@ public final class AdBrowserLayout extends RelativeLayout {
     }
 
     private void configFooterView() {
-        RelativeLayout.LayoutParams footer_params = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
+        LayoutParams footer_params = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
                 Utils.convertDpToPixel(HEADER_HEIGHT_DP));
         footer_params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         mFooterView.setLayoutParams(footer_params);
@@ -108,7 +108,7 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     private View initBottomWhiteLineView(Context context) {
         View whiteLine = new View(context);
-        RelativeLayout.LayoutParams whiteLineParams = new RelativeLayout.LayoutParams(
+        LayoutParams whiteLineParams = new LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
         whiteLineParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         whiteLine.setLayoutParams(whiteLineParams);
@@ -118,8 +118,8 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     @SuppressLint("NewApi")
     private void configBackButton(Context context, LinearLayout buttonsContainer,
-                                  RelativeLayout.LayoutParams buttons_params,
-                                  RelativeLayout.LayoutParams pb_params) {
+                                  LayoutParams buttons_params,
+                                  LayoutParams pb_params) {
         RelativeLayout backLayout = new RelativeLayout(context);
         backLayout.setLayoutParams(buttons_params);
         if (Build.VERSION.SDK_INT < 16) {
@@ -134,8 +134,8 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     @SuppressLint("NewApi")
     private void configRefreshButton(Context context, LinearLayout buttonsContainer,
-                                     RelativeLayout.LayoutParams buttons_params,
-                                     RelativeLayout.LayoutParams pb_params) {
+                                     LayoutParams buttons_params,
+                                     LayoutParams pb_params) {
         RelativeLayout refreshLayout = new RelativeLayout(context);
         refreshLayout.setLayoutParams(buttons_params);
         if (Build.VERSION.SDK_INT < 16) {
@@ -150,8 +150,8 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     @SuppressLint("NewApi")
     private void configNativeButton(Context context, LinearLayout buttonsContainer,
-                                    RelativeLayout.LayoutParams buttons_params,
-                                    RelativeLayout.LayoutParams pb_params) {
+                                    LayoutParams buttons_params,
+                                    LayoutParams pb_params) {
         RelativeLayout nativeLayout = new RelativeLayout(context);
         nativeLayout.setLayoutParams(buttons_params);
         if (Build.VERSION.SDK_INT < 16) {
@@ -166,8 +166,8 @@ public final class AdBrowserLayout extends RelativeLayout {
 
     @SuppressLint("NewApi")
     private void configCloseButton(Context context, LinearLayout buttonsContainer,
-                                   RelativeLayout.LayoutParams buttons_params,
-                                   RelativeLayout.LayoutParams pb_params) {
+                                   LayoutParams buttons_params,
+                                   LayoutParams pb_params) {
         RelativeLayout closeLayout = new RelativeLayout(context);
         closeLayout.setLayoutParams(buttons_params);
         if (Build.VERSION.SDK_INT < 16) {

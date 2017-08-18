@@ -9,6 +9,7 @@ import android.webkit.WebView;
 
 import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
 
@@ -16,14 +17,11 @@ import com.loopme.constants.WebviewState;
  * Custom ad view.
  * Communicate with javascript.
  */
-public class AdView extends WebView implements
+public class AdView extends BaseWebView implements
         BridgeInterface,
         Bridge.Listener {
 
     private static final String LOG_TAG = AdView.class.getSimpleName();
-    public static final String DEFAULT_CHROME_USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 7.1.1; Nexus 6P Build/NMF26F)";
-    public static final String CHROME_USER_AGENT = initUserAgent();
-
     private Bridge.Listener mBridgeListener;
     private volatile Bridge mBridge;
 
@@ -34,14 +32,6 @@ public class AdView extends WebView implements
         super(context);
         Logging.out(LOG_TAG, "AdView created");
         init();
-    }
-
-    private static String initUserAgent() {
-        String agent = System.getProperty("http.agent");
-        if (TextUtils.isEmpty(agent)) {
-            agent = DEFAULT_CHROME_USER_AGENT;
-        }
-        return agent;
     }
 
     @Override
@@ -77,13 +67,19 @@ public class AdView extends WebView implements
             setWebContentsDebuggingEnabled(true);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            webSettings.setMediaPlaybackRequiresUserGesture(false);
-        }
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setSupportZoom(false);
         setWebChromeClient(new AdViewChromeClient());
-        mBridge = new Bridge(this);
+        mBridge = new Bridge(this, getContext());
         setWebViewClient(mBridge);
+
+        modifyUserAgentForKrPano(webSettings);
+    }
+
+    private void modifyUserAgentForKrPano(WebSettings webSettings) {
+        String userString = WebSettings.getDefaultUserAgent(getContext());
+        String modifiedUserString = Utils.makeChromeShortCut(userString);
+        webSettings.setUserAgentString(modifiedUserString);
     }
 
     public int getCurrentVideoState() {
@@ -192,9 +188,23 @@ public class AdView extends WebView implements
     }
 
     @Override
-    public void onHtmlAdOpens() {
+    public void onCreateMoatNativeTracker() {
         if (mBridgeListener != null) {
-            mBridgeListener.onHtmlAdOpens();
+            mBridgeListener.onCreateMoatNativeTracker();
+        }
+    }
+
+    @Override
+    public void onCreateMoatWebAdTracker() {
+        if (mBridgeListener != null) {
+            mBridgeListener.onCreateMoatWebAdTracker();
+        }
+    }
+
+    @Override
+    public void onLeaveApp() {
+        if (mBridgeListener != null) {
+            mBridgeListener.onLeaveApp();
         }
     }
 

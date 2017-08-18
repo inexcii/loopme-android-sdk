@@ -99,35 +99,5 @@ public class BridgeCommandBuilder {
                 .append("'});");
         return builder.toString();
     }
-
-    public String unMuteAndPlayVideo() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(PREFIX_FUNCTION_BEGIN)
-                .append(playVideo())
-                .append(unMuteVideo())
-                .append(" })()");
-        return builder.toString();
-    }
-
-    private String playVideo() {
-        return "document.getElementsByTagName('video')[0].play();";
-    }
-
-    private String unMuteVideo() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("setTimeout(function(){")
-                .append("document.getElementById('gwd-video_1').volume = 1;")
-                .append("document.getElementById('gwd-video_1').muted = false;")
-                .append(deleteUnMuteAttribute())
-                .append("}, 0);},0)");
-        return builder.toString();
-    }
-
-    private String deleteUnMuteAttribute() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("setTimeout(function(){")
-                .append("document.getElementById('gwd-video_1').removeAttribute('muted');");
-        return builder.toString();
-    }
 }
 
