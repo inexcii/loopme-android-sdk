@@ -397,7 +397,7 @@ LoopMe SDK has a small video format Video MPU banner which allows to show video 
 
 
 ## What's new ##
-** Version 5.1.12**
+**Version 5.1.12**
 - Added MOAT SDK viewability measurement support for Native and Rich Media ads
 
 **Version 5.1.11**
