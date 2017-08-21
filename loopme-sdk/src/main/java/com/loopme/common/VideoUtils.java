@@ -53,7 +53,7 @@ class VideoUtils {
 		if (parentDir == null) {
 			return null;
 		}
-		Logging.out(LOG_TAG, “Cache dir: ” + parentDir.getAbsolutePath());
+		Logging.out(LOG_TAG, "Cache dir: " + parentDir.getAbsolutePath());
 
 		File[] files = parentDir.listFiles();
 		if(files == null){
