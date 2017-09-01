@@ -16,6 +16,7 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
@@ -34,12 +35,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Date;
 
 import static com.loopme.common.StaticParams.UNKNOWN_NAME;
 
@@ -165,20 +165,21 @@ public class Utils {
         return displayMetrics;
     }
 
-    public static boolean isPackageInstalled(List<String> packadeId) {
+    public static List<String> getPackageInstalled(List<String> packadeId) {
+        List<String> installedPackages = new ArrayList<>();
         if (sPackageManager == null) {
-            return false;
+            return null;
         }
         List<PackageInfo> packages = sPackageManager.getInstalledPackages(0);
 
         for (PackageInfo packageInfo : packages) {
             for (int i = 0; i < packadeId.size(); i++) {
                 if (packadeId.get(i).equalsIgnoreCase(packageInfo.packageName)) {
-                    return true;
+                    installedPackages.add(packadeId.get(i));
                 }
             }
         }
-        return false;
+        return installedPackages;
     }
 
     public static void animateAppear(View view) {
@@ -416,5 +417,26 @@ public class Utils {
         } else {
             return userString;
         }
+    }
+
+    public static String getPackageInstalledAsString(List<String> packagesIds) {
+        List<String> packagesInstalled = getPackageInstalled(packagesIds);
+        if(packagesInstalled == null || packagesInstalled.size() == 0){
+            return "";
+        }
+        String[] packagesInstalledArray = new String[packagesInstalled.size()];
+        packagesInstalledArray = packagesInstalled.toArray(packagesInstalledArray);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for(String packageName : packagesInstalledArray){
+            stringBuilder.append(packageName);
+            stringBuilder.append(",");
+        }
+        String formattedString = stringBuilder.toString();
+        if (formattedString.length() > 0 && formattedString.charAt(formattedString.length() - 1) == ',') {
+            formattedString = formattedString.substring(0, formattedString.length() - 1);
+        }
+        Log.i(LOG_TAG, formattedString);
+        return formattedString;
     }
 }

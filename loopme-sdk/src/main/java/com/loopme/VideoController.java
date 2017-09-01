@@ -151,7 +151,6 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     public void setSurface(Surface surface) throws IllegalStateException {
-        Logging.out(LOG_TAG, "setSurface " + surface);
         mSurface = surface;
         if (mMediaPlayer != null) {
             mMediaPlayer.setSurface(surface);
@@ -168,7 +167,6 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
                 startMediaPlayer();
             }
             seekTo(mVideoPositionWhenError);
-            Logging.out(LOG_TAG, "waitForVideo mHandler.postDelayed");
             mHandler.postDelayed(mRunnable, DELAY_TIME);
 
             setVideoState(VideoState.PLAYING);
@@ -412,7 +410,6 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         setVideoState(VideoState.READY);
         extractVideoInfo(mediaPlayer);
         stopBuffering();
-//        onPreparedMoatTracking(mMediaPlayer);
     }
 
     private void stopBuffering() {

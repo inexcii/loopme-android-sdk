@@ -12,7 +12,6 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.media.MediaPlayer;
 import android.os.Build;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -108,7 +107,6 @@ public class AdController {
     }
 
     public void initTrackers() {
-        Logging.out(LOG_TAG, "MOAT init");
         if (mBaseAd != null && mBaseAd.getAdParams() != null) {
             if (mBaseAd.getAdParams().getTrackers() != null) {
                 for (String name : mBaseAd.getAdParams().getTrackers()) {
@@ -132,7 +130,6 @@ public class AdController {
 
 
     public void createMoatNativeTracker() {
-        Logging.out(LOG_TAG, "MOAT Native createMoatNativeTracker");
         MoatFactory factory = MoatFactory.create();
         this.mMoatNativeTracker = factory.createNativeVideoTracker(MOAT_TOKEN);
         Context context = mBaseAd.getContext();
@@ -159,7 +156,6 @@ public class AdController {
         @Override
         public void onStopMoatTracking() {
             if (mMoatNativeTracker != null) {
-                Logging.out(LOG_TAG, "MOAT Native onStopMoatTracking");
                 mMoatNativeTracker.stopTracking();
             }
         }
@@ -167,7 +163,6 @@ public class AdController {
         @Override
         public void onChangeViewMoatTracking(AdView adView) {
             if (mMoatNativeTracker != null) {
-                Logging.out(LOG_TAG, "MOAT Native changeTargetView");
                 mMoatNativeTracker.changeTargetView(adView);
             }
         }
@@ -175,7 +170,6 @@ public class AdController {
         @Override
         public void onPreparedMoatTracking(MediaPlayer mediaPlayer, AdView adView) {
             if (mMoatNativeTracker != null) {
-                Logging.out(LOG_TAG, "MOAT Native trackVideoAd ");
                 mMoatNativeTracker.trackVideoAd(getAdIds(), mediaPlayer, adView);
             }
         }
@@ -196,7 +190,6 @@ public class AdController {
         @Override
         public void onCompletionMoatTracking(MediaPlayer mediaPlayer) {
             if (mMoatNativeTracker != null) {
-                Logging.out(LOG_TAG, "MOAT Native onCompletionMoatTracking");
                 MoatAdEvent event = new MoatAdEvent(MoatAdEventType.AD_EVT_COMPLETE);
                 mMoatNativeTracker.dispatchEvent(event);
             }
@@ -205,7 +198,6 @@ public class AdController {
         @Override
         public void onVolumeChangedMoatTracking(int playerPositionInMillis, double volume) {
             if (mMoatNativeTracker != null) {
-                Logging.out(LOG_TAG, "MOAT Native onVolumeChangedMoatTracking");
                 MoatAdEvent event = new MoatAdEvent(MoatAdEventType.AD_EVT_VOLUME_CHANGE, playerPositionInMillis, volume);
                 mMoatNativeTracker.dispatchEvent(event);
             }
@@ -266,7 +258,6 @@ public class AdController {
 
     public void setActivity(Activity activity) {
         if (mMoatNativeTracker != null) {
-            Logging.out(LOG_TAG, "MOAT setActivity");
             mMoatNativeTracker.setActivity(activity);
         }
     }
@@ -556,7 +547,6 @@ public class AdController {
         if (mraid) {
             mMraidView = new MraidView(mBaseAd.getContext(), mMraidController);
             mMraidView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null);
-            Logging.out(LOG_TAG, "Start loading mraid html content to WebView...");
         } else {
             if (mAdView != null) {
                 loadHtml(html);
@@ -657,7 +647,6 @@ public class AdController {
         if (mBaseAd != null && mBaseAd.isNativeAd()) {
             return;
         }
-        Log.i(LOG_TAG, "MOAT Web Ad createMoatWebAdTracker");
         MoatFactory factory = MoatFactory.create();
         this.mMoatWebAdTracker = factory.createWebAdTracker(mAdView);
         if (mBaseAd != null) {
@@ -899,20 +888,17 @@ public class AdController {
     public void setMoatWebAdTrackerActivity(Activity activity) {
         if (mMoatWebAdTracker != null) {
             mMoatWebAdTracker.setActivity(activity);
-            Log.i(LOG_TAG, "MOAT setActivity");
         }
     }
 
     public void startMoatWebAdTacking() {
         if (mBaseAd != null && mBaseAd.isHtmlAd() && mMoatWebAdTracker != null) {
-            Logging.out(LOG_TAG, "MOAT Web Ad onStartMoatWebAdTracking");
             mMoatWebAdTracker.startTracking();
         }
     }
 
     public void stopMoatWebAdTacking() {
         if (mBaseAd != null && mBaseAd.isHtmlAd() && mMoatWebAdTracker != null) {
-            Logging.out(LOG_TAG, "MOAT Web Ad stopMoatWebAdTacking");
             mMoatWebAdTracker.stopTracking();
         }
     }

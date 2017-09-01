@@ -29,6 +29,7 @@ import com.loopme.common.Logging;
 import com.loopme.common.Utils;
 import com.loopme.constants.ConnectionType;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +68,7 @@ public class AdRequestParametersProvider {
     private int mAdWidth;
     private int mAdHeight;
     private String mDeviceName;
+    private BaseAd mBaseAd;
 
 
     private AdRequestParametersProvider() {
@@ -509,6 +511,7 @@ public class AdRequestParametersProvider {
     }
 
     public void init(BaseAd baseAd) {
+        mBaseAd = baseAd;
         setAppKey(baseAd.getAppKey());
         detectPackage(baseAd.getContext());
         setUserAgent(baseAd.getContext());
@@ -531,5 +534,9 @@ public class AdRequestParametersProvider {
 
     public String getDeviceName() {
         return mDeviceName;
+    }
+
+    public List<String> getPackagesInstalled() {
+        return Utils.getPackageInstalled(mBaseAd.getAdParams().getPackageIds());
     }
 }

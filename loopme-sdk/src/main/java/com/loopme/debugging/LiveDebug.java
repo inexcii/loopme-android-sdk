@@ -2,22 +2,14 @@ package com.loopme.debugging;
 
 import android.content.Context;
 import android.os.CountDownTimer;
-import android.os.Looper;
 import android.os.Handler;
+import android.os.Looper;
 
-import com.loopme.common.StaticParams;
-import com.loopme.request.AdRequestParametersProvider;
 import com.loopme.common.Logging;
+import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
+import com.loopme.request.AdRequestParametersProvider;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +101,7 @@ public class LiveDebug {
         params.put(Params.APP_KEY, provider.getAppKey());
         params.put(Params.MSG, "sdk_debug");
         params.put(Params.DEBUG_LOGS, debugLogs);
-
+        params.put(Params.APP_IDS, Utils.getPackageInstalledAsString(provider.getPackagesInstalled()));
         return params;
     }
 

@@ -30,6 +30,7 @@ import com.loopme.tasks.RequestTimer;
 import com.moat.analytics.mobile.loo.MoatAnalytics;
 import com.moat.analytics.mobile.loo.MoatOptions;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 public abstract class BaseAd implements AdTargeting {
@@ -79,18 +80,13 @@ public abstract class BaseAd implements AdTargeting {
         mAppKey = appKey;
         AdRequestParametersProvider.getInstance().init(this);
         Utils.setCacheDirectory(activity);
-
-//        MoatAnalytics.getInstance().start(mContext.getApplication());
         initMoatAnalytics();
-
     }
 
     private void initMoatAnalytics() {
         MoatOptions options = new MoatOptions();
         options.disableAdIdCollection = true;
-        Logging.out(LOG_TAG, "initMoatAnalytics");
-        MoatAnalytics.getInstance().start(mContext.getApplication());
-
+        MoatAnalytics.getInstance().start(options, mContext.getApplication());
     }
 
     /**
@@ -252,7 +248,7 @@ public abstract class BaseAd implements AdTargeting {
         return mAdTargetingData;
     }
 
-    protected AdParams getAdParams() {
+    public AdParams getAdParams() {
         return mAdParams;
     }
 
@@ -290,9 +286,12 @@ public abstract class BaseAd implements AdTargeting {
 
                 stopRequestTimer();
                 if (params != null && !params.getPackageIds().isEmpty()) {
-                    if (Utils.isPackageInstalled(params.getPackageIds())) {
-                        mAdState = AdState.NONE;
-                        completeRequest(null, new LoopMeError("No valid ads found"));
+                    List<String> installedPackages = Utils.getPackageInstalled(params.getPackageIds());
+                    if (installedPackages != null && installedPackages.size() > 0) {
+//                        mAdState = AdState.NONE;
+//                        completeRequest(null, new LoopMeError("No valid ads found"));
+                        completeRequest(params, error);
+
                         EventManager eventManager = new EventManager();
                         eventManager.trackSdkEvent(params.getToken());
                     } else {
