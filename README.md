@@ -40,17 +40,30 @@ Requires `Android` 4.4 and up. If you have lower version please see the "Merging
 There are 2 ways:<br><br>
 1. Download latest version of SDK (`loopme-sdk-[version].aar` file) and put it in folder `libs`. <br>
 Add dependency to `loopme-sdk` in your project (`build.gradle` file):<br>
-``` repositories { flatDir { dirs 'libs' } }```
+```groovy 
+    repositories { 
+        flatDir { 
+	    dirs 'libs' 
+	} 
+    }
 <br>
-``` dependencies { compile ( name: 'loopme-sdk-[version]', ext: 'aar' ) }```
+```
+<br>
+```groovy 
+    dependencies { compile ( name: 'loopme-sdk-[version]', ext: 'aar' ) }
+```
 <br><br>
 2. LoopMe SDK is available as an AAR via jCenter.<br>
 To use it, add the following to your `build.gradle` file:<br>
-```repositories { jcenter () }```
+```groovy
+    repositories { 
+        jcenter () 
+    }
+```
 <br>
-```dependencies { compile 'com.loopme:loopme-sdk:5.1.11@aar' }
-    compile 'com.google.android.gms:play-services-ads:9.6.1'```
-
+```groovy
+    dependencies { compile 'com.loopme:loopme-sdk:5.1.11@aar' }
+```
 
 <br>An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](https://app.loopme.com/login/)**, and follow **[instruction](https://docs.google.com/document/d/1mXoWMVMvrfd5URvpWfCnFt89uL96PgT7usisCTa1K34/edit#)**. <br>
 
@@ -176,7 +189,7 @@ public class SimpleBannerActivity extends AppCompatActivity implements LoopMeBan
 * Display banner
 <br><b>NOTE:</b> This method should be triggered after receive `onLoopMeBannerLoadSuccess()` notification.
 ```java
-mBanner.show();
+    mBanner.show();
 ```
 
 * `LoopMeBanner` notifications
