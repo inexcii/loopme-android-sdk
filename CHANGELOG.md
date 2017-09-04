@@ -1,3 +1,9 @@
+## Version 5.1.13 (1 of September, 2017)
+- Ads targeting improvements
+
+## Version 5.1.12 (21 of August, 2017)
+- Added MOAT SDK viewability measurement support for Native and Rich Media ads
+
 ## Version 5.1.11 (27 of June, 2017)
 - Ads targeting improvements
 
