@@ -405,7 +405,9 @@ The information that allows to identify a device to serve appropriate ads or sto
 17. <b>Does your ad request access to device’s connectivity capabilities and geolocation?</b><br>
 Yes. As users should get relevant ads based on the country when they can get the advertised product. This helps avoid confusing ads with a game that is not available on the local Appstore or GooglePlay markets or offline trade networks a user can not find in their country. Also if a user has no internet connection they can not get to the advertised product page or as well as download the ad itself.<br><br>
 18. <b>Does LoopMe SDK supports native ads?</b><br>
-LoopMe SDK has a small video format Video MPU banner which allows to show video in content. However, it does not support traditional Native ad format with icon, title, description text etc.<br>
+LoopMe SDK has a small video format Video MPU banner which allows to show video in content. However, it does not support traditional Native ad format with icon, title, description text etc.<br><br>
+19. <b>What size of android SDK aar?</b><br>
+Android SDK aar will raise size of your application on 1.16Mb.<br>
 
 
 
