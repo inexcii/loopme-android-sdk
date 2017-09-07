@@ -1,3 +1,6 @@
+## Version 5.1.14 (7 of September, 2017)
+- Bug fix
+
 ## Version 5.1.13 (1 of September, 2017)
 - Ads targeting improvements
 

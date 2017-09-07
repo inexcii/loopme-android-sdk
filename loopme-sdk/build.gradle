@@ -16,7 +16,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 13
+        versionCode 14
         versionName "5.1"
         multiDexEnabled true
     }
@@ -66,7 +66,7 @@ buildscript {
 ext {
     adapterName = 'Loopme'
     fileName = 'loopme-sdk'
-    releaseVersion = '5.1.13'
+    releaseVersion = '5.1.14'
     fileName = "${fileName}-${releaseVersion}"
     sdkVersion = releaseVersion
     apiVersion = "5"
@@ -84,7 +84,7 @@ allprojects {
 }
 
 group = 'com.loopme'
-version = '5.1.13'
+version = '5.1.14'
 
 install {
     repositories.mavenInstaller {
@@ -136,14 +136,14 @@ bintray {
 
 
 task clearJar(type: Delete) {
-    delete 'build/outputs/loopme-sdk-5.1.12.jar'
+    delete 'build/outputs/loopme-sdk-5.1.13.jar'
 }
 
 task makeJar(type: Copy) {
     from('build/intermediates/bundles/release/')
     into('build/outputs/')
     include('classes.jar')
-    rename('classes.jar', 'loopme-sdk-5.1.13.jar')
+    rename('classes.jar', 'loopme-sdk-5.1.14.jar')
 }
 
 task wrapper(type: Wrapper) {

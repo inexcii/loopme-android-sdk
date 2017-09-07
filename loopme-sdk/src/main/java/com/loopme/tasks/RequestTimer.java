@@ -36,7 +36,7 @@ public class RequestTimer implements Runnable {
         long timeNow = System.currentTimeMillis();
         long timeInFuture = timeNow + mTimeout;
 
-        while (timeNow != timeInFuture) {
+        while (timeNow >= timeInFuture) {
             timeNow = System.currentTimeMillis();
         }
 
