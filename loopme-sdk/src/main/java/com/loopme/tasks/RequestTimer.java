@@ -1,47 +1,43 @@
 package com.loopme.tasks;
 
+import android.os.CountDownTimer;
+
 import com.loopme.common.Logging;
 
-public class RequestTimer implements Runnable {
+public class RequestTimer extends CountDownTimer {
+
     private static final String LOG_TAG = RequestTimer.class.getSimpleName();
-    private int mTimeout;
+    private static final long TICK_INTERVAL_IN_MILLIS = 1000;
     private Listener mListener;
-    private Thread mThread;
 
-    public void start() {
-        mThread.start();
+    public RequestTimer(long millisInFuture, Listener requestTimerListener) {
+        super(millisInFuture, TICK_INTERVAL_IN_MILLIS);
+        this.mListener = requestTimerListener;
     }
 
-    public void stop() {
-        try {
-            mThread.interrupt();
-        } catch (SecurityException e) {
-            Logging.out(LOG_TAG, e.getMessage());
-        }
-        Logging.out(LOG_TAG, LOG_TAG + " is successfully stopped.");
+    public void startTimer(){
+        Logging.out(LOG_TAG, "start request timer");
+        start();
     }
 
-    public interface Listener {
-        void onTimeout();
-    }
-
-    public RequestTimer(int timeout, Listener listener) {
-        this.mTimeout = timeout;
-        this.mListener = listener;
-        mThread = new Thread(this);
+    public void stopTimer(){
+        Logging.out(LOG_TAG, "stop request timer");
+        cancel();
     }
 
     @Override
-    public void run() {
-        long timeNow = System.currentTimeMillis();
-        long timeInFuture = timeNow + mTimeout;
+    public void onTick(long millisUntilFinished) {
 
-        while (timeNow >= timeInFuture) {
-            timeNow = System.currentTimeMillis();
-        }
+    }
 
-        if (mListener != null && !mThread.isInterrupted()) {
+    @Override
+    public void onFinish() {
+        if(mListener != null){
             mListener.onTimeout();
         }
+    }
+
+    public interface Listener{
+        void onTimeout();
     }
 }

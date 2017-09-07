@@ -482,16 +482,26 @@ public abstract class BaseAd implements AdTargeting {
     }
 
     private void startRequestTimer() {
-        mRequestTimerListener = initTimerListener();
-        mRequestTimer = new RequestTimer(StaticParams.REQUEST_TIMEOUT, mRequestTimerListener);
-        mRequestTimer.start();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mRequestTimerListener = initTimerListener();
+                mRequestTimer = new RequestTimer(StaticParams.REQUEST_TIMEOUT, mRequestTimerListener);
+                mRequestTimer.startTimer();
+            }
+        });
     }
 
     private void stopRequestTimer() {
-        if (mRequestTimer != null && mRequestTimerListener != null) {
-            mRequestTimerListener = null;
-            mRequestTimer.stop();
-        }
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mRequestTimer != null) {
+                    mRequestTimer.stopTimer();
+                    mRequestTimerListener = null;
+                }
+            }
+        });
     }
 
     private RequestTimer.Listener initTimerListener() {
