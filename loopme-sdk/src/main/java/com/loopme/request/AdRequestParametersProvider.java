@@ -404,7 +404,7 @@ public class AdRequestParametersProvider {
                     monitor.notifyAll();
                 }
             }
-        }, 2, TimeUnit.SECONDS);
+        }, 2, TimeUnit.MILLISECONDS);
 
         synchronized (monitor) {
             try {
