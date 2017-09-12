@@ -343,6 +343,8 @@ Using ProGuard tool can break LoopMe SDK work. It may look like all works fine i
 -keep class com.loopme.** {
 *;
 }
+-keep class com.google.android.gms.* { ; }
+-dontwarn com.google.android.gms.**
 ```
 
 ## FAQ ##
