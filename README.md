@@ -415,13 +415,13 @@ Android SDK aar will raise size of your application on 1.16Mb.<br>
 
 ## What's new ##
 
-## Version 5.1.16 (14 of September, 2017)
+**Version 5.1.16**
 - Integration improvements
 
-## Version 5.1.15 (11 of September, 2017)
+**Version 5.1.15**
 - Ads targeting improvements
 
-## Version 5.1.14 (7 of September, 2017)
+**Version 5.1.14**
 - Bug fix
 
 **Version 5.1.13**
