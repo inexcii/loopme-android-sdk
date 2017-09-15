@@ -1,3 +1,6 @@
+## Version 5.1.17 (15 of September, 2017)
+- Integration improvements
+
 ## Version 5.1.16 (14 of September, 2017)
 - Integration improvements
 

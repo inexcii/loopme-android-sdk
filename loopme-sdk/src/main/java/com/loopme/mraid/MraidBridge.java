@@ -39,6 +39,7 @@ public class MraidBridge extends WebViewClient {
     private static final String RESIZE = "resize";
     private static final String EXPAND = "expand";
     private static final String USE_CUSTOM_CLOSE = "usecustomclose";
+    private static final int START_URLS_INDEX = 17;
 
     public interface OnMraidBridgeListener {
         void close();
@@ -143,7 +144,7 @@ public class MraidBridge extends WebViewClient {
                 break;
 
             case OPEN:
-                String openUrl = detectQueryParameter(uri, QUERY_PARAMETER_URL);
+                String openUrl = url.substring(START_URLS_INDEX);
                 Logging.out(LOG_TAG, String.valueOf(openUrl));
                 mOnMraidBridgeListener.open(openUrl);
                 break;
