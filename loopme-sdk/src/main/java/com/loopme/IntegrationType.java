@@ -11,8 +11,8 @@ public enum IntegrationType {
     FYBER (3, "fyber"),
     UNITY (4, "unity"),
     ADOBE_AIR (5, "adobe_air"),
-    CORONA (5, "corona"),
-    AMR (5, "amr");
+    CORONA (6, "corona"),
+    AMR (7, "amr");
 
     private int mId;
     private String mType;
