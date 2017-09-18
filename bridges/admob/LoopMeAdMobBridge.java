@@ -20,7 +20,7 @@ public class LoopMeAdMobBridge implements CustomEventInterstitial {
     private CustomEventInterstitialListener mListener;
 
     @Override
-    public void requestInterstitialAd(Context activity,
+    public void requestInterstitialAd(Context context,
                                       CustomEventInterstitialListener customEventInterstitialListener,
                                       String s,
                                       MediationAdRequest mediationAdRequest,
@@ -30,9 +30,13 @@ public class LoopMeAdMobBridge implements CustomEventInterstitial {
 
         mListener = customEventInterstitialListener;
 
-        mInterstitial = LoopMeInterstitial.getInstance(s, activity);
-        mInterstitial.setListener(mLoopMeListener);
-        mInterstitial.load(IntegrationType.ADMOB);
+        if (context != null && context instanceof Activity){
+            mInterstitial = LoopMeInterstitial.getInstance(s, (Activity)context);
+            mInterstitial.setListener(mLoopMeListener);
+            mInterstitial.load(IntegrationType.ADMOB);
+        } else {
+            Log.i(LOG_TAG, "context should not be null and should be instanse of Activity")
+        }
     }
 
     @Override

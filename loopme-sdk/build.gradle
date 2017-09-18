@@ -117,8 +117,8 @@ install {
 }
 
 bintray {
-    user = 'loopme'
-    key = '0ff0262e1e8650b56717d33da97d25aeae28300e'
+    user = BINTRAY_USER
+    key = BINTRAY_API_KEY
 
     configurations = ['archives']
     pkg {

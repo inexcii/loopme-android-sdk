@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
@@ -20,6 +19,7 @@ import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.loopme.BaseAd;
@@ -428,20 +428,12 @@ public class AdRequestParametersProvider {
         if (context == null) {
             return result;
         }
-        PackageManager pm = context.getPackageManager();
-        try {
-            // Android System WebView started from 5.0
-            PackageInfo pi = pm.getPackageInfo("com.google.android.webview", 0);
-            result = pi.versionName;
-            Logging.out(LOG_TAG, "WebView version: " + result);
-        } catch (NameNotFoundException e) {
-            Logging.out(LOG_TAG, "Android System WebView is not found. Trying to get it from user agent");
-            String[] s = mUserAgent.split(" ");
-            for (int i = 0; i < s.length; i++) {
-                if (s[i].startsWith("Chrome")) {
-                    String[] s2 = s[i].split("/");
-                    result = s2[1];
-                }
+
+        String[] components = WebSettings.getDefaultUserAgent(context).split(" ");
+        for (String value : components) {
+            if (value.startsWith("Chrome")) {
+                String[] s2 = value.split("/");
+                result = s2[1];
             }
         }
         return result;
