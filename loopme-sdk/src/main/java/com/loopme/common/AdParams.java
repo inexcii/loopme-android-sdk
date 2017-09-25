@@ -27,6 +27,7 @@ public class AdParams {
     private boolean mPartPreload;
     private boolean mVideo360;
     private boolean mMraid;
+    private boolean mAutoloading;
     private boolean mOwnCloseButton;
 
     private AdParams(AdParamsBuilder builder) {
@@ -46,6 +47,7 @@ public class AdParams {
         mVideo360 = builder.mVideo360;
 
         mMraid = builder.mMraid;
+        mAutoloading = builder.mAutoloading;
 
         Logging.out(LOG_TAG, "Server response indicates  ad params: "
                 + "format: " + mFormat + ", orientation: " + mOrientation
@@ -99,6 +101,9 @@ public class AdParams {
         mOwnCloseButton = hasOwnCloseButton;
     }
 
+    public boolean getAutoloading(){
+        return mAutoloading;
+    }
     static class AdParamsBuilder {
 
         private final String mBuilderFormat;
@@ -113,6 +118,7 @@ public class AdParams {
         private boolean mPartPreload;
         private boolean mVideo360;
         private boolean mMraid;
+        private boolean mAutoloading;
         private List<String> mTrackers = new ArrayList<>();
 
         public AdParamsBuilder(String format) {
@@ -141,6 +147,11 @@ public class AdParams {
 
         public AdParamsBuilder mraid(boolean isMraid) {
             mMraid = isMraid;
+            return this;
+        }
+
+        public AdParamsBuilder autoloading(boolean autoloading){
+            mAutoloading = autoloading;
             return this;
         }
 

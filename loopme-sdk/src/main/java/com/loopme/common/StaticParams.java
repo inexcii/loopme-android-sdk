@@ -4,12 +4,18 @@ public class StaticParams {
 
     private StaticParams() {
     }
+
+    public static final long ONE_MINUTE_IN_MILLIS = 1000 * 60;
+    public static final long SLEEP_TIME = 1000 * 60 * 15;// 15 min
+    public static final int MAX_FAIL_COUNT = 4;
     public static final String CACHED_LOG_FILE_NAME = "events_log.txt";
     public static final boolean APPEND_TO_FILE = true;
-    public static final String SDK_VERSION = "5.1.17";
+    public static final String SDK_VERSION = "5.2";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
+    public static final String UTF_8 = "UTF-8";
     public static final String UNKNOWN_NAME = "unknown";
     public static String sCacheDirectory = "";
+    public static final int DEFAULT_AD_ID = -1;
 
     public static boolean DEBUG_MODE = true;
 
@@ -39,6 +45,8 @@ public class StaticParams {
 
     public static final String APPKEY_TAG = "appkey";
     public static final String FORMAT_TAG = "format";
+
+    public static final String AD_ID_TAG = "adid";
 
     public static final String LOOPME_PREFERENCES = "loopme";
     public static final String VIEWER_TOKEN = "viewer_token";

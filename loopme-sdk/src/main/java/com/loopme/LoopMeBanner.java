@@ -1,127 +1,64 @@
 package com.loopme;
 
 import android.app.Activity;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.View;
-import android.view.ViewTreeObserver;
+import android.content.Context;
+import android.os.CountDownTimer;
+import android.text.TextUtils;
 
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
 import com.loopme.common.StaticParams;
-import com.loopme.common.Utils;
 import com.loopme.constants.AdFormat;
-import com.loopme.constants.AdState;
-import com.loopme.constants.DisplayMode;
-import com.loopme.constants.VideoState;
-import com.loopme.constants.WebviewState;
-import com.loopme.debugging.ErrorLog;
-import com.loopme.debugging.LiveDebug;
 
 /**
  * The `LoopMeBanner` class provides facilities to display a custom size ads
  * during natural transition points in your application.
  * <p>
- * It is recommended to implement `LoopMeBanner.OnMraidBridgeListener` to stay informed about ad state changes,
+ * It is recommended to implement `LoopMeBanner.Listener` to stay informed about ad state changes,
  * such as when an ad has been loaded or has failed to load its content, when video ad has been watched completely,
  * when an ad has been presented or dismissed from the screen, and when an ad has expired or received a tap.
  */
-public class LoopMeBanner extends BaseAd {
-
-    private static final String LOG_TAG = LoopMeBanner.class.getSimpleName();
-
-    /**
-     * AppKey for test purposes
-     */
+public class LoopMeBanner extends Settings {
     public static final String TEST_MPU_BANNER = "test_mpu";
-
-    private Listener mAdListener;
-
+    private static final String FIRST_BANNER = "FIRST_BANNER";
+    private static final String SECOND_BANNER = "SECOND_BANNER";
+    private static final String LOG_TAG = LoopMeBanner.class.getSimpleName();
+    private int mFailCounter;
+    private String mAppKey;
+    private Activity mActivity;
+    private Listener mMainAdListener;
+    private CountDownTimer mSleepLoadTimer;
+    private LoopMeBannerGeneral mFirstBanner;
+    private LoopMeBannerGeneral mSecondBanner;
     private volatile LoopMeBannerView mBannerView;
+    private String mCurrentAd = FIRST_BANNER;
 
-    private boolean mIsVideoFinished;
-
-    public interface Listener {
-
-        void onLoopMeBannerLoadSuccess(LoopMeBanner banner);
-
-        void onLoopMeBannerLoadFail(LoopMeBanner banner, LoopMeError error);
-
-        void onLoopMeBannerShow(LoopMeBanner banner);
-
-        void onLoopMeBannerHide(LoopMeBanner banner);
-
-        void onLoopMeBannerClicked(LoopMeBanner banner);
-
-        void onLoopMeBannerLeaveApp(LoopMeBanner banner);
-
-        void onLoopMeBannerVideoDidReachEnd(LoopMeBanner banner);
-
-        void onLoopMeBannerExpired(LoopMeBanner banner);
-    }
 
     /**
      * Creates new `LoopMeBanner` object with the given appKey
      *
      * @param activity - application context
-     * @param appKey  - your app key
+     * @param appKey   - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
     LoopMeBanner(Activity activity, String appKey) {
-        super(activity, appKey);
-
-        mAdController = new AdController(this);
-
-        Utils.init(activity);
-        LiveDebug.init(activity);
-        Logging.out(LOG_TAG, "Start creating banner with app key: " + appKey);
+        this.mActivity = activity;
+        this.mAppKey = appKey;
+        mFirstBanner = LoopMeBannerGeneral.getInstance(appKey, activity);
+        mSecondBanner = LoopMeBannerGeneral.getInstance(appKey, activity);
     }
 
     /**
      * Getting already initialized ad object or create new one with specified appKey
      * Note: Returns null if Android version under 4.0
      *
-     * @param appKey  - your app key
+     * @param appKey   - your app key
      * @param activity - Activity context
      * @return instance of LoopMeBanner
      */
     public static LoopMeBanner getInstance(String appKey, Activity activity) {
-        if (Build.VERSION.SDK_INT >= 14) {
-            return LoopMeAdHolder.getBanner(appKey, activity);
-        } else {
-            Logging.out(LOG_TAG, "Not supported Android version. Expected Android 4.0+");
-            return null;
-        }
-    }
-
-    private void ensureAdIsVisible() {
-        if (mAdController != null) {
-            mAdController.ensureAdIsVisible(mBannerView);
-        }
-    }
-
-    /**
-     * NOTE: should be in UI thread
-     */
-    @Override
-    public void destroy() {
-        mAdListener = null;
-        if (mBannerView != null) {
-            mBannerView.setVisibility(View.GONE);
-            mBannerView.removeAllViews();
-            mBannerView = null;
-        }
-        if (mAdController != null) {
-            mAdController.destroyMinimizedView();
-            if (mAdController.getViewController() != null) {
-                mAdController.getViewController().onPause();
-                mAdController.getViewController().onDestroy();
-            }
-        }
-
-        super.destroy();
+        return new LoopMeBanner(activity, appKey);
     }
 
     /**
@@ -131,17 +68,23 @@ public class LoopMeBanner extends BaseAd {
      * @param viewGroup - @link LoopMeBannerView (container for ad) where ad will be displayed.
      */
     public void bindView(LoopMeBannerView viewGroup) {
-        if (viewGroup != null) {
-            String visibility = Utils.getViewVisibility(viewGroup);
-            Logging.out(LOG_TAG, "Bind view (" + visibility + ")");
-            mBannerView = viewGroup;
+        mBannerView = viewGroup;
+    }
+
+    private void bindView(LoopMeBannerView viewGroup, LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.bindView(viewGroup);
         }
     }
 
     public void setMinimizedMode(MinimizedMode mode) {
-        if (mAdController != null && mode != null) {
-            Logging.out(LOG_TAG, "Set minimized mode");
-            mAdController.setMinimizedMode(mode);
+        setMinimizedMode(mode, mFirstBanner);
+        setMinimizedMode(mode, mSecondBanner);
+    }
+
+    private void setMinimizedMode(MinimizedMode mode, LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.setMinimizedMode(mode);
         }
     }
 
@@ -164,165 +107,136 @@ public class LoopMeBanner extends BaseAd {
      * Needs to be triggered on appropriate Activity life-cycle method "onPause()".
      */
     public void pause() {
-        if (mAdController != null) {
-            if (mAdController.getViewController() != null) {
-                mAdController.getViewController().onPause();
-            }
-            if (mAdController.getCurrentDisplayMode() == DisplayMode.FULLSCREEN) {
-                return;
-            }
-
-            if (mAdController.getCurrentVideoState() == VideoState.PLAYING) {
-                Logging.out(LOG_TAG, "pause Ad");
-                mAdController.setWebViewState(WebviewState.HIDDEN);
-            }
-        }
+        pause(mFirstBanner);
+        pause(mSecondBanner);
     }
 
-    /**
-     * Sets listener in order to receive notifications during the loading/displaying ad processes
-     * @param listener - OnMraidBridgeListener
-     */
-    public void setListener(Listener listener) {
-        mAdListener = listener;
-    }
-
-    public Listener getListener() {
-        return mAdListener;
-    }
-
-    /**
-     * Removes listener.
-     */
-    public void removeListener() {
-        mAdListener = null;
-    }
-
-    void showNativeVideo() {
-        if (mAdState == AdState.SHOWING) {
-            return;
-        }
-        if (isReady() && mBannerView != null) {
-            Logging.out(LOG_TAG, "Banner did start showing ad (native)");
-            mAdState = AdState.SHOWING;
-            stopExpirationTimer();
-
-            mAdController.buildVideoAdView(mBannerView);
-            if (getAdParams().isVideo360()) {
-                IViewController v360 = mAdController.getViewController();
-                v360.initVRLibrary(getContext());
-                v360.onResume();
-            }
-
-            if (mBannerView.getVisibility() != View.VISIBLE) {
-                mBannerView.setVisibility(View.VISIBLE);
-            }
-            onLoopMeBannerShow();
-        } else {
-            ErrorLog.post("Banner is not ready");
+    private void pause(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.pause();
         }
     }
 
     public void show() {
-        Logging.out(LOG_TAG, "Banner did start showing ad");
-        if (mAdState == AdState.SHOWING) {
-            Logging.out(LOG_TAG, "Banner already displays on screen");
-            return;
-        }
-        if (isReady() && mBannerView != null) {
-            mAdState = AdState.SHOWING;
-            stopExpirationTimer();
-
-            if (getAdParams().isMraid()) {
-                mAdController.buildMraidContainer(mBannerView);
-                mAdController.getMraidView().setIsViewable(true);
-                mAdController.getMraidView().notifyStateChange();
-            } else {
-                if (isVideoPresented()) {
-                    mAdController.buildVideoAdView(mBannerView);
-                } else {
-                    mAdController.buildStaticAdView(mBannerView);
-                    mAdController.getAdView().setVideoState(VideoState.PLAYING);
-                }
-                if (getAdParams().isVideo360()) {
-                    IViewController v360 = mAdController.getViewController();
-                    v360.initVRLibrary(getContext());
-                    v360.onResume();
-                }
-            }
-
-            if (mBannerView.getVisibility() != View.VISIBLE) {
-                mBannerView.setVisibility(View.VISIBLE);
-            }
-
-            final ViewTreeObserver observer = mBannerView.getViewTreeObserver();
-
-            ViewTreeObserver.OnGlobalLayoutListener layoutListener =
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            Logging.out(LOG_TAG, "onGlobalLayout");
-                            if (mAdController != null &&
-                                    mAdController.getCurrentDisplayMode() != DisplayMode.FULLSCREEN) {
-                                ensureAdIsVisible();
-                            }
-                            if (observer.isAlive()) {
-                                if (Build.VERSION.SDK_INT >= 16) {
-                                    observer.removeOnGlobalLayoutListener(this);
-                                } else {
-                                    observer.removeGlobalOnLayoutListener(this);
-                                }
-                            }
-                        }
-                    };
-            observer.addOnGlobalLayoutListener(layoutListener);
-
-            onLoopMeBannerShow();
-        } else {
-            ErrorLog.post("Banner is not ready");
+        if (isReady(mFirstBanner)) {
+            bindView(mBannerView, mFirstBanner);
+            show(mFirstBanner);
+            mCurrentAd = FIRST_BANNER;
+        } else if (isReady(mSecondBanner)) {
+            bindView(mBannerView, mSecondBanner);
+            show(mSecondBanner);
+            mCurrentAd = SECOND_BANNER;
         }
     }
 
-    private boolean isVideoPresented() {
-        return mAdController.isVideoPresented();
+    public void showNativeVideo() {
+        if (isReady(mFirstBanner)) {
+            showNativeVideo(mFirstBanner);
+        } else if (isReady(mSecondBanner)) {
+            showNativeVideo(mSecondBanner);
+        }
+    }
+
+    private void showNativeVideo(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.showNativeVideo();
+        }
     }
 
     public void resume() {
-        Logging.out(LOG_TAG, "resume");
-        if (mAdController != null && isReady()) {
-            ensureAdIsVisible();
-            if (mAdController.getViewController() != null) {
-                mAdController.getViewController().onResume();
-            }
-            mAdController.setWebViewState(WebviewState.VISIBLE);
+        resume(mFirstBanner);
+        resume(mSecondBanner);
+    }
+
+    private void resume(LoopMeBannerGeneral banner) {
+        if (banner != null && banner.isShowing()) {
+            banner.resume();
+        }
+    }
+
+    public void switchToMinimizedMode() {
+        switchToMinimizedMode(mFirstBanner);
+        switchToMinimizedMode(mSecondBanner);
+    }
+
+    public void switchToMinimizedMode(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.switchToMinimizedMode();
+        }
+    }
+
+    public void switchToNormalMode() {
+        switchToNormalMode(mFirstBanner);
+        switchToNormalMode(mSecondBanner);
+    }
+
+    private void switchToNormalMode(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.switchToNormalMode();
         }
     }
 
     public AdController getAdController() {
-        return mAdController;
-    }
-
-    void switchToMinimizedMode() {
-        if (mAdState == AdState.SHOWING && mAdController != null && !mIsVideoFinished) {
-            if (mAdController.isBackFromExpand()) {
-                return;
-            }
-            if (mAdController.isMinimizedModeEnable() ) {
-                mAdController.switchToMinimizedMode();
-            } else {
-                pause();
-            }
+        if (isReady(mFirstBanner)) {
+            return mFirstBanner.getAdController();
+        } else if (isReady(mSecondBanner)) {
+            return mSecondBanner.getAdController();
+        } else {
+            return null;
         }
     }
 
-    void playbackFinishedWithError() {
-        mIsVideoFinished = true;
+    public void load() {
+        stopSleepLoadTimer();
+        load(mFirstBanner);
+        if (isAutoLoadingEnabled()) {
+            load(mSecondBanner);
+        }
     }
 
-    void switchToNormalMode() {
-        if (mAdState == AdState.SHOWING && mAdController != null) {
-            mAdController.switchToNormalMode();
-        }
+    /**
+     * Indicates whether ad content was loaded successfully and ready to be displayed.
+     * After you initialized a `LoopMeInterstitial`/`LoopMeBanner` object and triggered the `load` method,
+     * this property will be set to TRUE on it's successful completion.
+     * It is set to FALSE when loaded ad content has expired or already was presented,
+     * in this case it requires next `load` method triggering
+     */
+    public boolean isReady() {
+        return isReady(mFirstBanner) || isReady(mSecondBanner);
+    }
+
+    /**
+     * Indicates whether `LoopMeInterstitial`/`LoopMeBanner` currently presented on screen.
+     * Ad status will be set to `AdState.SHOWING` after trigger `show` method
+     *
+     * @return true - if ad presented on screen
+     * false - if ad absent on screen
+     */
+    public boolean isShowing() {
+        return isShowing(mFirstBanner) || isShowing(mSecondBanner);
+    }
+
+    /**
+     * Indicates whether `LoopMeInterstitial`/`LoopMeBanner` in "loading ad content" process.
+     * Ad status will be set to `AdState.LOADING` after trigger `load` method
+     *
+     * @return true - if ad is loading now
+     * false - if ad is not loading now
+     */
+    public boolean isLoading() {
+        return isLoading(mFirstBanner) || isLoading(mSecondBanner);
+    }
+
+    /**
+     * The appKey uniquely identifies your app to the LoopMe ad network.
+     * To get an appKey visit the LoopMe Dashboard.
+     */
+    public String getAppKey() {
+        return mAppKey;
+    }
+
+    public Context getContext() {
+        return mActivity;
     }
 
     /**
@@ -337,222 +251,296 @@ public class LoopMeBanner extends BaseAd {
      * NOTE: should be triggered from UI thread
      */
     public void dismiss() {
-        Logging.out(LOG_TAG, "Banner will be dismissed");
-        if (mAdState == AdState.SHOWING) {
-            if (mBannerView != null) {
-                mBannerView.setVisibility(View.GONE);
-                mBannerView.removeAllViews();
-            }
-            if (mAdController != null) {
-                mAdController.destroyMinimizedView();
-                mAdController.setWebViewState(WebviewState.CLOSED);
-                if (mAdController.getViewController() != null) {
-                    mAdController.getViewController().onPause();
-                }
-            }
-            onLoopMeBannerHide();
-            Logging.logEvent("Ad closed.");
+        dismiss(mFirstBanner);
+        dismiss(mSecondBanner);
+        loadCurrentBanner();
+    }
+
+    private void loadCurrentBanner() {
+        if (TextUtils.equals(mCurrentAd, FIRST_BANNER)) {
+            load(mFirstBanner);
         } else {
-            Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
+            load(mSecondBanner);
         }
     }
 
-    @Override
     public int getAdFormat() {
         return AdFormat.BANNER;
     }
 
     /**
-     * Triggered when banner ad failed to load ad content
+     * NOTE: should be in UI thread
+     */
+    public void destroy() {
+        destroyFirst();
+        destroySecond();
+        stopSleepLoadTimer();
+        destroyBannersView();
+    }
+
+    private void destroyBannersView() {
+        if (mFirstBanner != null) {
+            mFirstBanner.destroyBannerView();
+        }
+        if (mSecondBanner != null) {
+            mSecondBanner.destroyBannerView();
+        }
+    }
+
+    /**
+     * Sets listener in order to receive notifications during the loading/displaying ad processes
      *
-     * @param error  - error of unsuccesful ad loading attempt
+     * @param listener - LoopMeBanner.Listener
      */
-    void onLoopMeBannerLoadFail(final LoopMeError error) {
-        Logging.out(LOG_TAG, "Ad fails to load: " + error.getMessage());
-        mAdState = AdState.NONE;
-        mIsReady = false;
-        stopFetcherTimer();
-        if (mAdController != null) {
-            mAdController.resetFullScreenCommandCounter();
-        }
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerLoadFail(this, error);
-            Logging.logEvent(getAppKey(), "Ad failed to load. " + error.getMessage());
-        } else {
-            Logging.out(LOG_TAG, "Warning: empty listener");
-        }
+    public void setListener(Listener listener) {
+        mMainAdListener = listener;
+        setListener(initInternalListener(), mFirstBanner);
+        setListener(initInternalListener(), mSecondBanner);
     }
 
-    /**
-     * Triggered when the banner has successfully loaded the ad content
-     */
-    void onLoopMeBannerSuccessLoad() {
-        long currentTime = System.currentTimeMillis();
-        long loadingTime = currentTime - mAdLoadingTimer;
-
-        Logging.out(LOG_TAG, "Ad successfully loaded (" + loadingTime + "ms)");
-        mIsReady = true;
-        mAdState = AdState.NONE;
-        stopFetcherTimer();
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerLoadSuccess(this);
-            Logging.logEvent(getAppKey(), "Ad loaded successfully.");
-        } else {
-            Logging.out(LOG_TAG, "Warning: empty listener");
-        }
-    }
-
-    /**
-     * Triggered when the banner ad appears on the screen
-     */
-    void onLoopMeBannerShow() {
-        Logging.out(LOG_TAG, "Ad appeared on screen");
-        mIsVideoFinished = false;
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerShow(this);
-            Logging.logEvent("Ad appeared on the screen.");
-        }
-    }
-
-    /**
-     * Triggered when the banner ad disappears on the screen
-     */
-    void onLoopMeBannerHide() {
-        Logging.out(LOG_TAG, "Ad disappeared from screen");
-        mIsReady = false;
-        mAdState = AdState.NONE;
-        releaseViewController();
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerHide(this);
-        }
-    }
-
-    /**
-     * Triggered when the user taps the banner ad and the banner is about to perform extra actions
-     * Those actions may lead to displaying a modal browser or leaving your application.
-     */
-    void onLoopMeBannerClicked() {
-        Logging.out(LOG_TAG, "Ad received click event");
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerClicked(this);
-            Logging.logEvent("User interacts with Ad.");
-        }
-    }
-
-    /**
-     * Triggered when your application is about to go to the background, initiated by the SDK.
-     * This may happen in various ways, f.e if user wants open the SDK's browser web page in native browser or clicks
-     * on `mailto:` links...
-     */
-    void onLoopMeBannerLeaveApp() {
-        Logging.out(LOG_TAG, "Leaving application");
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerLeaveApp(LoopMeBanner.this);
-        }
-    }
-
-    /**
-     * Triggered only when banner's video was played until the end.
-     * It won't be sent if the video was skipped or the banner was dissmissed during the displaying process
-     */
-    void onLoopMeBannerVideoDidReachEnd() {
-        Logging.out(LOG_TAG, "Video did reach end");
-        mIsVideoFinished = true;
-        Runnable runnable = new Runnable() {
+    private LoopMeBannerGeneral.Listener initInternalListener() {
+        return new LoopMeBannerGeneral.Listener() {
 
             @Override
-            public void run() {
-                if (mAdController != null) {
-                    mAdController.switchToNormalMode();
+            public void onLoopMeBannerLoadSuccess(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerLoadSuccess(LoopMeBanner.this);
+                }
+                mFailCounter = 0;
+            }
+
+            @Override
+            public void onLoopMeBannerLoadFail(LoopMeBannerGeneral banner, LoopMeError error) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerLoadFail(LoopMeBanner.this, error);
+                }
+                increaseFailCounter(banner);
+            }
+
+            @Override
+            public void onLoopMeBannerShow(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerShow(LoopMeBanner.this);
+                }
+            }
+
+            @Override
+            public void onLoopMeBannerHide(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerHide(LoopMeBanner.this);
+                }
+            }
+
+            @Override
+            public void onLoopMeBannerClicked(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerClicked(LoopMeBanner.this);
+                }
+
+            }
+
+            @Override
+            public void onLoopMeBannerLeaveApp(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerLeaveApp(LoopMeBanner.this);
+                }
+            }
+
+            @Override
+            public void onLoopMeBannerVideoDidReachEnd(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerVideoDidReachEnd(LoopMeBanner.this);
+                }
+            }
+
+            @Override
+            public void onLoopMeBannerExpired(LoopMeBannerGeneral banner) {
+                if (mMainAdListener != null) {
+                    mMainAdListener.onLoopMeBannerExpired(LoopMeBanner.this);
                 }
             }
         };
-        Handler handler = new Handler(Looper.getMainLooper());
-        if (mAdController.getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
-            handler.postDelayed(runnable, StaticParams.SHRINK_MODE_KEEP_AFTER_FINISH_TIME);
-        }
-
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerVideoDidReachEnd(this);
-        }
     }
 
-    /**
-     * Triggered when the banner's loaded ad content is expired.
-     * Expiration happens when loaded ad content wasn't displayed during some period of time, approximately one hour.
-     * Once the banner is presented on the screen, the expiration is no longer tracked and banner won't
-     * receive this message
-     */
-    void onLoopMeBannerExpired() {
-        Logging.out(LOG_TAG, "Ad content is expired");
-        mExpirationTimer = null;
-        mIsReady = false;
-        mAdState = AdState.NONE;
-        releaseViewController();
-        if (mAdListener != null) {
-            mAdListener.onLoopMeBannerExpired(this);
+    private void destroySecond() {
+        if (mSecondBanner != null) {
+            mSecondBanner.removeListener();
+            mSecondBanner.destroy();
+            mSecondBanner = null;
         }
     }
 
-    @Override
-    void onAdExpired() {
-        onLoopMeBannerExpired();
+    private void destroyFirst() {
+        if (mFirstBanner != null) {
+            mFirstBanner.removeListener();
+            mFirstBanner.destroy();
+            mFirstBanner = null;
+        }
     }
 
-    @Override
-    void onAdLoadSuccess() {
-        onLoopMeBannerSuccessLoad();
-    }
-
-    @Override
-    void onAdLoadFail(final LoopMeError error) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                onLoopMeBannerLoadFail(error);
+    private void increaseFailCounter(LoopMeBannerGeneral banner) {
+        if (isAutoLoadingEnabled()) {
+            if (mFailCounter > StaticParams.MAX_FAIL_COUNT) {
+                sleep(banner);
+            } else {
+                mFailCounter++;
+                Logging.out(LOG_TAG, "Attempt #" + mFailCounter);
+                reload(banner);
             }
-        });
-    }
-
-    @Override
-    void onAdLeaveApp() {
-        onLoopMeBannerLeaveApp();
-    }
-
-    @Override
-    void onAdClicked() {
-        onLoopMeBannerClicked();
-    }
-
-    @Override
-    void onAdVideoDidReachEnd() {
-        onLoopMeBannerVideoDidReachEnd();
-    }
-
-    @Override
-    int detectWidth() {
-        if (mBannerView == null) {
-            return 0;
         }
-        android.view.ViewGroup.LayoutParams params = mBannerView.getLayoutParams();
-        return params.width;
     }
 
-    @Override
-    int detectHeight() {
-        if (mBannerView == null) {
-            return 0;
+    private void sleep(LoopMeBannerGeneral banner) {
+        if (mSleepLoadTimer == null) {
+            mSleepLoadTimer = initSleepLoadTimer(banner);
+            float sleepTimeout = StaticParams.SLEEP_TIME / StaticParams.ONE_MINUTE_IN_MILLIS;
+            Logging.out(LOG_TAG, "Sleep timeout: " + sleepTimeout + " minutes");
+            mSleepLoadTimer.start();
         }
-        android.view.ViewGroup.LayoutParams params = mBannerView.getLayoutParams();
-        return params.height;
     }
 
-    /**
-     * Removes all video files from cache.
-     */
+    private CountDownTimer initSleepLoadTimer(final LoopMeBannerGeneral banner) {
+        return new CountDownTimer(StaticParams.SLEEP_TIME, StaticParams.ONE_MINUTE_IN_MILLIS) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Logging.out(LOG_TAG, "Till next attempt: " + millisUntilFinished / StaticParams.ONE_MINUTE_IN_MILLIS + " min.");
+            }
+
+            @Override
+            public void onFinish() {
+                stopSleepLoadTimer();
+                load();
+            }
+        };
+    }
+
+    protected void stopSleepLoadTimer() {
+        if (mSleepLoadTimer != null) {
+            Logging.out(LOG_TAG, "Stop sleep timer");
+            mSleepLoadTimer.cancel();
+            mSleepLoadTimer = null;
+        }
+        mFailCounter = 0;
+    }
+
+    private void reload(LoopMeBannerGeneral banner) {
+        if (isAutoLoadingEnabled() && banner != null) {
+            load(banner);
+        }
+    }
+
+    private void setListener(LoopMeBannerGeneral.Listener listener, LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.setListener(listener);
+        }
+    }
+
+    public Listener getListener() {
+        return mMainAdListener;
+    }
+
+    public void removeListener() {
+        mMainAdListener = null;
+        removeListener(mFirstBanner);
+        removeListener(mSecondBanner);
+    }
+
     public void clearCache() {
-        if (getContext() != null) {
-            Utils.clearCache(getContext());
+        clearCache(mFirstBanner);
+        clearCache(mSecondBanner);
+    }
+
+    private void removeListener(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.removeListener();
         }
+    }
+
+    private void clearCache(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.clearCache();
+        }
+    }
+
+    private void load(BaseAd baseAd) {
+        if (baseAd != null) {
+            baseAd.load();
+        }
+    }
+
+    private boolean isReady(BaseAd baseAd) {
+        return baseAd != null && baseAd.isReady();
+    }
+
+    private boolean isShowing(BaseAd baseAd) {
+        return baseAd != null && baseAd.isShowing();
+    }
+
+    private boolean isLoading(BaseAd baseAd) {
+        return baseAd != null && baseAd.isLoading();
+    }
+
+    private void show(LoopMeBannerGeneral banner) {
+        if (banner != null) {
+            banner.show();
+        }
+    }
+
+    private void dismiss(BaseAd baseAd) {
+        if (baseAd != null) {
+            baseAd.dismiss();
+        }
+    }
+
+    public void setKeywords(String keywords) {
+        setKeywords(keywords, mFirstBanner);
+        setKeywords(keywords, mSecondBanner);
+    }
+
+    public void setGender(String gender) {
+        setGender(gender, mFirstBanner);
+        setGender(gender, mSecondBanner);
+    }
+
+    public void setYearOfBirth(int year) {
+        setYearOfBirth(year, mFirstBanner);
+        setYearOfBirth(year, mSecondBanner);
+    }
+
+    private void setYearOfBirth(int year, BaseAd baseAd) {
+        if (baseAd != null) {
+            baseAd.setYearOfBirth(year);
+        }
+    }
+
+    private void setKeywords(String keywords, BaseAd baseAd) {
+        if (baseAd != null) {
+            baseAd.setKeywords(keywords);
+        }
+    }
+
+    private void setGender(String gender, BaseAd baseAd) {
+        if (baseAd != null) {
+            baseAd.setGender(gender);
+        }
+    }
+
+    public interface Listener {
+
+        void onLoopMeBannerLoadSuccess(LoopMeBanner banner);
+
+        void onLoopMeBannerLoadFail(LoopMeBanner banner, LoopMeError error);
+
+        void onLoopMeBannerShow(LoopMeBanner banner);
+
+        void onLoopMeBannerHide(LoopMeBanner banner);
+
+        void onLoopMeBannerClicked(LoopMeBanner banner);
+
+        void onLoopMeBannerLeaveApp(LoopMeBanner banner);
+
+        void onLoopMeBannerVideoDidReachEnd(LoopMeBanner banner);
+
+        void onLoopMeBannerExpired(LoopMeBanner banner);
     }
 }

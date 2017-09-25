@@ -1,8 +1,10 @@
 package com.loopme;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.text.TextUtils;
 
+import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
 
 import java.util.HashMap;
@@ -10,58 +12,73 @@ import java.util.Map;
 
 public class LoopMeAdHolder {
 
-    private static final Map<String, LoopMeInterstitial> mInterstitialMap =
-            new HashMap<String, LoopMeInterstitial>();
-
-    private static final Map<String, LoopMeBanner> mBannerMap =
-            new HashMap<String, LoopMeBanner>();
+    private static final Map<Integer, LoopMeInterstitialGeneral> mNewImplInterstitialMap = new HashMap<Integer, LoopMeInterstitialGeneral>();
+    private static final Map<Integer, LoopMeBannerGeneral> mNewImplBannerMap = new HashMap<Integer, LoopMeBannerGeneral>();
 
     private LoopMeAdHolder() {
     }
 
-    static void putAd(BaseAd ad) {
-        String appKey = ad.getAppKey();
-
-        if (ad.getAdFormat() == AdFormat.INTERSTITIAL) {
-            mInterstitialMap.put(appKey, (LoopMeInterstitial) ad);
+    static void putAd(BaseAd baseAd) {
+        int id = baseAd.getAdId();
+        if (baseAd.getAdFormat() == AdFormat.INTERSTITIAL) {
+            mNewImplInterstitialMap.put(id, (LoopMeInterstitialGeneral) baseAd);
         } else {
-            mBannerMap.put(appKey, (LoopMeBanner) ad);
+            mNewImplBannerMap.put(id, (LoopMeBannerGeneral) baseAd);
         }
     }
 
-    public static LoopMeInterstitial getInterstitial(String appKey, Activity activity) {
-        if (mInterstitialMap.containsKey(appKey)) {
-            return mInterstitialMap.get(appKey);
+    public static LoopMeInterstitialGeneral createInterstitial(String appKey, Activity activity) {
+        if (activity == null || TextUtils.isEmpty(appKey)) {
+            return null;
         } else {
-            if (activity == null || TextUtils.isEmpty(appKey)) {
-                return null;
-            } else {
-                LoopMeInterstitial interstitial = new LoopMeInterstitial(activity, appKey);
-                mInterstitialMap.put(appKey, interstitial);
-                return interstitial;
-            }
+            LoopMeInterstitialGeneral interstitial = new LoopMeInterstitialGeneral(activity, appKey);
+            mNewImplInterstitialMap.put(interstitial.getAdId(), interstitial);
+            return interstitial;
         }
     }
 
-    public static LoopMeBanner getBanner(String appKey, Activity activity) {
-        if (mBannerMap.containsKey(appKey)) {
-            return mBannerMap.get(appKey);
+    private static LoopMeInterstitialGeneral findInterstitial(int adId) {
+        if (mNewImplInterstitialMap.containsKey(adId)) {
+            return mNewImplInterstitialMap.get(adId);
         } else {
-            if (activity == null || TextUtils.isEmpty(appKey)) {
-                return null;
-            } else {
-                LoopMeBanner banner = new LoopMeBanner(activity, appKey);
-                mBannerMap.put(appKey, banner);
-                return banner;
-            }
+            return null;
         }
     }
 
-    static void removeInterstitial(String appKey) {
-        mInterstitialMap.remove(appKey);
+    public static LoopMeBannerGeneral createBanner(String appKey, Activity activity) {
+        if (activity == null || TextUtils.isEmpty(appKey)) {
+            return null;
+        } else {
+            LoopMeBannerGeneral banner = new LoopMeBannerGeneral(activity, appKey);
+            mNewImplBannerMap.put(banner.getAdId(), banner);
+            return banner;
+        }
     }
 
-    static void removeBanner(String appKey) {
-        mBannerMap.remove(appKey);
+    private static LoopMeBannerGeneral findBanner(int adId) {
+        if (mNewImplBannerMap.containsKey(adId)) {
+            return mNewImplBannerMap.get(adId);
+        } else {
+            return null;
+        }
+    }
+
+    public static void removeAd(BaseAd baseAd) {
+        if (baseAd != null) {
+            mNewImplInterstitialMap.remove(baseAd.getAdId());
+            mNewImplBannerMap.remove(baseAd.getAdId());
+        }
+    }
+
+    public static BaseAd getAd(Intent intent, int format) {
+        if (intent == null) {
+            return null;
+        }
+        int adId = intent.getIntExtra(StaticParams.AD_ID_TAG, StaticParams.DEFAULT_AD_ID);
+        if (format == AdFormat.BANNER) {
+            return LoopMeAdHolder.findBanner(adId);
+        } else {
+            return LoopMeAdHolder.findInterstitial(adId);
+        }
     }
 }

@@ -18,13 +18,15 @@ import android.provider.Settings;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.loopme.BaseAd;
-import com.loopme.LoopMeBanner;
-import com.loopme.LoopMeInterstitial;
+import com.loopme.BuildConfig;
+import com.loopme.LoopMeBannerGeneral;
+import com.loopme.LoopMeInterstitialGeneral;
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
 import com.loopme.constants.ConnectionType;
@@ -485,10 +487,10 @@ public class AdRequestParametersProvider {
     }
 
     public void setAdSize(BaseAd baseAd) {
-        if (baseAd instanceof LoopMeInterstitial) {
+        if (baseAd instanceof LoopMeInterstitialGeneral) {
             setSize(mScreenWidth, mScreenHeight);
-        } else if (baseAd instanceof LoopMeBanner) {
-            LoopMeBanner banner = (LoopMeBanner) baseAd;
+        } else if (baseAd instanceof LoopMeBannerGeneral) {
+            LoopMeBannerGeneral banner = (LoopMeBannerGeneral) baseAd;
             ViewGroup.LayoutParams params = Utils.getParamsSafety(banner);
             if (params != null) {
                 setSize(Utils.convertPixelToDp(params.width),
@@ -530,5 +532,26 @@ public class AdRequestParametersProvider {
 
     public List<String> getPackagesInstalled() {
         return Utils.getPackageInstalled(mBaseAd.getAdParams().getPackageIds());
+    }
+
+    public String getTrackersSupported() {
+        return "[" + BuildConfig.SUPPORTED_TRACKERS + "]";
+    }
+
+    private String getSupportedTrackersAsString(String[] supportedTrackers) {
+        if (supportedTrackers == null || supportedTrackers.length == 0) {
+            return "";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String trackerName : supportedTrackers) {
+            stringBuilder.append(trackerName);
+            stringBuilder.append(",");
+        }
+        String formattedString = stringBuilder.toString();
+        if (formattedString.length() > 0 && formattedString.charAt(formattedString.length() - 1) == ',') {
+            formattedString = formattedString.substring(0, formattedString.length() - 1);
+        }
+        Log.i(LOG_TAG, formattedString);
+        return formattedString;
     }
 }

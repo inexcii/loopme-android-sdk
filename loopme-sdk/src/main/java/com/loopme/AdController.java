@@ -49,7 +49,6 @@ import java.util.Map;
 public class AdController {
 
     private static final String LOG_TAG = AdController.class.getSimpleName();
-    private static final String MOAT_TOKEN = "loopmeinappvideo302333386816";
     public static final String MOAT = "moat";
 
     private NativeVideoTracker mMoatNativeTracker;
@@ -92,7 +91,6 @@ public class AdController {
 
     private volatile Bridge.Listener mBridgeListener;
     private View.OnTouchListener mOnTouchListener;
-    private boolean mHtmlAd;
     private NativeVideoTracker mMoatAdTracker;
     private WebAdTracker mMoatWebAdTracker;
 
@@ -131,7 +129,7 @@ public class AdController {
 
     public void createMoatNativeTracker() {
         MoatFactory factory = MoatFactory.create();
-        this.mMoatNativeTracker = factory.createNativeVideoTracker(MOAT_TOKEN);
+        this.mMoatNativeTracker = factory.createNativeVideoTracker(BuildConfig.MOAT_TOKEN);
         Context context = mBaseAd.getContext();
         if (context != null && context instanceof Activity) {
             setActivity((Activity) context);
@@ -302,7 +300,7 @@ public class AdController {
             @Override
             public void onPlaybackFinishedWithError() {
                 if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
-                    ((LoopMeBanner) mBaseAd).playbackFinishedWithError();
+                    ((LoopMeBannerGeneral) mBaseAd).playbackFinishedWithError();
                 }
             }
         };
@@ -324,12 +322,16 @@ public class AdController {
         if (mAdView != null) {
             mAdView.stopLoading();
             mAdView.clearCache(true);
+            mAdView.setWebChromeClient(null);
+            mAdView.setWebViewClient(null);
             mAdView.loadUrl("about:blank");
             mAdView = null;
         }
         if (mMraidView != null) {
             mMraidView.stopLoading();
             mMraidView.clearCache(true);
+            mMraidView.setWebChromeClient(null);
+            mAdView.setWebViewClient(null);
             mMraidView.loadUrl("about:blank");
             mMraidView = null;
         }
@@ -514,7 +516,7 @@ public class AdController {
         storePreviousMode(mDisplayMode);
         mDisplayMode = DisplayMode.NORMAL;
 
-        LoopMeBannerView initialView = ((LoopMeBanner) mBaseAd).getBannerView();
+        LoopMeBannerView initialView = ((LoopMeBannerGeneral) mBaseAd).getBannerView();
         initialView.setVisibility(View.VISIBLE);
 
         mViewController.rebuildView(initialView, mAdView);
@@ -762,6 +764,7 @@ public class AdController {
 
     private void broadcastDestroyIntent() {
         Intent intent = new Intent();
+        intent.putExtra(StaticParams.AD_ID_TAG, mBaseAd.getAdId());
         intent.setAction(StaticParams.DESTROY_INTENT);
         mBaseAd.getContext().sendBroadcast(intent);
     }
@@ -795,7 +798,7 @@ public class AdController {
         if (Utils.isOnline(context)) {
             Intent intent = new Intent(context, AdBrowserActivity.class);
             intent.putExtra(EXTRA_URL, url);
-            intent.putExtra(StaticParams.APPKEY_TAG, mBaseAd.getAppKey());
+            intent.putExtra(StaticParams.AD_ID_TAG, mBaseAd.getAdId());
             intent.putExtra(StaticParams.FORMAT_TAG, mBaseAd.getAdFormat());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 

@@ -25,6 +25,9 @@ class VideoUtils {
 
         int amountOfCachedFiles = 0;
         File[] files = parentDir.listFiles();
+        if(files == null){
+            return;
+        }
         for (File file : files) {
             if (!file.isDirectory()) {
                 if (file.getName().endsWith(MP4_FORMAT)) {

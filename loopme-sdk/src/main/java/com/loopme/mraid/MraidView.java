@@ -2,7 +2,6 @@ package com.loopme.mraid;
 
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -14,15 +13,7 @@ import com.loopme.constants.WebviewState;
 
 public class MraidView extends WebView {
     private int mViewState = WebviewState.CLOSED;
-
-
     private static final String LOG_TAG = MraidView.class.getSimpleName();
-
-    public static final String DEFAULT_CHROME_USER_AGENT = "Mozilla/5.0 (Linux; Android 4.4.2; " +
-            "Nexus 4 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 " +
-            "Mobile Safari/537.36";
-
-    public static final String CHROME_USER_AGENT = initUserAgent();
     public static final String JAVASCRIPT = "javascript:";
 
     public MraidView(Context context, MraidController mraidController) {
@@ -44,19 +35,10 @@ public class MraidView extends WebView {
         webSettings.setDomStorageEnabled(true);
         Logging.out(LOG_TAG, "Encoding: " + webSettings.getDefaultTextEncodingName());
 
-        webSettings.setUserAgentString(CHROME_USER_AGENT);
         setWebChromeClient(new AdViewChromeClient());
 
         mraidController.setMraidView(this);
         setWebViewClient(new MraidBridge(mraidController));
-    }
-
-    private static String initUserAgent() {
-        String agent = System.getProperty("http.agent");
-        if (TextUtils.isEmpty(agent)) {
-            agent = DEFAULT_CHROME_USER_AGENT;
-        }
-        return agent;
     }
 
     public void setIsViewable(boolean isViewable) {

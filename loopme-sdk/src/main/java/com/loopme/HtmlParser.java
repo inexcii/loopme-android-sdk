@@ -1,12 +1,13 @@
 package com.loopme;
 
 
+import com.loopme.common.StaticParams;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Created by katerina on 2/6/17.
@@ -49,7 +50,7 @@ public class HtmlParser {
     @Deprecated
     public static String decode(String source) {
         try {
-            return URLDecoder.decode(source, StandardCharsets.UTF_8.name());
+            return URLDecoder.decode(source, StaticParams.UTF_8);
         } catch (UnsupportedEncodingException var2) {
             return URLDecoder.decode(source);
         }

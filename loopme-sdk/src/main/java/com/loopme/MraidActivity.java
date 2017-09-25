@@ -3,7 +3,6 @@ package com.loopme;
 import android.app.Activity;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -42,13 +41,6 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
-        if (TextUtils.isEmpty(appKey)) {
-            Logging.out(LOG_TAG, "Empty app key");
-        }
-        mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
-        mHasOwnCloseButton = getIntent().getBooleanExtra(EXTRAS_CUSTOM_CLOSE, false);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -56,21 +48,34 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
-        if (mFormat == AdFormat.INTERSTITIAL) {
-            mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
-        } else {
-            mBaseAd = LoopMeAdHolder.getBanner(appKey, null);
+        mHasOwnCloseButton = getIntent().getBooleanExtra(EXTRAS_CUSTOM_CLOSE, false);
+        mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
+        mBaseAd = LoopMeAdHolder.getAd(getIntent(), mFormat);
+
+        if (mBaseAd == null) {
+            finish();
         }
         if (mBaseAd != null) {
             mAdController = mBaseAd.getAdController();
         }
 
         mLayout = buildLayout();
+        if(mLayout == null){
+            return;
+        }
         setContentView(mLayout);
 
         initCloseButton();
         initDestroyReceiver();
         initMraidAdCloseButtonReceiver();
+        onInterstitialShowCallback();
+    }
+
+    private void onInterstitialShowCallback() {
+        if (mBaseAd instanceof LoopMeInterstitialGeneral) {
+            LoopMeInterstitialGeneral interstitial = (LoopMeInterstitialGeneral) mBaseAd;
+            interstitial.onLoopMeInterstitialShow(interstitial);
+        }
     }
 
     private void initMraidAdCloseButtonReceiver() {
@@ -99,11 +104,13 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
             Logging.out(LOG_TAG, "mAdController is null");
         }
 
-        if (mMraidView.getParent() != null) {
+        if (mMraidView != null && mMraidView.getParent() != null) {
             ((ViewGroup) mMraidView.getParent()).removeView(mMraidView);
+            mLayout.addView(mMraidView, params);
+            return mLayout;
+        } else{
+            return null;
         }
-        mLayout.addView(mMraidView, params);
-        return mLayout;
     }
 
     private void initCloseButton() {
@@ -130,12 +137,15 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
         if (mReceiver != null) {
             unregisterReceiver(mReceiver);
         }
+        if (mCloseButtonReceiver != null) {
+            unregisterReceiver(mCloseButtonReceiver);
+        }
         if (mLayout != null) {
             mLayout.removeAllViews();
         }
         if (mFormat == AdFormat.INTERSTITIAL) {
-            ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialHide(
-                    (LoopMeInterstitial) mBaseAd);
+            ((LoopMeInterstitialGeneral) mBaseAd).onLoopMeInterstitialHide(
+                    (LoopMeInterstitialGeneral) mBaseAd);
         } else {
             //todo change state
         }
@@ -165,7 +175,10 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
     }
 
     @Override
-    public void onDestroyBroadcast() {
+    public void onDestroyBroadcast(int adIdToClose) {
+        if (mBaseAd.getAdId() != adIdToClose) {
+            return;
+        }
         Logging.out(LOG_TAG, "onDestroyBroadcast");
         mReceivedDestroyBroadcast = true;
         if (mReceiver != null) {

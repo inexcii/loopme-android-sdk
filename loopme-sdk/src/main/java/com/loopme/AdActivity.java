@@ -10,7 +10,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -25,7 +24,6 @@ public final class AdActivity extends Activity
         implements AdReceiver.Listener {
 
     private static final String LOG_TAG = AdActivity.class.getSimpleName();
-
     private AdController mAdController;
     private IViewController mIViewController;
     private int mFormat;
@@ -84,12 +82,6 @@ public final class AdActivity extends Activity
 
         mInitialOrientation = Utils.getScreenOrientation();
 
-        String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
-        if (TextUtils.isEmpty(appKey)) {
-            Logging.out(LOG_TAG, "Empty app key");
-        }
-        mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -99,46 +91,41 @@ public final class AdActivity extends Activity
 
         Logging.out(LOG_TAG, "onCreate");
 
-        if (mFormat == AdFormat.INTERSTITIAL) {
-            mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
-
-        } else if (mFormat == AdFormat.BANNER) {
-            mBaseAd = LoopMeAdHolder.getBanner(appKey, null);
-        }
-
-        if (mBaseAd == null || mBaseAd.getAdController() == null) {
-            Logging.out(LOG_TAG, "No ads with app key " + appKey);
+        mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
+        mBaseAd = LoopMeAdHolder.getAd(getIntent(), mFormat);
+        if (mBaseAd == null) {
             finish();
-        } else {
-            mIs360 = mBaseAd.getAdParams().isVideo360();
-            mAdController = mBaseAd.getAdController();
-            mAdController.setActivity(AdActivity.this);
-
-            mIViewController = mAdController.getViewController();
-
-            if (mFormat == AdFormat.INTERSTITIAL) {
-                if (!mIs360) {
-                    applyOrientationFromAdParams();
-                }
-            } else {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            }
-
-            mLayout = buildLayout();
-            setContentView(mLayout);
-
-            initSensor();
-            initDestroyReceiver();
-
-            if (mFormat == AdFormat.INTERSTITIAL) {
-                if (mIs360) {
-                    mIViewController.initVRLibrary(this);
-                }
-                ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialShow((LoopMeInterstitial) mBaseAd);
-            }
-            startMoatWebAdTacking();
-            setMoatWebAdTrackerActivity();
+            return;
         }
+
+        mIs360 = mBaseAd.getAdParams().isVideo360();
+        mAdController = mBaseAd.getAdController();
+        mAdController.setActivity(AdActivity.this);
+
+        mIViewController = mAdController.getViewController();
+
+        if (mFormat == AdFormat.INTERSTITIAL) {
+            if (!mIs360) {
+                applyOrientationFromAdParams();
+            }
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
+
+        mLayout = buildLayout();
+        setContentView(mLayout);
+
+        initSensor();
+        initDestroyReceiver();
+
+        if (mFormat == AdFormat.INTERSTITIAL) {
+            if (mIs360) {
+                mIViewController.initVRLibrary(this);
+            }
+            ((LoopMeInterstitialGeneral) mBaseAd).onLoopMeInterstitialShow((LoopMeInterstitialGeneral) mBaseAd);
+        }
+        startMoatWebAdTacking();
+        setMoatWebAdTrackerActivity();
     }
 
     private void startMoatWebAdTacking() {
@@ -235,7 +222,7 @@ public final class AdActivity extends Activity
             if (mIs360) {
                 mIViewController.onDestroy();
             }
-            ((LoopMeInterstitial) mBaseAd).onLoopMeInterstitialHide((LoopMeInterstitial) mBaseAd);
+            ((LoopMeInterstitialGeneral) mBaseAd).onLoopMeInterstitialHide((LoopMeInterstitialGeneral) mBaseAd);
         }
         super.onDestroy();
     }
@@ -243,7 +230,6 @@ public final class AdActivity extends Activity
     @Override
     protected void onPause() {
         super.onPause();
-        Logging.out(LOG_TAG, "onPause");
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mSensorListener);
         }
@@ -267,7 +253,6 @@ public final class AdActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
-        Logging.out(LOG_TAG, "onResume");
         mKeepAlive = false;
         if (mAdController != null) {
             if (mAdController.getWebViewState() == WebviewState.HIDDEN) {
@@ -295,7 +280,10 @@ public final class AdActivity extends Activity
     }
 
     @Override
-    public void onDestroyBroadcast() {
+    public void onDestroyBroadcast(int adIdToClose) {
+        if (mBaseAd.getAdId() != adIdToClose) {
+            return;
+        }
         Logging.out(LOG_TAG, "onDestroyBroadcast");
         mReceivedDestroyBroadcast = true;
         if (mFormat == AdFormat.BANNER) {

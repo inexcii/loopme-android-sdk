@@ -22,6 +22,7 @@ public class MraidBridge extends WebViewClient {
     private static final String LOOPME_SCHEME = "loopme";
     private static final String MRAID_SCHEME = "mraid";
     private static final String CUSTOM_HTTP_SCHEME = "http";
+    private static final String CUSTOM_HTTPS_SCHEME = "https";
 
     private static final String QUERY_PARAMETER_URI = "uri";
     private static final String QUERY_PARAMETER_URL = "url";
@@ -80,7 +81,7 @@ public class MraidBridge extends WebViewClient {
                 handleMraidCommand(host, url);
                 return true;
             }
-            if (TextUtils.equals(protocol, CUSTOM_HTTP_SCHEME)) {
+            if (TextUtils.equals(protocol, CUSTOM_HTTP_SCHEME) || TextUtils.equals(protocol, CUSTOM_HTTPS_SCHEME)) {
                 mOnMraidBridgeListener.open(url);
                 return true;
             }

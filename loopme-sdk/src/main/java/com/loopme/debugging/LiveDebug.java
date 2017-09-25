@@ -101,8 +101,12 @@ public class LiveDebug {
         params.put(Params.APP_KEY, provider.getAppKey());
         params.put(Params.MSG, "sdk_debug");
         params.put(Params.DEBUG_LOGS, debugLogs);
-        params.put(Params.APP_IDS, Utils.getPackageInstalledAsString(provider.getPackagesInstalled()));
+        params.put(Params.APP_IDS, encryptString(Utils.getPackageInstalledAsString(provider.getPackagesInstalled())));
         return params;
+    }
+
+    private static String encryptString(String installedAsString) {
+        return Utils.getEncryptedString(installedAsString);
     }
 
     private static String initLogsString() {

@@ -1,6 +1,7 @@
 package com.loopme.common;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -27,7 +28,8 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.loopme.AES;
-import com.loopme.LoopMeBanner;
+import com.loopme.BaseAd;
+import com.loopme.LoopMeBannerGeneral;
 import com.loopme.constants.StretchOption;
 
 import java.io.ByteArrayInputStream;
@@ -35,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -165,21 +166,32 @@ public class Utils {
         return displayMetrics;
     }
 
-    public static List<String> getPackageInstalled(List<String> packadeId) {
-        List<String> installedPackages = new ArrayList<>();
+    public static boolean isPackageInstalled(List<String> packadeId) {
         if (sPackageManager == null) {
-            return null;
+            return false;
         }
         List<PackageInfo> packages = sPackageManager.getInstalledPackages(0);
 
         for (PackageInfo packageInfo : packages) {
             for (int i = 0; i < packadeId.size(); i++) {
                 if (packadeId.get(i).equalsIgnoreCase(packageInfo.packageName)) {
-                    installedPackages.add(packadeId.get(i));
+                    return true;
                 }
             }
         }
-        return installedPackages;
+        return false;
+    }
+
+    public static List<String> getPackageInstalled(List<String> packadeId) {
+        List<String> allPackages = new ArrayList<>();
+        if (sPackageManager == null) {
+            return null;
+        }
+        List<PackageInfo> packages = sPackageManager.getInstalledPackages(0);
+        for (PackageInfo packageInfo : packages) {
+            allPackages.add(packageInfo.packageName);
+        }
+        return allPackages;
     }
 
     public static void animateAppear(View view) {
@@ -287,10 +299,10 @@ public class Utils {
     }
 
     public static FrameLayout.LayoutParams calculateNewLayoutParams(
-               FrameLayout.LayoutParams lp,
-               int mVideoWidth, int mVideoHeight,
-               int mResizeWidth, int mResizeHeight,
-               StretchOption mStretch) {
+            FrameLayout.LayoutParams lp,
+            int mVideoWidth, int mVideoHeight,
+            int mResizeWidth, int mResizeHeight,
+            StretchOption mStretch) {
 
         lp.gravity = Gravity.CENTER;
 
@@ -370,7 +382,7 @@ public class Utils {
         }
     }
 
-    public static ViewGroup.LayoutParams getParamsSafety(LoopMeBanner banner) {
+    public static ViewGroup.LayoutParams getParamsSafety(LoopMeBannerGeneral banner) {
         try {
             return banner.getBannerView().getLayoutParams();
         } catch (NullPointerException e) {
@@ -398,7 +410,7 @@ public class Utils {
 
     public static String getUrlEncodedString(String stringToEncode) {
         try {
-            return URLEncoder.encode(stringToEncode, StandardCharsets.UTF_8.name());
+            return URLEncoder.encode(stringToEncode, StaticParams.UTF_8);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -419,6 +431,12 @@ public class Utils {
         }
     }
 
+    public static void setAdIdOrAppKey(Intent intent, BaseAd baseAd) {
+        if (intent == null || baseAd == null) {
+            return;
+        }
+        intent.putExtra(StaticParams.AD_ID_TAG, baseAd.getAdId());
+    }
     public static String getPackageInstalledAsString(List<String> packagesIds) {
         List<String> packagesInstalled = getPackageInstalled(packagesIds);
         if(packagesInstalled == null || packagesInstalled.size() == 0){

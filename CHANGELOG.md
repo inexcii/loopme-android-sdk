@@ -1,3 +1,6 @@
+## Version 5.2 (25 of September, 2017)
+- Display rate improvements (Smart loading)
+
 ## Version 5.1.18 (15 of September, 2017)
 - Integration improvements
 

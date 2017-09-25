@@ -31,7 +31,8 @@ public class ResponseParser {
     private static final String JSON_TRACKING = "measure_partners";
     private static final String JSON_ERROR = "error";
     private static final String JSON_MRAID = "mraid";
-    private static final  String JSON_V360 = "v360";
+    private static final String JSON_V360 = "v360";
+    private static final String JSON_AUTOLOADING = "autoloading";
 
     private Listener mListener;
     private int mAdFormat;
@@ -113,6 +114,9 @@ public class ResponseParser {
         int mraidValue = parseInt(settings, JSON_MRAID);
         boolean mraid = mraidValue == 1;
 
+        int autoloadingValue = parseIntWithDefaultTrue(settings, JSON_AUTOLOADING);
+        boolean autoloading = autoloadingValue == 1;
+
         return new AdParams.AdParamsBuilder(format)
                 .html(parseString(object, JSON_SCRIPT))
                 .orientation(parseString(settings, JSON_ORIENTATION))
@@ -123,6 +127,7 @@ public class ResponseParser {
                 .partPreload(preload)
                 .video360(video360)
                 .mraid(mraid)
+                .autoloading(autoloading)
                 .build();
     }
 
@@ -176,6 +181,17 @@ public class ResponseParser {
 
     private int parseInt(JSONObject object, String jsonParam) {
         int value = 0;
+        try {
+            value = object.getInt(jsonParam);
+        } catch (JSONException e) {
+            Logging.out(LOG_TAG, jsonParam + " absent");
+        }
+        return value;
+    }
+
+
+    private int parseIntWithDefaultTrue(JSONObject object, String jsonParam) {
+        int value = 1;
         try {
             value = object.getInt(jsonParam);
         } catch (JSONException e) {

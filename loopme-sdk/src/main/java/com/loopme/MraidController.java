@@ -44,7 +44,7 @@ public class MraidController implements MraidBridge.OnMraidBridgeListener {
         if (Utils.isOnline(context)) {
             Intent intent = new Intent(context, AdBrowserActivity.class);
             intent.putExtra(EXTRAS_URL, url);
-            intent.putExtra(StaticParams.APPKEY_TAG, mBaseAd.getAppKey());
+            Utils.setAdIdOrAppKey(intent, mBaseAd);
             intent.putExtra(StaticParams.FORMAT_TAG, mBaseAd.getAdFormat());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
@@ -58,7 +58,7 @@ public class MraidController implements MraidBridge.OnMraidBridgeListener {
     public void resize(int w, int h) {
         Logging.out(LOG_TAG, "resize");
         if (mBaseAd.getAdFormat() == AdFormat.BANNER) {
-            LoopMeBanner banner = (LoopMeBanner) mBaseAd;
+            LoopMeBannerGeneral banner = (LoopMeBannerGeneral) mBaseAd;
             banner.getBannerView().setViewSize(w, h);
             mMraidView.resize();
             mMraidView.setState(MraidState.RESIZED);

@@ -49,6 +49,7 @@ public class ViewController implements TextureView.SurfaceTextureListener, IView
 
         adView.setBackgroundColor(Color.TRANSPARENT);
         adView.setLayerType(WebView.LAYER_TYPE_SOFTWARE, null);
+        bannerView.removeAllViews();
         bannerView.setBackgroundColor(Color.BLACK);
         bannerView.addView(mTextureView, 0);
         if (adView.getParent() != null) {

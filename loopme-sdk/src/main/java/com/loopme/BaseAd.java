@@ -16,7 +16,6 @@ import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
-import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
 import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
@@ -33,12 +32,12 @@ import com.moat.analytics.mobile.loo.MoatOptions;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public abstract class BaseAd implements AdTargeting {
+public abstract class BaseAd extends Settings implements AdTargeting {
 
     private static final String LOG_TAG = BaseAd.class.getSimpleName();
 
-    private Activity mContext;
-    private String mAppKey;
+    protected Activity mContext;
+    protected String mAppKey;
 
     protected volatile AdController mAdController;
 
@@ -71,6 +70,7 @@ public abstract class BaseAd implements AdTargeting {
 
     private boolean mHtmlAd;
     private boolean mNativeAd;
+    private int mAdId;
 
     public BaseAd(Activity activity, String appKey) {
         if (activity == null || TextUtils.isEmpty(appKey)) {
@@ -81,6 +81,7 @@ public abstract class BaseAd implements AdTargeting {
         AdRequestParametersProvider.getInstance().init(this);
         Utils.setCacheDirectory(activity);
         initMoatAnalytics();
+        mAdId = IdGenerator.generateId();
     }
 
     private void initMoatAnalytics() {
@@ -133,7 +134,16 @@ public abstract class BaseAd implements AdTargeting {
      * application.
      * After its execution, the interstitial/banner notifies whether the loading of the ad content failed or succeded.
      */
-    public void load(IntegrationType integrationType) {
+    public void load(final IntegrationType integrationType) {
+        ExecutorHelper.getExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                internalLoad(integrationType);
+            }
+        });
+    }
+
+    private void internalLoad(IntegrationType integrationType) {
         Logging.out(LOG_TAG, "Start loading ad with app key " + mAppKey);
         if (mAdState == AdState.LOADING || mAdState == AdState.SHOWING) {
             Logging.out(LOG_TAG, "Ad already loading or showing");
@@ -141,17 +151,26 @@ public abstract class BaseAd implements AdTargeting {
         }
         mIntegrationType = integrationType != null ? integrationType : IntegrationType.NORMAL;
 
-        if (mAdController == null) {
-            mAdController = new AdController(this);
-        }
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mAdController == null) {
+                    mAdController = new AdController(BaseAd.this);
+                }
+            }
+        });
 
         mAdState = AdState.LOADING;
         mAdLoadingTimer = System.currentTimeMillis();
-        startFetcherTimer();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                startFetcherTimer();
 
+            }
+        });
         if (isReady()) {
             Logging.out(LOG_TAG, "Ad already loaded");
-            onAdLoadSuccess();
             return;
         }
 
@@ -173,22 +192,17 @@ public abstract class BaseAd implements AdTargeting {
      * If the Ad is in "displaying ad" phase, destroy causes "closing ad" and cleaning-up all related resources
      */
     public void destroy() {
-        Logging.out(LOG_TAG, "Ad will be destroyed");
-
+        Logging.out(LOG_TAG, "Ad will be destroyed #" + getAdId());
+        cancelFetcher();
         mAdFetcherListener = null;
         mIsReady = false;
         stopExpirationTimer();
         stopFetcherTimer();
         mAdState = AdState.NONE;
         getAdTargetingData().clear();
-        AdRequestParametersProvider.getInstance().reset();
         releaseViewController();
 
-        if (getAdFormat() == AdFormat.INTERSTITIAL) {
-            LoopMeAdHolder.removeInterstitial(mAppKey);
-        } else {
-            LoopMeAdHolder.removeBanner(mAppKey);
-        }
+        LoopMeAdHolder.removeAd(this);
 
         if (mFuture != null) {
             mFuture.cancel(true);
@@ -202,7 +216,6 @@ public abstract class BaseAd implements AdTargeting {
         Logging.out(LOG_TAG, "Cancel ad fether");
 
         mAdFetcherListener = null;
-        releaseViewController();
 
         if (mFuture != null) {
             mFuture.cancel(true);
@@ -258,6 +271,7 @@ public abstract class BaseAd implements AdTargeting {
 
     protected void fetchAdComplete(AdParams params) {
         setAdParams(params);
+        setBackendAutoLoadingValue(params.getAutoloading());
         preloadHtmlContent(params.getHtml(), params.isMraid());
     }
 
@@ -286,14 +300,13 @@ public abstract class BaseAd implements AdTargeting {
 
                 stopRequestTimer();
                 if (params != null && !params.getPackageIds().isEmpty()) {
-                    List<String> installedPackages = Utils.getPackageInstalled(params.getPackageIds());
-                    if (installedPackages != null && installedPackages.size() > 0) {
-//                        mAdState = AdState.NONE;
-//                        completeRequest(null, new LoopMeError("No valid ads found"));
-                        completeRequest(params, error);
-
-                        EventManager eventManager = new EventManager();
-                        eventManager.trackSdkEvent(params.getToken());
+                    if (Utils.isPackageInstalled(params.getPackageIds())) {
+                        List<String> installedPackages = Utils.getPackageInstalled(params.getPackageIds());
+                        if (installedPackages != null && installedPackages.size() > 0) {
+                            completeRequest(params, error);
+                            EventManager eventManager = new EventManager();
+                            eventManager.trackSdkEvent(params.getToken());
+                        }
                     } else {
                         completeRequest(params, error);
                     }
@@ -410,7 +423,6 @@ public abstract class BaseAd implements AdTargeting {
     }
 
     protected void fetchAd() {
-        LoopMeAdHolder.putAd(this);
         AdRequestParametersProvider.getInstance().setScreenSize();
         AdRequestParametersProvider.getInstance().setAdSize(this);
         mRequestUrl = new AdRequestUrlBuilder(mContext).buildRequestUrl(mAppKey, mAdTargetingData, mIntegrationType);
@@ -423,38 +435,6 @@ public abstract class BaseAd implements AdTargeting {
         AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, getAdFormat());
         startRequestTimer();
         mFuture = ExecutorHelper.getExecutor().submit(fetcher);
-    }
-
-    /**
-     * Changes default value of time interval during which video file will be cached.
-     * Default time interval is 32 hours.
-     */
-    public void setVideoCacheTimeInterval(long milliseconds) {
-        if (milliseconds > 0) {
-            StaticParams.CACHED_VIDEO_LIFE_TIME = milliseconds;
-        }
-    }
-
-    /**
-     * Defines, should use mobile network for caching video or not.
-     * By default, video will not cache on mobile network (only on wi-fi)
-     *
-     * @param b - true if need to cache video on mobile network,
-     *          false if need to cache video only on wi-fi network.
-     */
-    public void useMobileNetworkForCaching(boolean b) {
-        StaticParams.USE_MOBILE_NETWORK_FOR_CACHING = b;
-    }
-
-    /**
-     * Use it for figure out any problems during integration process.
-     * We recommend to set it "false" after full integration and testing.
-     * <p>
-     * If true - all debug logs will be in Logcat.
-     * If false - only main info logs will be in Logcat.
-     */
-    public void setDebugMode(boolean mode) {
-        StaticParams.DEBUG_MODE = mode;
     }
 
     @Override
@@ -535,5 +515,18 @@ public abstract class BaseAd implements AdTargeting {
 
     public void setNativeAd(boolean nativeAd) {
         this.mNativeAd = nativeAd;
+    }
+
+    public int getAdId() {
+        return mAdId;
+    }
+
+    /**
+     * Removes all video files from cache.
+     */
+    public void clearCache() {
+        if (getContext() != null) {
+            Utils.clearCache(getContext());
+        }
     }
 }

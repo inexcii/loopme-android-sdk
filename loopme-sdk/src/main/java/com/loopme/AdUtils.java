@@ -4,6 +4,7 @@ import android.content.Intent;
 
 import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
+import com.loopme.common.Utils;
 
 import static com.loopme.common.StaticParams.EXTRAS_CUSTOM_CLOSE;
 
@@ -16,7 +17,7 @@ public class AdUtils {
             Logging.out(LOG_TAG, "Starting Ad Activity");
             LoopMeAdHolder.putAd(ad);
             Intent intent = new Intent(ad.getContext(), AdActivity.class);
-            intent.putExtra(StaticParams.APPKEY_TAG, ad.getAppKey());
+            Utils.setAdIdOrAppKey(intent, ad);
             intent.putExtra(StaticParams.FORMAT_TAG, ad.getAdFormat());
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -29,7 +30,7 @@ public class AdUtils {
             Logging.out(LOG_TAG, "Starting Mraid Activity");
             LoopMeAdHolder.putAd(ad);
             Intent intent = new Intent(ad.getContext(), MraidActivity.class);
-            intent.putExtra(StaticParams.APPKEY_TAG, ad.getAppKey());
+            Utils.setAdIdOrAppKey(intent, ad);
             intent.putExtra(StaticParams.FORMAT_TAG, ad.getAdFormat());
             intent.putExtra(EXTRAS_CUSTOM_CLOSE, customClose);
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

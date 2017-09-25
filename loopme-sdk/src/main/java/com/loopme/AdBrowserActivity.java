@@ -20,11 +20,8 @@ import com.loopme.adbrowser.AdBrowserLayout;
 import com.loopme.adbrowser.AdBrowserWebViewClient;
 import com.loopme.adbrowser.BrowserWebView;
 import com.loopme.common.Base64Drawables;
-import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
-import com.loopme.constants.AdFormat;
-import com.moat.analytics.mobile.loo.WebAdTracker;
 
 /**
  * Browser Activity. Starts when ad click happened.
@@ -82,19 +79,12 @@ public final class AdBrowserActivity extends Activity {
     }
 
     private boolean isValidExtras() {
-        String appKey = getIntent().getStringExtra(StaticParams.APPKEY_TAG);
         int format = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             mUrl = extras.getString(KEY_URL);
         }
-        if (format == AdFormat.BANNER) {
-            mBaseAd = LoopMeAdHolder.getBanner(appKey, null);
-
-        } else if (format == AdFormat.INTERSTITIAL) {
-            mBaseAd = LoopMeAdHolder.getInterstitial(appKey, null);
-        }
-
+        mBaseAd = LoopMeAdHolder.getAd(getIntent(), format);
         return (mBaseAd != null) && !TextUtils.isEmpty(mUrl);
     }
 

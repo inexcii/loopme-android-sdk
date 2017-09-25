@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -52,6 +51,9 @@ class HttpUtils {
 
             int code = urlConnection.getResponseCode();
             Logging.out(LOG_TAG, "response code : " + code);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            Logging.out(LOG_TAG, e.getMessage());
 
         } catch (IOException e) {
             e.printStackTrace();

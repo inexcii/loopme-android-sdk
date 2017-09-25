@@ -44,6 +44,7 @@ public class AdRequestUrlBuilder {
     private static final String PARAM_AD_HEIGHT = "height";
     private static final String PARAM_DEVICE_TYPE = "devicetype";
     private static final String PARAM_DEVICE_NAME = "pn";
+    private static final String PARAM_TRACKERS = "trackers";
 
     /**
      * Optional targeting parameters
@@ -107,7 +108,8 @@ public class AdRequestUrlBuilder {
                 .appendQueryParameter(PARAM_SCREEN_HEIGHT, String.valueOf(provider.getScreenHeight()))
                 .appendQueryParameter(PARAM_AD_WIDTH, String.valueOf(provider.getAdWidth()))
                 .appendQueryParameter(PARAM_AD_HEIGHT, String.valueOf(provider.getAdHeight()))
-                .appendQueryParameter(PARAM_DEVICE_NAME, provider.getDeviceName());
+                .appendQueryParameter(PARAM_DEVICE_NAME, provider.getDeviceName())
+                .appendQueryParameter(PARAM_TRACKERS, provider.getTrackersSupported());
 
         String latitude = provider.getLatitude();
         if (latitude != null) {
