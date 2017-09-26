@@ -64,7 +64,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
 
     private RequestTimer mRequestTimer;
     private volatile RequestTimer.Listener mRequestTimerListener;
-    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
+    protected IntegrationType mIntegrationType = IntegrationType.NORMAL;
 
     protected Handler mHandler = new Handler(Looper.getMainLooper());
 
@@ -125,7 +125,12 @@ public abstract class BaseAd extends Settings implements AdTargeting {
 
 
     public void load() {
-        load(IntegrationType.NORMAL);
+        ExecutorHelper.getExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                internalLoad(mIntegrationType);
+            }
+        });
     }
 
     /**
@@ -529,4 +534,9 @@ public abstract class BaseAd extends Settings implements AdTargeting {
             Utils.clearCache(getContext());
         }
     }
+
+    public void setIntegrationType(IntegrationType integrationType){
+        mIntegrationType = integrationType;
+    }
+
 }

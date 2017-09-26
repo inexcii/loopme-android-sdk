@@ -10,7 +10,7 @@ public class StaticParams {
     public static final int MAX_FAIL_COUNT = 4;
     public static final String CACHED_LOG_FILE_NAME = "events_log.txt";
     public static final boolean APPEND_TO_FILE = true;
-    public static final String SDK_VERSION = "5.2";
+    public static final String SDK_VERSION = "5.2.1";
     public static String BASE_URL = "loopme.me/api/loopme/ads/v3";
     public static final String UTF_8 = "UTF-8";
     public static final String UNKNOWN_NAME = "unknown";

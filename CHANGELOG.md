@@ -1,3 +1,6 @@
+## Version 5.2.1 (25 of September, 2017)
+- Ads targeting improvements
+
 ## Version 5.2 (25 of September, 2017)
 - Display rate improvements (Smart loading)
 
@@ -33,7 +36,8 @@
 
 ## Version 5.1.8 (19 of June, 2017)
 - Performance improvements. Bug fixes.
-- MRAID compliancy improvements
+-
+-
 
 ## Version 5.1.7 (4 of May, 2017)
 - Ads targeting improvements: better fit to device type and screens

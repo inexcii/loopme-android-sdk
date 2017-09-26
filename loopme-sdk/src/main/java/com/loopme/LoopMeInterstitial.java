@@ -64,11 +64,23 @@ public class LoopMeInterstitial extends Settings {
      * As a result you'll receive onLoopMeInterstitialShow() callback
      */
     public void show() {
-        if (isReady(mFirstInterstitial)) {
-            show(mFirstInterstitial);
-        } else if (isReady(mSecondInterstitial)) {
-            show(mSecondInterstitial);
+        if (!isShowing()) {
+            if (isReady(mFirstInterstitial)) {
+                show(mFirstInterstitial);
+            } else if (isReady(mSecondInterstitial)) {
+                show(mSecondInterstitial);
+            }
+        } else {
+            Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
         }
+    }
+
+    public void load(IntegrationType integrationType){
+        if(mFirstInterstitial != null && mSecondInterstitial != null){
+            mFirstInterstitial.setIntegrationType(integrationType);
+            mSecondInterstitial.setIntegrationType(integrationType);
+        }
+        load();
     }
 
     public void load() {

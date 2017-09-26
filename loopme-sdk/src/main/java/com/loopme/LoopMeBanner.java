@@ -118,14 +118,18 @@ public class LoopMeBanner extends Settings {
     }
 
     public void show() {
-        if (isReady(mFirstBanner)) {
-            bindView(mBannerView, mFirstBanner);
-            show(mFirstBanner);
-            mCurrentAd = FIRST_BANNER;
-        } else if (isReady(mSecondBanner)) {
-            bindView(mBannerView, mSecondBanner);
-            show(mSecondBanner);
-            mCurrentAd = SECOND_BANNER;
+        if (!isShowing()) {
+            if (isReady(mFirstBanner)) {
+                bindView(mBannerView, mFirstBanner);
+                show(mFirstBanner);
+                mCurrentAd = FIRST_BANNER;
+            } else if (isReady(mSecondBanner)) {
+                bindView(mBannerView, mSecondBanner);
+                show(mSecondBanner);
+                mCurrentAd = SECOND_BANNER;
+            }
+        } else {
+            Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
         }
     }
 
@@ -186,12 +190,18 @@ public class LoopMeBanner extends Settings {
         }
     }
 
+    public void load(IntegrationType integrationType){
+        if(mFirstBanner != null && mSecondBanner != null){
+            mFirstBanner.setIntegrationType(integrationType);
+            mSecondBanner.setIntegrationType(integrationType);
+        }
+        load();
+    }
+
     public void load() {
         stopSleepLoadTimer();
         load(mFirstBanner);
-        if (isAutoLoadingEnabled()) {
-            load(mSecondBanner);
-        }
+        load(mSecondBanner);
     }
 
     /**
