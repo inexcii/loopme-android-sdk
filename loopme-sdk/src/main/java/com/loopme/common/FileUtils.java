@@ -3,7 +3,6 @@ package com.loopme.common;
 import android.os.Environment;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -12,17 +11,6 @@ import java.io.IOException;
 
 public class FileUtils {
     private FileUtils() {
-    }
-
-    public static void logToFile(String message, boolean append) {
-        if (isExternalStorageAvailable() && !isExternalStorageReadOnly()) {
-            File file = getCachedLogFile();
-            try (FileWriter writer = new FileWriter(file, append)) {
-                writer.write(message + "\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private static boolean isExternalStorageReadOnly() {

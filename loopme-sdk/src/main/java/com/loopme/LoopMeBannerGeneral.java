@@ -350,7 +350,6 @@ public class LoopMeBannerGeneral extends BaseAd {
                 }
             }
             onLoopMeBannerHide();
-            Logging.logEvent("Ad closed.");
         } else {
             Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
         }
@@ -376,7 +375,6 @@ public class LoopMeBannerGeneral extends BaseAd {
         }
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLoadFail(this, error);
-            Logging.logEvent(getAppKey(), "Ad failed to load. " + error.getMessage());
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -395,7 +393,6 @@ public class LoopMeBannerGeneral extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerLoadSuccess(this);
-            Logging.logEvent(getAppKey(), "Ad loaded successfully.");
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -409,7 +406,6 @@ public class LoopMeBannerGeneral extends BaseAd {
         mIsVideoFinished = false;
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerShow(this);
-            Logging.logEvent("Ad appeared on the screen.");
         }
     }
 
@@ -437,7 +433,6 @@ public class LoopMeBannerGeneral extends BaseAd {
         Logging.out(LOG_TAG, "Ad received click event");
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerClicked(this);
-            Logging.logEvent("User interacts with Ad.");
         }
     }
 

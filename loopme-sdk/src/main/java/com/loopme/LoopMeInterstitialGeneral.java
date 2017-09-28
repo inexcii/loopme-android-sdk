@@ -187,7 +187,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadSuccess(LoopMeInterstitialGeneral.this);
-            Logging.logEvent(getAppKey(), "Ad loaded successfully.");
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -206,7 +205,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         stopFetcherTimer();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialLoadFail(LoopMeInterstitialGeneral.this, error);
-            Logging.logEvent(getAppKey(), "Ad failed to load. " + error.getMessage());
         } else {
             Logging.out(LOG_TAG, "Warning: empty listener");
         }
@@ -221,7 +219,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         if (mAdListener != null) {
             Logging.out(LOG_TAG, "Ad appeared on screen");
             mAdListener.onLoopMeInterstitialShow(this);
-            Logging.logEvent("Ad appeared on the screen.");
         }
     }
 
@@ -237,7 +234,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         releaseViewController();
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialHide(this);
-            Logging.logEvent("Ad closed.");
         }
     }
 
@@ -251,7 +247,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         Logging.out(LOG_TAG, "Ad received tap event");
         if (mAdListener != null) {
             mAdListener.onLoopMeInterstitialClicked(this);
-            Logging.logEvent("User interacts with Ad.");
         }
     }
 

@@ -331,7 +331,7 @@ public class AdController {
             mMraidView.stopLoading();
             mMraidView.clearCache(true);
             mMraidView.setWebChromeClient(null);
-            mAdView.setWebViewClient(null);
+            mMraidView.setWebViewClient(null);
             mMraidView.loadUrl("about:blank");
             mMraidView = null;
         }

@@ -5,8 +5,6 @@ import android.util.Log;
 
 import com.loopme.debugging.LiveDebug;
 
-import static com.loopme.common.StaticParams.APPEND_TO_FILE;
-
 public class Logging {
 
     private static final String PREFIX = "Debug.LoopMe.";
@@ -25,19 +23,4 @@ public class Logging {
         LiveDebug.handle(logTag, text);
     }
 
-    public static void logEvent(String appKey, String event) {
-        if (TextUtils.isEmpty(appKey)) {
-            return;
-        }
-        FileUtils.logToFile("AppKey: " + appKey, APPEND_TO_FILE);
-        logEvent(event);
-    }
-
-    public static void logEvent(String text) {
-        if (TextUtils.isEmpty(text)) {
-            return;
-        }
-        String message = Utils.getCurrentDate() + ": " + text;
-        FileUtils.logToFile(message, APPEND_TO_FILE);
-    }
 }
