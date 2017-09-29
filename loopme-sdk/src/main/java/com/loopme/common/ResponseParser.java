@@ -1,5 +1,7 @@
 package com.loopme.common;
 
+import android.os.Build;
+
 import com.loopme.constants.AdFormat;
 import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
@@ -191,13 +193,17 @@ public class ResponseParser {
 
 
     private int parseIntWithDefaultTrue(JSONObject object, String jsonParam) {
-        int value = 1;
+        int value = isApi19() ? 0 : 1;
         try {
             value = object.getInt(jsonParam);
         } catch (JSONException e) {
             Logging.out(LOG_TAG, jsonParam + " absent");
         }
-        return value;
+        return isApi19() ? 0 : value;
+    }
+
+    public static boolean isApi19() {
+        return  Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT;
     }
 
     private String extractTrackingUrl(JSONObject tracking) {

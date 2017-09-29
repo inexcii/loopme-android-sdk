@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
+import com.loopme.common.ResponseParser;
 import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
 
@@ -201,7 +202,9 @@ public class LoopMeBanner extends Settings {
     public void load() {
         stopSleepLoadTimer();
         load(mFirstBanner);
-        load(mSecondBanner);
+        if(!ResponseParser.isApi19() && isAutoLoadingEnabled()){
+            load(mSecondBanner);
+        }
     }
 
     /**
@@ -268,9 +271,9 @@ public class LoopMeBanner extends Settings {
 
     private void loadCurrentBanner() {
         if (TextUtils.equals(mCurrentAd, FIRST_BANNER)) {
-            load(mFirstBanner);
+            reload(mFirstBanner);
         } else {
-            load(mSecondBanner);
+            reload(mSecondBanner);
         }
     }
 
@@ -434,8 +437,13 @@ public class LoopMeBanner extends Settings {
     }
 
     private void reload(LoopMeBannerGeneral banner) {
-        if (isAutoLoadingEnabled() && banner != null) {
-            load(banner);
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled() && banner != null) {
+            if(!isReady(mFirstBanner)){
+                load(mFirstBanner);
+            }
+            if(!isReady(mSecondBanner)){
+                load(mSecondBanner);
+            }
         }
     }
 

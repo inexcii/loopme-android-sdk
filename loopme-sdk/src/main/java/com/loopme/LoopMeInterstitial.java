@@ -6,6 +6,7 @@ import android.os.CountDownTimer;
 
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
+import com.loopme.common.ResponseParser;
 import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
 
@@ -86,7 +87,9 @@ public class LoopMeInterstitial extends Settings {
     public void load() {
         stopSleepLoadTimer();
         load(mFirstInterstitial);
-        load(mSecondInterstitial);
+        if(!ResponseParser.isApi19() && isAutoLoadingEnabled()){
+            load(mSecondInterstitial);
+        }
     }
 
     /**
@@ -195,7 +198,6 @@ public class LoopMeInterstitial extends Settings {
                 if (mMainAdListener != null) {
                     mMainAdListener.onLoopMeInterstitialShow(LoopMeInterstitial.this);
                 }
-                reload(interstitial);
             }
 
             @Override
@@ -298,8 +300,13 @@ public class LoopMeInterstitial extends Settings {
     }
 
     private void reload(LoopMeInterstitialGeneral interstitial) {
-        if (isAutoLoadingEnabled() && interstitial != null) {
-            load(interstitial);
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled() && interstitial != null) {
+            if(!isReady(mFirstInterstitial)){
+                load(mFirstInterstitial);
+            }
+            if(!isReady(mSecondInterstitial)){
+                load(mSecondInterstitial);
+            }
         }
     }
 

@@ -789,6 +789,9 @@ public class AdController {
             switchToMinimizedMode();
         } else if (mPrevDisplayMode == DisplayMode.NORMAL) {
             switchToNormalMode();
+            if (mAdView != null) {
+                mAdView.setFullscreenMode(false);
+            }
         }
     }
 

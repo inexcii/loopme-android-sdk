@@ -61,6 +61,7 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
 
         mLayout = buildLayout();
         if(mLayout == null){
+            finish();
             return;
         }
         setContentView(mLayout);
@@ -104,9 +105,12 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
             Logging.out(LOG_TAG, "mAdController is null");
         }
 
-        if (mMraidView != null && mMraidView.getParent() != null) {
-            ((ViewGroup) mMraidView.getParent()).removeView(mMraidView);
-            mLayout.addView(mMraidView, params);
+        if (mMraidView != null){
+            if(mMraidView.getParent() != null) {
+                ((ViewGroup) mMraidView.getParent()).removeView(mMraidView);
+            } else {
+                mLayout.addView(mMraidView, params);
+            }
             return mLayout;
         } else{
             return null;
