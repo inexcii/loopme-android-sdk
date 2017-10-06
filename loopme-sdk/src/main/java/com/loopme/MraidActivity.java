@@ -61,7 +61,6 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
 
         mLayout = buildLayout();
         if(mLayout == null){
-            finish();
             return;
         }
         setContentView(mLayout);

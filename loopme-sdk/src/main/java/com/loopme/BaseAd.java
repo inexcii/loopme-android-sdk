@@ -437,7 +437,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         }
 
         mAdFetcherListener = initAdFetcherListener();
-        AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, getAdFormat());
+        AdFetcher fetcher = new AdFetcher(mRequestUrl, mAdFetcherListener, getAdFormat(), mAppKey);
         startRequestTimer();
         mFuture = ExecutorHelper.getExecutor().submit(fetcher);
     }
@@ -535,7 +535,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         }
     }
 
-    public void setIntegrationType(IntegrationType integrationType){
+    public void setIntegrationType(IntegrationType integrationType) {
         mIntegrationType = integrationType;
     }
 

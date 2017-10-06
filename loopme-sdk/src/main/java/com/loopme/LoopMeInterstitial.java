@@ -31,6 +31,7 @@ public class LoopMeInterstitial extends Settings {
     private CountDownTimer mSleepLoadTimer;
     private LoopMeInterstitialGeneral mFirstInterstitial;
     private LoopMeInterstitialGeneral mSecondInterstitial;
+    private boolean mIsLoadingPaused;
 
     /**
      * Creates new `LoopMeInterstitial` object with the given appKey
@@ -76,8 +77,8 @@ public class LoopMeInterstitial extends Settings {
         }
     }
 
-    public void load(IntegrationType integrationType){
-        if(mFirstInterstitial != null && mSecondInterstitial != null){
+    public void load(IntegrationType integrationType) {
+        if (mFirstInterstitial != null && mSecondInterstitial != null) {
             mFirstInterstitial.setIntegrationType(integrationType);
             mSecondInterstitial.setIntegrationType(integrationType);
         }
@@ -85,11 +86,24 @@ public class LoopMeInterstitial extends Settings {
     }
 
     public void load() {
-        stopSleepLoadTimer();
+        if (isLoadingPaused()) {
+            onAutoLoadPaused();
+            return;
+        }
         load(mFirstInterstitial);
-        if(!ResponseParser.isApi19() && isAutoLoadingEnabled()){
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
             load(mSecondInterstitial);
         }
+    }
+
+    private void onAutoLoadPaused() {
+        if (mMainAdListener != null) {
+            mMainAdListener.onLoopMeInterstitialLoadFail(this, new LoopMeError("Paused by auto loading"));
+        }
+    }
+
+    private boolean isLoadingPaused() {
+        return isAutoLoadingEnabled() && mIsLoadingPaused;
     }
 
     /**
@@ -190,7 +204,7 @@ public class LoopMeInterstitial extends Settings {
                 if (mMainAdListener != null) {
                     mMainAdListener.onLoopMeInterstitialLoadFail(LoopMeInterstitial.this, error);
                 }
-                increaseFailCounter(interstitial);
+                increaseFailCounter();
             }
 
             @Override
@@ -205,7 +219,7 @@ public class LoopMeInterstitial extends Settings {
                 if (mMainAdListener != null) {
                     mMainAdListener.onLoopMeInterstitialHide(LoopMeInterstitial.this);
                 }
-                reload(interstitial);
+                reload();
             }
 
             @Override
@@ -254,28 +268,29 @@ public class LoopMeInterstitial extends Settings {
         }
     }
 
-    private void increaseFailCounter(LoopMeInterstitialGeneral interstitial) {
+    private void increaseFailCounter() {
         if (isAutoLoadingEnabled()) {
             if (mFailCounter > StaticParams.MAX_FAIL_COUNT) {
-                sleep(interstitial);
+                sleep();
             } else {
                 mFailCounter++;
                 Logging.out(LOG_TAG, "Attempt #" + mFailCounter);
-                reload(interstitial);
+                reload();
             }
         }
     }
 
-    private void sleep(LoopMeInterstitialGeneral interstitial) {
+    private void sleep() {
         if (mSleepLoadTimer == null) {
-            mSleepLoadTimer = initSleepLoadTimer(interstitial);
+            mIsLoadingPaused = true;
+            mSleepLoadTimer = initSleepLoadTimer();
             float sleepTimeout = StaticParams.SLEEP_TIME / StaticParams.ONE_MINUTE_IN_MILLIS;
             Logging.out(LOG_TAG, "Sleep timeout: " + sleepTimeout + " minutes");
             mSleepLoadTimer.start();
         }
     }
 
-    private CountDownTimer initSleepLoadTimer(final LoopMeInterstitialGeneral interstitial) {
+    private CountDownTimer initSleepLoadTimer() {
         return new CountDownTimer(StaticParams.SLEEP_TIME, StaticParams.ONE_MINUTE_IN_MILLIS) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -284,7 +299,7 @@ public class LoopMeInterstitial extends Settings {
 
             @Override
             public void onFinish() {
-                mFailCounter = 0;
+                stopSleepLoadTimer();
                 load();
             }
         };
@@ -297,14 +312,15 @@ public class LoopMeInterstitial extends Settings {
             mSleepLoadTimer = null;
         }
         mFailCounter = 0;
+        mIsLoadingPaused = false;
     }
 
-    private void reload(LoopMeInterstitialGeneral interstitial) {
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled() && interstitial != null) {
-            if(!isReady(mFirstInterstitial)){
+    private void reload() {
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+            if (!isReady(mFirstInterstitial)) {
                 load(mFirstInterstitial);
             }
-            if(!isReady(mSecondInterstitial)){
+            if (!isReady(mSecondInterstitial)) {
                 load(mSecondInterstitial);
             }
         }

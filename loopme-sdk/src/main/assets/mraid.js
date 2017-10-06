@@ -145,7 +145,6 @@
   };
 
   bridge.setIsViewable = function(_isViewable) {
-    console.log('setIsViewable ' + _isViewable);
     isViewable = _isViewable;
     broadcastEvent(EVENTS.INFO, 'Set isViewable to ' + stringify(isViewable));
     broadcastEvent(EVENTS.VIEWABLECHANGE, isViewable);

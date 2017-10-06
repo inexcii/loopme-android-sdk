@@ -26,6 +26,7 @@ public class AdFetcher implements Runnable {
     private final String mRequestUrl;
     private Listener mListener;
     private int mFormat;
+    private String mAppKey;
     private LoopMeError mLoopMeError;
     private HttpURLConnection mUrlConnection;
     private static final String USER_AGENT = "User-Agent";
@@ -35,10 +36,11 @@ public class AdFetcher implements Runnable {
         void onComplete(AdParams params, LoopMeError error);
     }
 
-    public AdFetcher(String requestUrl, Listener listener, int format) {
+    public AdFetcher(String requestUrl, Listener listener, int format, String appKey) {
         mRequestUrl = requestUrl;
         mListener = listener;
         mFormat = format;
+        mAppKey = appKey;
     }
 
     @Override
@@ -86,13 +88,12 @@ public class AdFetcher implements Runnable {
         } catch (SocketTimeoutException e) {
             Logging.out(LOG_TAG + "timeout ad_request", ErrorType.SERVER);
             mLoopMeError = new LoopMeError("Request timeout");
-            ErrorLog.post("Request timeout", ErrorType.SERVER);
+            ErrorLog.post("Request timeout", ErrorType.SERVER, mAppKey);
         } catch (IOException e) {
-            e.printStackTrace();
             Logging.out(LOG_TAG, e.getMessage());
             if (responseCode != RESPONSE_CODE_UNKNOWN) {
                 mLoopMeError = new LoopMeError("Server code: " + responseCode);
-                ErrorLog.post("Bad servers response code " + responseCode, ErrorType.SERVER);
+                ErrorLog.post("Bad servers response code " + responseCode, ErrorType.SERVER, mAppKey);
             }
         } finally {
             if (mUrlConnection != null) {

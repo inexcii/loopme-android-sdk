@@ -34,7 +34,7 @@ public class LoopMeBanner extends Settings {
     private LoopMeBannerGeneral mSecondBanner;
     private volatile LoopMeBannerView mBannerView;
     private String mCurrentAd = FIRST_BANNER;
-
+    private boolean mIsLoadingPaused;
 
     /**
      * Creates new `LoopMeBanner` object with the given appKey
@@ -191,8 +191,8 @@ public class LoopMeBanner extends Settings {
         }
     }
 
-    public void load(IntegrationType integrationType){
-        if(mFirstBanner != null && mSecondBanner != null){
+    public void load(IntegrationType integrationType) {
+        if (mFirstBanner != null && mSecondBanner != null) {
             mFirstBanner.setIntegrationType(integrationType);
             mSecondBanner.setIntegrationType(integrationType);
         }
@@ -200,11 +200,25 @@ public class LoopMeBanner extends Settings {
     }
 
     public void load() {
+        if (isLoadingPaused()) {
+            onAutoLoadPaused();
+            return;
+        }
         stopSleepLoadTimer();
         load(mFirstBanner);
-        if(!ResponseParser.isApi19() && isAutoLoadingEnabled()){
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
             load(mSecondBanner);
         }
+    }
+
+    private void onAutoLoadPaused() {
+        if (mMainAdListener != null) {
+            mMainAdListener.onLoopMeBannerLoadFail(this, new LoopMeError("Paused by auto loading"));
+        }
+    }
+
+    private boolean isLoadingPaused() {
+        return isAutoLoadingEnabled() && mIsLoadingPaused;
     }
 
     /**
@@ -277,6 +291,14 @@ public class LoopMeBanner extends Settings {
         }
     }
 
+    private void reload(BaseAd baseAd) {
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+            if (!isReady(baseAd)) {
+                load(baseAd);
+            }
+        }
+    }
+
     public int getAdFormat() {
         return AdFormat.BANNER;
     }
@@ -327,7 +349,7 @@ public class LoopMeBanner extends Settings {
                 if (mMainAdListener != null) {
                     mMainAdListener.onLoopMeBannerLoadFail(LoopMeBanner.this, error);
                 }
-                increaseFailCounter(banner);
+                increaseFailCounter();
             }
 
             @Override
@@ -391,28 +413,29 @@ public class LoopMeBanner extends Settings {
         }
     }
 
-    private void increaseFailCounter(LoopMeBannerGeneral banner) {
+    private void increaseFailCounter() {
         if (isAutoLoadingEnabled()) {
             if (mFailCounter > StaticParams.MAX_FAIL_COUNT) {
-                sleep(banner);
+                sleep();
             } else {
                 mFailCounter++;
                 Logging.out(LOG_TAG, "Attempt #" + mFailCounter);
-                reload(banner);
+                reloadAll();
             }
         }
     }
 
-    private void sleep(LoopMeBannerGeneral banner) {
+    private void sleep() {
         if (mSleepLoadTimer == null) {
-            mSleepLoadTimer = initSleepLoadTimer(banner);
+            mIsLoadingPaused = true;
+            mSleepLoadTimer = initSleepLoadTimer();
             float sleepTimeout = StaticParams.SLEEP_TIME / StaticParams.ONE_MINUTE_IN_MILLIS;
             Logging.out(LOG_TAG, "Sleep timeout: " + sleepTimeout + " minutes");
             mSleepLoadTimer.start();
         }
     }
 
-    private CountDownTimer initSleepLoadTimer(final LoopMeBannerGeneral banner) {
+    private CountDownTimer initSleepLoadTimer() {
         return new CountDownTimer(StaticParams.SLEEP_TIME, StaticParams.ONE_MINUTE_IN_MILLIS) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -434,14 +457,15 @@ public class LoopMeBanner extends Settings {
             mSleepLoadTimer = null;
         }
         mFailCounter = 0;
+        mIsLoadingPaused = false;
     }
 
-    private void reload(LoopMeBannerGeneral banner) {
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled() && banner != null) {
-            if(!isReady(mFirstBanner)){
+    private void reloadAll() {
+        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+            if (!isReady(mFirstBanner)) {
                 load(mFirstBanner);
             }
-            if(!isReady(mSecondBanner)){
+            if (!isReady(mSecondBanner)) {
                 load(mSecondBanner);
             }
         }
