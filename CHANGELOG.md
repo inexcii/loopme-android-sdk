@@ -1,3 +1,6 @@
+## Version 5.2.5 (12 of October, 2017)
+- Ads targeting improvements
+
 ## Version 5.2.4 (6 of October, 2017)
 - Bug fix
 

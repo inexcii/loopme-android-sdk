@@ -62,7 +62,7 @@ To use it, add the following to your `build.gradle` file:<br>
 ```
 
 ```
-    dependencies { compile 'com.loopme:loopme-sdk:5.2.4@aar' }
+    dependencies { compile 'com.loopme:loopme-sdk:5.2.5@aar' }
 ```
 
 <br>An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](https://app.loopme.com/login/)**, and follow **[instruction](https://docs.google.com/document/d/1mXoWMVMvrfd5URvpWfCnFt89uL96PgT7usisCTa1K34/edit#)**. <br>
@@ -414,6 +414,10 @@ Android SDK aar will raise size of your application on 1.16Mb.<br>
 
 
 ## What's new ##
+
+**Version 5.2.5**
+- Ads targeting improvements
+
 **Version 5.2.4**
 - Bug fix
 

@@ -293,7 +293,6 @@ public class LoopMeBannerGeneral extends BaseAd {
             if (mAdController.getViewController() != null) {
                 mAdController.getViewController().onResume();
             }
-            mAdController.setWebViewState(WebviewState.VISIBLE);
         }
     }
 
@@ -337,7 +336,7 @@ public class LoopMeBannerGeneral extends BaseAd {
      */
     public void dismiss() {
         Logging.out(LOG_TAG, "Banner will be dismissed");
-        if (mAdState == AdState.SHOWING) {
+        if (mAdState == AdState.SHOWING || mAdState == AdState.NONE) {
             if (mBannerView != null) {
                 mBannerView.setVisibility(View.GONE);
                 mBannerView.removeAllViews();
