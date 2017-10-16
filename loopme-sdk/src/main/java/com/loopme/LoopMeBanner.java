@@ -43,7 +43,7 @@ public class LoopMeBanner extends Settings {
      * @param appKey   - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeBanner(Activity activity, String appKey) {
+    public LoopMeBanner(Activity activity, String appKey) {
         this.mActivity = activity;
         this.mAppKey = appKey;
         mFirstBanner = LoopMeBannerGeneral.getInstance(appKey, activity);

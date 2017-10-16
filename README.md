@@ -342,9 +342,7 @@ Using ProGuard tool can break LoopMe SDK work. It may look like all works fine i
 -dontwarn com.loopme.**
 -keep class com.loopme.** {
 *;
-}
--keep class com.google.android.gms.* { ; }
--dontwarn com.google.android.gms.**
+
 ```
 
 ## FAQ ##
@@ -414,6 +412,9 @@ Android SDK aar will raise size of your application on 1.16Mb.<br>
 
 
 ## What's new ##
+
+**Version 5.2.6 **
+- Bug fix
 
 **Version 5.2.5**
 - Ads targeting improvements

@@ -40,7 +40,7 @@ public class LoopMeInterstitial extends Settings {
      * @param appKey   - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
-    LoopMeInterstitial(Activity activity, String appKey) {
+    public LoopMeInterstitial(Activity activity, String appKey) {
         this.mActivity = activity;
         this.mAppKey = appKey;
         mFirstInterstitial = LoopMeInterstitialGeneral.getInstance(appKey, activity);
