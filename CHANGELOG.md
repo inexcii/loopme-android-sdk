@@ -1,3 +1,6 @@
+## Version 5.2.6 (12 of November, 2017)
+- Removed deadlock fix for android 4.4
+
 ## Version 5.2.6 (16 of October, 2017)
 - Bug fix
 
