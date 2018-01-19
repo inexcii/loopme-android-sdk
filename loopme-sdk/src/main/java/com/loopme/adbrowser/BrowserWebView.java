@@ -1,17 +1,20 @@
 package com.loopme.adbrowser;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.webkit.WebSettings;
 import android.webkit.WebSettings.PluginState;
-import android.webkit.WebView;
 
-public class BrowserWebView extends WebView {
+import com.loopme.adview.BaseWebView;
+
+public class BrowserWebView extends BaseWebView {
 
     public BrowserWebView(Context context) {
         super(context);
         init();
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void init() {
         WebSettings webSettings = getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -23,4 +26,5 @@ public class BrowserWebView extends WebView {
         webSettings.setUseWideViewPort(true);
         setInitialScale(1);
     }
+
 }

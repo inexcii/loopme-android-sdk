@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+
 repositories {
     jcenter()
     flatDir {
@@ -7,16 +8,14 @@ repositories {
 }
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    compileSdkVersion 26
 
     defaultConfig {
         applicationId "com.loopme.banner_sample.app"
-        minSdkVersion 9
-        targetSdkVersion 25
+        minSdkVersion 19
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
-        multiDexEnabled true
     }
 
     lintOptions {
@@ -29,15 +28,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/MANIFEST.MF'
+
+    }
 }
 
 dependencies {
+//    compile 'com.loopme:loopme-sdk:5.2.5@aar'
     compile project(':loopme-sdk')
-    compile ('com.android.support:multidex:1.0.1')
-
+    compile(name:'LOO-moat-mobile-app-kit-2.1.0', ext: 'aar')
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:recyclerview-v7:23.2.1'
     compile 'com.android.support:cardview-v7:23.2.1'
     compile 'com.android.support:support-v4:23.2.1'
-
 }

@@ -81,6 +81,7 @@
       call += encodeURIComponent(key) + '=' + encodeURIComponent(value);
     }
 
+    console.log('mraid url ' + call);
     if (this.nativeCallInFlight) {
       this.nativeCallQueue.push(call);
     } else {
@@ -145,6 +146,7 @@
   };
 
   bridge.setIsViewable = function(_isViewable) {
+    console.log('setIsViewable ' + _isViewable);
     isViewable = _isViewable;
     broadcastEvent(EVENTS.INFO, 'Set isViewable to ' + stringify(isViewable));
     broadcastEvent(EVENTS.VIEWABLECHANGE, isViewable);
@@ -567,7 +569,6 @@
   };
 
   mraid.isViewable = function() {
-    console.log("mraid.isViewable " + isViewable);
     return isViewable;
   };
 

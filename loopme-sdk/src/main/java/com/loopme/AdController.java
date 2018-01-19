@@ -1,24 +1,19 @@
 package com.loopme;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
@@ -26,9 +21,9 @@ import com.loopme.adview.AdView;
 import com.loopme.adview.Bridge;
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
+import com.loopme.common.LoopMeGestureListener;
 import com.loopme.common.MinimizedMode;
 import com.loopme.common.StaticParams;
-import com.loopme.common.SwipeListener;
 import com.loopme.common.Utils;
 import com.loopme.common.VideoLoader;
 import com.loopme.constants.AdFormat;
@@ -77,7 +72,6 @@ public class AdController {
     //we should ignore first command
     private boolean mIsFirstFullScreenCommand = true;
     private boolean mHorizontalScrollOrientation;
-    private boolean mIsBackFromExpand;
     private boolean mPostponePlay;
 
     private VideoLoader mVideoLoader;
@@ -91,8 +85,8 @@ public class AdController {
 
     private volatile Bridge.Listener mBridgeListener;
     private View.OnTouchListener mOnTouchListener;
-    private NativeVideoTracker mMoatAdTracker;
     private WebAdTracker mMoatWebAdTracker;
+    private boolean mIsInMinimizedMode;
 
     public AdController(BaseAd ad) {
         mBaseAd = ad;
@@ -203,7 +197,7 @@ public class AdController {
         }
 
         @Override
-        public void initMoatNativeTracker(){
+        public void initMoatNativeTracker() {
             initTrackers();
         }
     };
@@ -312,6 +306,9 @@ public class AdController {
 
     void destroy() {
         mBridgeListener = null;
+        if (mMraidController != null) {
+            mMraidController.destroy();
+        }
         if (mVideoController != null) {
             mVideoController.destroy();
         }
@@ -376,35 +373,58 @@ public class AdController {
     }
 
     void ensureAdIsVisible(View view) {
-        if (mAdView == null || view == null) {
-            return;
-        }
-
-        Rect rect = new Rect();
-        boolean b = view.getGlobalVisibleRect(rect);
-
-        int halfOfView = mHorizontalScrollOrientation ? view.getWidth() / 2 : view.getHeight() / 2;
-        int rectHeight = mHorizontalScrollOrientation ? rect.width() : rect.height();
-
-        if (b) {
-            if (rectHeight < halfOfView) {
-                setWebViewState(WebviewState.HIDDEN);
-                mIsBackFromExpand = false;
-
-            } else if (rectHeight >= halfOfView) {
-                setWebViewState(WebviewState.VISIBLE);
-
+        MoatViewAbilityUtils.calculateViewAbilitySyncDelayed(view, new MoatViewAbilityUtils.OnResultListener() {
+            @Override
+            public void onResult(MoatViewAbilityUtils.ViewAbilityInfo info) {
+                if (info.isVisibleMore50Percents()) {
+                    setWebViewStateDependsOnAdType(WebviewState.VISIBLE);
+                } else {
+                    setWebViewStateDependsOnAdType(WebviewState.HIDDEN);
+                }
             }
+        });
+    }
+
+    public void setWebViewStateDependsOnAdType(int webViewState) {
+        if (isMraid()) {
+            setMraidWebViewState(webViewState);
         } else {
-            setWebViewState(WebviewState.HIDDEN);
+            setWebViewState(webViewState);
         }
     }
 
+    private boolean isMraid() {
+        return mBaseAd != null && mBaseAd.getAdParams() != null && mBaseAd.getAdParams().isMraid();
+    }
+
     void buildMraidContainer(ViewGroup bannerView) {
+        setMraidBannerSize();
+        setBannerLayoutParams(bannerView);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT);
+        Utils.removeParent(mMraidView);
         bannerView.addView(mMraidView, layoutParams);
+    }
+
+    private void setBannerLayoutParams(ViewGroup bannerView) {
+        if (mMraidController != null && bannerView != null) {
+            ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(StaticParams.DEFAULT_WIDTH, StaticParams.DEFAULT_HEIGHT);
+            if (bannerView.getParent() instanceof RelativeLayout) {
+                params = new RelativeLayout.LayoutParams(mMraidController.getWidth(), mMraidController.getHeight());
+            } else if (bannerView.getParent() instanceof FrameLayout) {
+                params = new FrameLayout.LayoutParams(mMraidController.getWidth(), mMraidController.getHeight());
+            } else if (bannerView.getParent() instanceof LinearLayout) {
+                params = new LinearLayout.LayoutParams(mMraidController.getWidth(), mMraidController.getHeight());
+            }
+            bannerView.setLayoutParams(params);
+        }
+    }
+
+    private void setMraidBannerSize() {
+        if (mMraidController != null) {
+            mMraidController.setBannerSize(mBaseAd.getAdParams().getHtml());
+        }
     }
 
     void buildVideoAdView(ViewGroup bannerView) {
@@ -415,7 +435,7 @@ public class AdController {
 
     void rebuildView(ViewGroup bannerView) {
         if (mViewController != null) {
-            mViewController.rebuildView(bannerView, mAdView);
+            mViewController.rebuildView(bannerView, mAdView, DisplayMode.NORMAL);
         }
     }
 
@@ -431,13 +451,9 @@ public class AdController {
         }
     }
 
-    boolean isBackFromExpand() {
-        return mIsBackFromExpand;
-    }
-
     void switchToMinimizedMode() {
         if (mDisplayMode == DisplayMode.MINIMIZED) {
-            if (getCurrentVideoState() == VideoState.PAUSED) {
+            if (getCurrentVideoState() == VideoState.PAUSED || getCurrentVideoState() == VideoState.PLAYING) {
                 setWebViewState(WebviewState.VISIBLE);
             }
             return;
@@ -450,8 +466,10 @@ public class AdController {
         int height = mMinimizedMode.getHeight();
         mMinimizedView = new LoopMeBannerView(mAdView.getContext(), width, height);
 
-        mViewController.rebuildView(mMinimizedView, mAdView);
-        addBordersToView(mMinimizedView);
+        mMinimizedView.setOnTouchListener(initLoopMeGestureListener());
+
+        mViewController.rebuildView(mMinimizedView, mAdView, DisplayMode.MINIMIZED);
+        Utils.addBordersToView(mMinimizedView);
         mViewController.onResume();
 
         if (mAdView.getCurrentWebViewState() == WebviewState.HIDDEN) {
@@ -459,49 +477,39 @@ public class AdController {
         }
 
         mMinimizedMode.getRootView().addView(mMinimizedView);
-        configMinimizedViewLayoutParams(mMinimizedView);
+        Utils.configMinimizedViewLayoutParams(mMinimizedView, mMinimizedMode);
 
         setWebViewState(WebviewState.VISIBLE);
 
-        mAdView.setOnTouchListener(new SwipeListener(width,
-                new SwipeListener.Listener() {
-                    @Override
-                    public void onSwipe(boolean toRight) {
-                        mAdView.setWebViewState(WebviewState.HIDDEN);
-
-                        Animation anim = AnimationUtils.makeOutAnimation(mBaseAd.getContext(),
-                                toRight);
-                        anim.setDuration(200);
-                        mMinimizedView.startAnimation(anim);
-
-                        switchToNormalMode();
-                        mMinimizedMode = null;
-                    }
-                }));
+        mIsInMinimizedMode = true;
     }
 
-    private void configMinimizedViewLayoutParams(LoopMeBannerView bannerView) {
-        LayoutParams lp = (LayoutParams) bannerView.getLayoutParams();
-        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        lp.bottomMargin = mMinimizedMode.getMarginBottom();
-        lp.rightMargin = mMinimizedMode.getMarginRight();
-        bannerView.setLayoutParams(lp);
+    private View.OnTouchListener initLoopMeGestureListener() {
+        return new LoopMeGestureListener(mBaseAd.getContext(), new LoopMeGestureListener.Listener() {
+            @Override
+            public void onSwipe(boolean toRight) {
+                removeMinimizedView(toRight);
+            }
+
+            @Override
+            public void onClick() {
+                onMinimizedViewClicked();
+            }
+        });
     }
 
-    @SuppressLint("NewApi")
-    private void addBordersToView(LoopMeBannerView bannerView) {
-        ShapeDrawable drawable = new ShapeDrawable(new RectShape());
-        drawable.getPaint().setColor(Color.BLACK);
-        drawable.getPaint().setStyle(Style.FILL_AND_STROKE);
-        drawable.getPaint().setAntiAlias(true);
-
-        bannerView.setPadding(2, 2, 2, 2);
-        if (Build.VERSION.SDK_INT < 16) {
-            bannerView.setBackgroundDrawable(drawable);
-        } else {
-            bannerView.setBackground(drawable);
+    private void onMinimizedViewClicked() {
+        if (mMinimizedMode != null) {
+            mMinimizedMode.onViewClicked();
         }
+    }
+
+    private void removeMinimizedView(boolean toRight) {
+        mAdView.setWebViewState(WebviewState.HIDDEN);
+        mMinimizedView.startAnimation(Utils.getRemoveViewAnim(mBaseAd.getContext(), toRight));
+        mMinimizedMode = null;
+        mIsInMinimizedMode = false;
+        mBaseAd.dismiss();
     }
 
     void switchToNormalMode() {
@@ -510,16 +518,14 @@ public class AdController {
         }
 
         Logging.out(LOG_TAG, "switch to normal mode");
-        if (mDisplayMode == DisplayMode.FULLSCREEN) {
-            mIsBackFromExpand = true;
-        }
+        mIsInMinimizedMode = false;
         storePreviousMode(mDisplayMode);
         mDisplayMode = DisplayMode.NORMAL;
 
         LoopMeBannerView initialView = ((LoopMeBannerGeneral) mBaseAd).getBannerView();
         initialView.setVisibility(View.VISIBLE);
 
-        mViewController.rebuildView(initialView, mAdView);
+        mViewController.rebuildView(initialView, mAdView, DisplayMode.NORMAL);
 
         if (mMinimizedView != null && mMinimizedView.getParent() != null) {
             ((ViewGroup) mMinimizedView.getParent()).removeView(mMinimizedView);
@@ -548,7 +554,7 @@ public class AdController {
     void preloadHtml(String html, boolean mraid) {
         if (mraid) {
             mMraidView = new MraidView(mBaseAd.getContext(), mMraidController);
-            mMraidView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "UTF-8", null);
+            mMraidView.loadHtml(html);
         } else {
             if (mAdView != null) {
                 loadHtml(html);
@@ -616,7 +622,7 @@ public class AdController {
 
             @Override
             public void onCreateMoatNativeTracker() {
-                if(mBaseAd != null){
+                if (mBaseAd != null) {
                     mBaseAd.setNativeAd(true);
                     mBaseAd.setHtmlAd(false);
                 }
@@ -751,7 +757,7 @@ public class AdController {
     private void handleFullscreenMode(boolean b) {
         if (mIsFirstFullScreenCommand) {
             mIsFirstFullScreenCommand = false;
-            mAdView.setFullscreenMode(false);
+            setFullScreenMode(false);
             return;
         }
         if (b) {
@@ -759,7 +765,7 @@ public class AdController {
         } else {
             broadcastDestroyIntent();
         }
-        mAdView.setFullscreenMode(b);
+        setFullScreenMode(b);
     }
 
     private void broadcastDestroyIntent() {
@@ -789,10 +795,8 @@ public class AdController {
             switchToMinimizedMode();
         } else if (mPrevDisplayMode == DisplayMode.NORMAL) {
             switchToNormalMode();
-            if (mAdView != null) {
-                mAdView.setFullscreenMode(false);
-            }
         }
+        setFullScreenMode(false);
     }
 
     private void handleNonLoopMe(String url) {
@@ -869,17 +873,13 @@ public class AdController {
     private boolean surfaceTextureDestroyed() {
         Logging.out(LOG_TAG, "onSurfaceTextureDestroyed");
         mVideoController.setSurfaceTextureAvailable(false);
-        try {
-            mVideoController.setSurface(null);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+        mVideoController.setSurface(null);
         return true;
     }
 
     private void loadHtml(String html) {
         if (mAdView != null) {
-            mAdView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+            mAdView.loadDataWithBaseURL(StaticParams.FULL_BASE_URL, html, StaticParams.MIME_TYPE_TEXT_HTML, StaticParams.UTF_8, null);
         }
     }
 
@@ -916,10 +916,39 @@ public class AdController {
     }
 
     public int getWebViewState() {
-        if (mAdView != null) {
-            return mAdView.getCurrentWebViewState();
-        } else {
-            return WebviewState.CLOSED;
+        return mAdView != null ? mAdView.getCurrentWebViewState() : WebviewState.CLOSED;
+    }
+
+    public void collapseMraidBanner() {
+        if (mBaseAd instanceof LoopMeBannerGeneral) {
+            LoopMeBannerGeneral banner = (LoopMeBannerGeneral) mBaseAd;
+            buildMraidContainer(banner.getBannerView());
+            onCollapseBanner();
+            broadcastDestroyIntent();
         }
+    }
+
+    private void onCollapseBanner() {
+        if (mMraidController != null) {
+            mMraidController.onCollapseBanner();
+        }
+    }
+
+    public int getMraidOrientation() {
+        return mMraidController != null ? mMraidController.getForceOrientation() : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    }
+
+    public void setFullScreenMode(boolean fullScree) {
+        if (mAdView != null) {
+            mAdView.setFullscreenMode(fullScree);
+        }
+    }
+
+    public boolean isFullScreenMode() {
+        return getCurrentDisplayMode() == DisplayMode.FULLSCREEN;
+    }
+
+    public boolean isInMinimizedMode() {
+        return mIsInMinimizedMode;
     }
 }

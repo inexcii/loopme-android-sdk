@@ -1,22 +1,45 @@
 package com.loopme.adview;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-/**
- * Created by vynnykiakiv on 4/6/17.
- */
+import com.loopme.common.StaticParams;
 
 public class BaseWebView extends WebView {
     protected boolean mIsDestroyed;
 
-
     public BaseWebView(Context context) {
         super(context);
+        allowCookies();
+        allowMixedContent();
+        allowWebViewDebug();
+    }
+
+    private void allowWebViewDebug() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && StaticParams.DEBUG_MODE) {
+            setWebContentsDebuggingEnabled(true);
+        }
+    }
+
+    protected void allowCookies() {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.setAcceptThirdPartyCookies(this, true);
+        }
+        CookieManager.setAcceptFileSchemeCookies(true);
+    }
+
+    private void allowMixedContent() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        }
     }
 
     @Override
@@ -25,13 +48,6 @@ public class BaseWebView extends WebView {
         BaseWebView.removeFromParent(this);
         removeAllViews();
         super.destroy();
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    public void enableJavascriptCaching() {
-        getSettings().setJavaScriptEnabled(true);
-        getSettings().setAppCacheEnabled(true);
-        getSettings().setAppCachePath(getContext().getCacheDir().getAbsolutePath());
     }
 
     public static void removeFromParent(@Nullable View view) {

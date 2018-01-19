@@ -4,17 +4,16 @@ import android.app.Activity;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 
+import com.loopme.common.Utils;
 import com.loopme.ui.view.CloseButton;
 import com.loopme.common.Logging;
 import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
 import com.loopme.constants.WebviewState;
-import com.loopme.mraid.MraidState;
 import com.loopme.mraid.MraidView;
 
 import static com.loopme.common.StaticParams.EXTRAS_CUSTOM_CLOSE;
@@ -51,6 +50,7 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
         mHasOwnCloseButton = getIntent().getBooleanExtra(EXTRAS_CUSTOM_CLOSE, false);
         mFormat = getIntent().getIntExtra(StaticParams.FORMAT_TAG, 0);
         mBaseAd = LoopMeAdHolder.getAd(getIntent(), mFormat);
+        applyOrientation();
 
         if (mBaseAd == null) {
             finish();
@@ -69,6 +69,11 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
         initDestroyReceiver();
         initMraidAdCloseButtonReceiver();
         onInterstitialShowCallback();
+    }
+
+    private void applyOrientation() {
+        int orientation = mBaseAd.getAdController().getMraidOrientation();
+        setRequestedOrientation(orientation);
     }
 
     private void onInterstitialShowCallback() {
@@ -104,14 +109,11 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
             Logging.out(LOG_TAG, "mAdController is null");
         }
 
-        if (mMraidView != null){
-            if(mMraidView.getParent() != null) {
-                ((ViewGroup) mMraidView.getParent()).removeView(mMraidView);
-            } else {
-                mLayout.addView(mMraidView, params);
-            }
+        if (mMraidView != null) {
+            Utils.removeParent(mMraidView);
+            mLayout.addView(mMraidView, params);
             return mLayout;
-        } else{
+        } else {
             return null;
         }
     }
@@ -122,8 +124,11 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
         mCloseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mAdController.getMraidController().close();
-                MraidActivity.this.finish();
+                if (mFormat == AdFormat.INTERSTITIAL) {
+                    mAdController.getMraidController().close();
+                } else {
+                    collapseBanner();
+                }
             }
         });
         if (mHasOwnCloseButton) {
@@ -134,7 +139,7 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
     @Override
     protected void onDestroy() {
         Logging.out(LOG_TAG, "onDestroy");
-        if (mAdController != null) {
+        if (mAdController != null && mFormat == AdFormat.INTERSTITIAL) {
             mAdController.setMraidWebViewState(WebviewState.CLOSED);
         }
         if (mReceiver != null) {
@@ -160,9 +165,6 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
         super.onResume();
         mMraidView.notifySizeChangeEvent(400, 600);
         mMraidView.setIsViewable(true);
-        if (mFormat == AdFormat.BANNER) {
-            mMraidView.setState(MraidState.EXPANDED);
-        }
         if (mAdController != null) {
             mAdController.setMraidWebViewState(WebviewState.VISIBLE);
         }
@@ -202,6 +204,20 @@ public class MraidActivity extends Activity implements AdReceiver.Listener,
             mCloseButton.setVisibility(View.GONE);
         } else {
             mCloseButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mFormat == AdFormat.BANNER) {
+            collapseBanner();
+        }
+        super.onBackPressed();
+    }
+
+    private void collapseBanner() {
+        if (mAdController != null) {
+            mAdController.collapseMraidBanner();
         }
     }
 }

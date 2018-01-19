@@ -1,5 +1,6 @@
 package com.loopme.common;
 
+import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 
@@ -12,13 +13,16 @@ public class MinimizedMode {
     private int mMarginRight = 10;
     private int mMarginBottom = 10;
     private ViewGroup mRoot;
+    private RecyclerView mRecyclerView;
+    private int mPosition;
 
-    public MinimizedMode(ViewGroup root) {
+    public MinimizedMode(ViewGroup root, RecyclerView recyclerView) {
         if (root == null) {
-            Logging.out(LOG_TAG, "Error: Root view should be not null. Minimized mode will not work");
+            Logging.out(LOG_TAG, "Error: Root view or recyclerView should be not null. Minimized mode will not work");
             return;
         }
         mRoot = root;
+        mRecyclerView = recyclerView;
 
         DisplayMetrics dm = Utils.getDisplayMetrics();
         // portrait mode
@@ -62,5 +66,15 @@ public class MinimizedMode {
 
     public int getMarginBottom() {
         return mMarginBottom;
+    }
+
+    public void onViewClicked() {
+        if (mRecyclerView != null) {
+            mRecyclerView.smoothScrollToPosition(mPosition);
+        }
+    }
+
+    public void setPosition(int position) {
+        mPosition = position;
     }
 }

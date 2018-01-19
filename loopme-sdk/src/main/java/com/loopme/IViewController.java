@@ -13,7 +13,8 @@ public interface IViewController {
     void setViewSize(int w, int h);
     void setVideoSize(int w, int h);
     void buildVideoAdView(Context c, ViewGroup vg, AdView av);
-    void rebuildView(ViewGroup vg, AdView av);
+
+    void rebuildView(ViewGroup vg, AdView av, int displayMode);
     void setStretchParam(StretchOption option);
 
     void onPause();

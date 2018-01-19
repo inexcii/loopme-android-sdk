@@ -1,16 +1,12 @@
 package com.loopme;
 
 import android.app.Activity;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
-import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
@@ -66,13 +62,11 @@ public class LoopMeBannerGeneral extends BaseAd {
      * Creates new `LoopMeBanner` object with the given appKey
      *
      * @param activity - application context
-     * @param appKey  - your app key
+     * @param appKey   - your app key
      * @throws IllegalArgumentException if any of parameters is null
      */
     LoopMeBannerGeneral(Activity activity, String appKey) {
         super(activity, appKey);
-
-        mAdController = new AdController(this);
 
         Utils.init(activity);
         LiveDebug.init(activity);
@@ -83,7 +77,7 @@ public class LoopMeBannerGeneral extends BaseAd {
      * Getting already initialized ad object or create new one with specified appKey
      * Note: Returns null if Android version under 4.0
      *
-     * @param appKey  - your app key
+     * @param appKey   - your app key
      * @param activity - Activity context
      * @return instance of LoopMeBanner
      */
@@ -179,6 +173,7 @@ public class LoopMeBannerGeneral extends BaseAd {
 
     /**
      * Sets listener in order to receive notifications during the loading/displaying ad processes
+     *
      * @param listener - LoopMeInterstitial.Listener
      */
     public void setListener(Listener listener) {
@@ -266,11 +261,7 @@ public class LoopMeBannerGeneral extends BaseAd {
                                 ensureAdIsVisible();
                             }
                             if (observer.isAlive()) {
-                                if (Build.VERSION.SDK_INT >= 16) {
-                                    observer.removeOnGlobalLayoutListener(this);
-                                } else {
-                                    observer.removeGlobalOnLayoutListener(this);
-                                }
+                                observer.removeOnGlobalLayoutListener(this);
                             }
                         }
                     };
@@ -302,7 +293,8 @@ public class LoopMeBannerGeneral extends BaseAd {
 
     void switchToMinimizedMode() {
         if (mAdState == AdState.SHOWING && mAdController != null && !mIsVideoFinished) {
-            if (mAdController.isBackFromExpand()) {
+            if (mAdController.isInMinimizedMode()) {
+                mAdController.setWebViewState(WebviewState.VISIBLE);
                 return;
             }
             if (mAdController.isMinimizedModeEnable()) {
@@ -318,9 +310,13 @@ public class LoopMeBannerGeneral extends BaseAd {
     }
 
     void switchToNormalMode() {
-        if (mAdState == AdState.SHOWING && mAdController != null) {
+        if ((mAdState == AdState.SHOWING || mAdState == AdState.NONE) && isMinimizedMode()) {
             mAdController.switchToNormalMode();
         }
+    }
+
+    private boolean isMinimizedMode() {
+        return mAdController != null && mAdController.isInMinimizedMode();
     }
 
     /**
@@ -337,13 +333,10 @@ public class LoopMeBannerGeneral extends BaseAd {
     public void dismiss() {
         Logging.out(LOG_TAG, "Banner will be dismissed");
         if (mAdState == AdState.SHOWING || mAdState == AdState.NONE) {
-            if (mBannerView != null) {
-                mBannerView.setVisibility(View.GONE);
-                mBannerView.removeAllViews();
-            }
+            dismissBannerView();
             if (mAdController != null) {
                 mAdController.destroyMinimizedView();
-                mAdController.setWebViewState(WebviewState.CLOSED);
+                mAdController.setWebViewStateDependsOnAdType(WebviewState.CLOSED);
                 if (mAdController.getViewController() != null) {
                     mAdController.getViewController().onPause();
                 }
@@ -351,6 +344,13 @@ public class LoopMeBannerGeneral extends BaseAd {
             onLoopMeBannerHide();
         } else {
             Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
+        }
+    }
+
+    protected void dismissBannerView() {
+        if (mBannerView != null) {
+            mBannerView.setVisibility(View.GONE);
+            mBannerView.removeAllViews();
         }
     }
 
@@ -456,23 +456,8 @@ public class LoopMeBannerGeneral extends BaseAd {
         mIsVideoFinished = true;
         mIsReady = false;
         mAdState = AdState.NONE;
-        if (mAdController != null) {
-            mAdController.resetFullScreenCommandCounter();
-        }
-        Runnable runnable = new Runnable() {
 
-            @Override
-            public void run() {
-                if (mAdController != null) {
-                    mAdController.switchToNormalMode();
-                }
-            }
-        };
-        Handler handler = new Handler(Looper.getMainLooper());
-        if (mAdController.getCurrentDisplayMode() == DisplayMode.MINIMIZED) {
-            handler.postDelayed(runnable, StaticParams.SHRINK_MODE_KEEP_AFTER_FINISH_TIME);
-        }
-
+        switchToNormalMode();
         if (mAdListener != null) {
             mAdListener.onLoopMeBannerVideoDidReachEnd(this);
         }
@@ -546,5 +531,9 @@ public class LoopMeBannerGeneral extends BaseAd {
         }
         android.view.ViewGroup.LayoutParams params = mBannerView.getLayoutParams();
         return params.height;
+    }
+
+    public boolean isFullScreenMode() {
+        return mAdController != null && mAdController.isFullScreenMode();
     }
 }

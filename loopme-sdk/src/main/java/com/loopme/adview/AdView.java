@@ -1,14 +1,11 @@
 package com.loopme.adview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Build;
-import android.text.TextUtils;
 import android.webkit.WebSettings;
 import android.webkit.WebSettings.PluginState;
-import android.webkit.WebView;
 
 import com.loopme.common.Logging;
-import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
 import com.loopme.constants.VideoState;
 import com.loopme.constants.WebviewState;
@@ -55,20 +52,21 @@ public class AdView extends BaseWebView implements
         mBridgeListener = listener;
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void init() {
         WebSettings webSettings = getSettings();
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setJavaScriptEnabled(true);
-
         webSettings.setPluginState(PluginState.ON);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(false);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webSettings.setSupportZoom(false);
+        webSettings.setDomStorageEnabled(true);
+
         setVerticalScrollBarEnabled(false);
         setHorizontalScrollBarEnabled(false);
-        //added to tests
-        if (Build.VERSION.SDK_INT >= 19 && StaticParams.DEBUG_MODE) {
-            setWebContentsDebuggingEnabled(true);
-        }
 
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
-        webSettings.setSupportZoom(false);
         setWebChromeClient(new AdViewChromeClient());
         mBridge = new Bridge(this, getContext());
         setWebViewClient(mBridge);

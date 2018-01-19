@@ -63,8 +63,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         super(activity, appKey);
         Logging.out(LOG_TAG, "Start creating interstitial with app key: " + appKey);
 
-        mAdController = new AdController(this);
-
         Utils.init(activity);
         LiveDebug.init(activity);
     }
@@ -83,7 +81,7 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
 
     @Override
     public void destroy() {
-        broadcastDestroyIntent();
+        Utils.broadcastDestroyIntent(getContext(), getAdId());
         super.destroy();
     }
 
@@ -98,7 +96,7 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
     public void dismiss() {
         if (mAdState == AdState.SHOWING) {
             Logging.out(LOG_TAG, "Dismiss ad");
-            broadcastDestroyIntent();
+            Utils.broadcastDestroyIntent(getContext(), getAdId());
             stopExpirationTimer();
             if (mHandler != null) {
                 mHandler.removeCallbacksAndMessages(null);
@@ -106,13 +104,6 @@ public final class LoopMeInterstitialGeneral extends BaseAd {
         } else {
             Logging.out(LOG_TAG, "Can't dismiss ad, it's not displaying");
         }
-    }
-
-    private void broadcastDestroyIntent() {
-        Intent intent = new Intent();
-        intent.putExtra(StaticParams.AD_ID_TAG, this.getAdId());
-        intent.setAction(StaticParams.DESTROY_INTENT);
-        getContext().sendBroadcast(intent);
     }
 
     /**

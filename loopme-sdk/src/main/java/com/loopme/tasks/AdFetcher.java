@@ -91,8 +91,8 @@ public class AdFetcher implements Runnable {
             ErrorLog.post("Request timeout", ErrorType.SERVER, mAppKey);
         } catch (IOException e) {
             Logging.out(LOG_TAG, e.getMessage());
-            if (responseCode != RESPONSE_CODE_UNKNOWN) {
-                mLoopMeError = new LoopMeError("Server code: " + responseCode);
+            createError(responseCode);
+            if (responseCode != RESPONSE_CODE_UNKNOWN && responseCode != HttpURLConnection.HTTP_NO_CONTENT) {
                 ErrorLog.post("Bad servers response code " + responseCode, ErrorType.SERVER, mAppKey);
             }
         } finally {
@@ -101,6 +101,11 @@ public class AdFetcher implements Runnable {
             }
         }
         return null;
+    }
+
+    private void createError(int responseCode) {
+        mLoopMeError = responseCode == HttpURLConnection.HTTP_NO_CONTENT ? new LoopMeError("No ads found")
+                : new LoopMeError("Server code: " + responseCode);
     }
 
     private String getUserAgent() {

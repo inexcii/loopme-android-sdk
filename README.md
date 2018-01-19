@@ -62,7 +62,7 @@ To use it, add the following to your `build.gradle` file:<br>
 ```
 
 ```
-    dependencies { compile 'com.loopme:loopme-sdk:5.2.7@aar' }
+    dependencies { compile 'com.loopme:loopme-sdk:5.2.8@aar' }
 ```
 
 <br>An appKey is required to use the `loopme-sdk`. The appKey uniquely identifies your app to the LoopMe ad network. (Example appKey: 7643ba4d53.) To get an appKey visit the **[LoopMe Dashboard](https://app.loopme.com/login/)**, and follow **[instruction](https://docs.google.com/document/d/1mXoWMVMvrfd5URvpWfCnFt89uL96PgT7usisCTa1K34/edit#)**. <br>
@@ -412,6 +412,14 @@ Android SDK aar will raise size of your application on 1.16Mb.<br>
 
 
 ## What's new ##
+
+**Version 5.2.8 **
+- Added Expandable banner format
+- Reduced the amount of debug events communicated between SDK and ad server
+- Ads got access to read cookies - which improved work of some on those which are depend on it
+- Reorganized events helping on integration phase
+- Increased the minimum required API level from 19 level to 21. Android 5.0 is now the minimum OS version that gets ads. Lower versions will not generate requests and be filled.
+- Updated and cleaned up Samples used for integration
 
 **Version 5.2.7 **
 - Removed deadlock fix for android 4.4

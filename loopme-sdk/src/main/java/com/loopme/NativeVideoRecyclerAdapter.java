@@ -2,7 +2,6 @@ package com.loopme;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,12 +10,10 @@ import android.widget.RelativeLayout;
 
 import com.loopme.common.AdChecker;
 import com.loopme.common.Logging;
-import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
-import com.loopme.common.Utils;
 
 public class NativeVideoRecyclerAdapter extends RecyclerView.Adapter
-implements AdChecker, NativeVideoController.DataChangeListener {
+        implements AdChecker, NativeVideoController.DataChangeListener {
 
     private static final String LOG_TAG = NativeVideoRecyclerAdapter.class.getSimpleName();
 
@@ -42,13 +39,13 @@ implements AdChecker, NativeVideoController.DataChangeListener {
         mRecyclerView = recyclerView;
 
         mInflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mNativeVideoController = new NativeVideoController(mActivity);
+        mNativeVideoController = new NativeVideoController(mActivity, this);
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                mNativeVideoController.onScroll(recyclerView, NativeVideoRecyclerAdapter.this);
+                mNativeVideoController.onScroll(recyclerView);
             }
         });
 
@@ -56,7 +53,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 Logging.out(LOG_TAG, "onLayoutChange!!!!!");
-                mNativeVideoController.onScroll(mRecyclerView, NativeVideoRecyclerAdapter.this);
+                mNativeVideoController.onScroll(mRecyclerView);
             }
         });
 
@@ -120,7 +117,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
      */
     public void onResume() {
         Logging.out(LOG_TAG, "onResume");
-        mNativeVideoController.onResume(mRecyclerView, this);
+        mNativeVideoController.onResume(mRecyclerView);
     }
 
     public void setMinimizedMode(MinimizedMode mode) {
@@ -132,11 +129,14 @@ implements AdChecker, NativeVideoController.DataChangeListener {
 
     /**
      * Adds banner ad to defined position.
-     * @param appKey - app key
+     *
+     * @param appKey   - app key
      * @param position - position in list
      */
     public void putAdWithAppKeyToPosition(String appKey, int position) {
-        if (position < mOriginAdapter.getItemCount()) {
+        if (position < 0) {
+            mNativeVideoController.putAdWithAppKeyToPosition(appKey, 0);
+        } else if (position < mOriginAdapter.getItemCount()) {
             mNativeVideoController.putAdWithAppKeyToPosition(appKey, position);
         } else {
             mNativeVideoController.putAdWithAppKeyToPosition(appKey, mOriginAdapter.getItemCount());
@@ -147,21 +147,14 @@ implements AdChecker, NativeVideoController.DataChangeListener {
      * Starts loading all ads which were added with 'putAdWithAppKeyToPosition' method
      */
     public void loadAds() {
-        if (Build.VERSION.SDK_INT < 14) {
-            LoopMeError error = new LoopMeError("Not supported Android version. Expected Android 4.0+");
-            mNativeVideoController.onLoadFail(error);
-            return;
-        }
-        if (Utils.isOnline(mActivity)) {
+        if (mNativeVideoController != null) {
             mNativeVideoController.loadAds(mOriginAdapter.getItemCount(), this);
-        } else {
-            LoopMeError error = new LoopMeError("No connection");
-            mNativeVideoController.onLoadFail(error);
         }
     }
 
     /**
      * Define custome design for TileText ads
+     *
      * @param binder - ViewBinder
      */
     public void setViewBinder(NativeVideoBinder binder) {
@@ -172,6 +165,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
 
     /**
      * Set listener to receive notifications during loading/showing process
+     *
      * @param listener - listener
      */
     public void setListener(LoopMeBanner.Listener listener) {
@@ -181,11 +175,7 @@ implements AdChecker, NativeVideoController.DataChangeListener {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         if (viewType == TYPE_AD) {
-            RelativeLayout v = new RelativeLayout(viewGroup.getContext());
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            v.setLayoutParams(params);
-            return new NativeVideoVH(v);
+            return new NativeVideoViewHolder(initLayout(viewGroup));
         } else {
             return mOriginAdapter.onCreateViewHolder(viewGroup, viewType);
         }
@@ -194,26 +184,12 @@ implements AdChecker, NativeVideoController.DataChangeListener {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, final int position) {
         if (isAd(position)) {
-
             Logging.out(LOG_TAG, "onBindViewHolder");
-            final LoopMeBanner banner = mNativeVideoController.getNativeVideoAd(position);
-            View row = mNativeVideoController.getAdView(mInflater, null, banner, position);
-
-            ((NativeVideoVH) viewHolder).adView.removeAllViews();
-            if (row.getParent() != null) {
-                ((ViewGroup) row.getParent()).removeView(row);
-            }
-            ((NativeVideoVH) viewHolder).adView.addView(row);
-
-            RelativeLayout.LayoutParams p = (RelativeLayout.LayoutParams) row.getLayoutParams();
-            p.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-            row.setLayoutParams(p);
-
+            configureAdView(viewHolder, position);
         } else {
             int initPosition = mNativeVideoController.getInitialPosition(position);
             mOriginAdapter.onBindViewHolder(viewHolder, initPosition);
         }
-
     }
 
     @Override
@@ -292,12 +268,59 @@ implements AdChecker, NativeVideoController.DataChangeListener {
         mOriginAdapter.notifyDataSetChanged();
     }
 
-    public class NativeVideoVH extends RecyclerView.ViewHolder {
+    private void configureAdView(RecyclerView.ViewHolder viewHolder, int position) {
+        final LoopMeBanner banner = mNativeVideoController.getNativeVideoAd(position);
+        View rowView = mNativeVideoController.getAdView(mInflater, null, banner, position);
+        cleanView(viewHolder, rowView);
+        ((NativeVideoViewHolder) viewHolder).addView(rowView);
+        setNewLayoutParams(rowView);
+    }
+
+    private void setNewLayoutParams(View rowView) {
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) rowView.getLayoutParams();
+        layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
+        rowView.setLayoutParams(layoutParams);
+    }
+
+    private void cleanView(RecyclerView.ViewHolder viewHolder, View rowView) {
+        if (viewHolder == null || rowView == null) {
+            return;
+        }
+        ((NativeVideoViewHolder) viewHolder).removeAllViews();
+        if (rowView.getParent() != null) {
+            ((ViewGroup) rowView.getParent()).removeView(rowView);
+        }
+    }
+
+    private View initLayout(ViewGroup viewGroup) {
+        RelativeLayout layout = new RelativeLayout(viewGroup.getContext());
+        layout.setLayoutParams(initParams());
+        return layout;
+    }
+
+    private ViewGroup.LayoutParams initParams() {
+        return new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    protected class NativeVideoViewHolder extends RecyclerView.ViewHolder {
         private RelativeLayout adView;
 
-        public NativeVideoVH(View view) {
+        private NativeVideoViewHolder(View view) {
             super(view);
             adView = (RelativeLayout) view;
+        }
+
+        private void addView(View view) {
+            adView.addView(view);
+        }
+
+        public View getView() {
+            return adView;
+        }
+
+        private void removeAllViews() {
+            adView.removeAllViews();
         }
     }
 }

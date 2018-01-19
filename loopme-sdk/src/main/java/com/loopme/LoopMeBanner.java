@@ -2,15 +2,16 @@ package com.loopme;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.text.TextUtils;
 
 import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.MinimizedMode;
-import com.loopme.common.ResponseParser;
 import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
+import com.loopme.debugging.ErrorLog;
 
 /**
  * The `LoopMeBanner` class provides facilities to display a custom size ads
@@ -35,6 +36,7 @@ public class LoopMeBanner extends Settings {
     private volatile LoopMeBannerView mBannerView;
     private String mCurrentAd = FIRST_BANNER;
     private boolean mIsLoadingPaused;
+    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
 
     /**
      * Creates new `LoopMeBanner` object with the given appKey
@@ -47,18 +49,25 @@ public class LoopMeBanner extends Settings {
         this.mActivity = activity;
         this.mAppKey = appKey;
         mFirstBanner = LoopMeBannerGeneral.getInstance(appKey, activity);
-        mSecondBanner = LoopMeBannerGeneral.getInstance(appKey, activity);
+        if (isAutoLoadingEnabled()) {
+            mSecondBanner = LoopMeBannerGeneral.getInstance(appKey, activity);
+        }
     }
 
     /**
      * Getting already initialized ad object or create new one with specified appKey
-     * Note: Returns null if Android version under 4.0
+     * Note: Returns null if Android version under 5.0
      *
      * @param appKey   - your app key
      * @param activity - Activity context
      * @return instance of LoopMeBanner
      */
     public static LoopMeBanner getInstance(String appKey, Activity activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            LoopMeError error = new LoopMeError("Unsupported android version. Loopme-sdk requires android API_LEVEL >= 21.");
+            ErrorLog.post(error.getMessage());
+            throw new UnsupportedClassVersionError(error.getMessage());
+        }
         return new LoopMeBanner(activity, appKey);
     }
 
@@ -70,6 +79,8 @@ public class LoopMeBanner extends Settings {
      */
     public void bindView(LoopMeBannerView viewGroup) {
         mBannerView = viewGroup;
+        bindView(mBannerView, mFirstBanner);
+        bindView(mBannerView, mSecondBanner);
     }
 
     private void bindView(LoopMeBannerView viewGroup, LoopMeBannerGeneral banner) {
@@ -128,17 +139,23 @@ public class LoopMeBanner extends Settings {
                 bindView(mBannerView, mSecondBanner);
                 show(mSecondBanner);
                 mCurrentAd = SECOND_BANNER;
+            } else {
+                onMissShow();
             }
         } else {
-            Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
+            Logging.out(LOG_TAG, "Banner is already presented on the screen");
         }
     }
 
     public void showNativeVideo() {
         if (isReady(mFirstBanner)) {
+            bindView(mBannerView, mFirstBanner);
             showNativeVideo(mFirstBanner);
+            mCurrentAd = FIRST_BANNER;
         } else if (isReady(mSecondBanner)) {
+            bindView(mBannerView, mSecondBanner);
             showNativeVideo(mSecondBanner);
+            mCurrentAd = SECOND_BANNER;
         }
     }
 
@@ -192,10 +209,7 @@ public class LoopMeBanner extends Settings {
     }
 
     public void load(IntegrationType integrationType) {
-        if (mFirstBanner != null && mSecondBanner != null) {
-            mFirstBanner.setIntegrationType(integrationType);
-            mSecondBanner.setIntegrationType(integrationType);
-        }
+        mIntegrationType = integrationType;
         load();
     }
 
@@ -206,8 +220,15 @@ public class LoopMeBanner extends Settings {
         }
         stopSleepLoadTimer();
         load(mFirstBanner);
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+        if (isAutoLoadingEnabled()) {
+            initSecondAdIfNull();
             load(mSecondBanner);
+        }
+    }
+
+    private void initSecondAdIfNull() {
+        if (mSecondBanner == null) {
+            mSecondBanner = LoopMeBannerGeneral.getInstance(mAppKey, mActivity);
         }
     }
 
@@ -292,7 +313,7 @@ public class LoopMeBanner extends Settings {
     }
 
     private void reload(BaseAd baseAd) {
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+        if (isAutoLoadingEnabled()) {
             if (!isReady(baseAd)) {
                 load(baseAd);
             }
@@ -342,6 +363,7 @@ public class LoopMeBanner extends Settings {
                     mMainAdListener.onLoopMeBannerLoadSuccess(LoopMeBanner.this);
                 }
                 mFailCounter = 0;
+                onLoadedSuccess();
             }
 
             @Override
@@ -350,6 +372,7 @@ public class LoopMeBanner extends Settings {
                     mMainAdListener.onLoopMeBannerLoadFail(LoopMeBanner.this, error);
                 }
                 increaseFailCounter();
+                onLoadFail();
             }
 
             @Override
@@ -401,7 +424,7 @@ public class LoopMeBanner extends Settings {
         if (mSecondBanner != null) {
             mSecondBanner.removeListener();
             mSecondBanner.destroy();
-            mSecondBanner = null;
+//            mSecondBanner = null;
         }
     }
 
@@ -409,7 +432,7 @@ public class LoopMeBanner extends Settings {
         if (mFirstBanner != null) {
             mFirstBanner.removeListener();
             mFirstBanner.destroy();
-            mFirstBanner = null;
+//            mFirstBanner = null;
         }
     }
 
@@ -461,7 +484,7 @@ public class LoopMeBanner extends Settings {
     }
 
     private void reloadAll() {
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+        if (isAutoLoadingEnabled()) {
             if (!isReady(mFirstBanner)) {
                 load(mFirstBanner);
             }
@@ -506,7 +529,8 @@ public class LoopMeBanner extends Settings {
 
     private void load(BaseAd baseAd) {
         if (baseAd != null) {
-            baseAd.load();
+            baseAd.load(mIntegrationType);
+            onLoad();
         }
     }
 
@@ -525,6 +549,7 @@ public class LoopMeBanner extends Settings {
     private void show(LoopMeBannerGeneral banner) {
         if (banner != null) {
             banner.show();
+            onShow();
         }
     }
 
@@ -584,5 +609,9 @@ public class LoopMeBanner extends Settings {
         void onLoopMeBannerVideoDidReachEnd(LoopMeBanner banner);
 
         void onLoopMeBannerExpired(LoopMeBanner banner);
+    }
+
+    public boolean isFullScreenMode() {
+        return mFirstBanner != null && mFirstBanner.isFullScreenMode();
     }
 }

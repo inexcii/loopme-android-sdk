@@ -35,9 +35,9 @@ public class LiveDebug {
 
     public static void setLiveDebug(final boolean debug) {
         Logging.out(LOG_TAG, "setLiveDebug " + debug);
+        sIsDebugOn = debug;
         if (sIsDebugOn != debug) {
             if (debug) {
-                sIsDebugOn = debug;
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(new Runnable() {
                     @Override
@@ -144,5 +144,9 @@ public class LiveDebug {
                 .append(": ")
                 .append(text);
         return sb.toString();
+    }
+
+    public static boolean isDebugOn() {
+        return sIsDebugOn;
     }
 }

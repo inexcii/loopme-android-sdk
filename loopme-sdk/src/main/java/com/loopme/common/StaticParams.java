@@ -5,6 +5,11 @@ public class StaticParams {
     private StaticParams() {
     }
 
+    public static final String BASE_URL_ANDROID_ASSET = "file:///android_asset/";
+    public static final String MIME_TYPE_TEXT_HTML = "text/html";
+    public static final String MRAID_SCRIPT = "<script src=\"mraid.js\"></script>";
+    public static final int DEFAULT_WIDTH = 350;
+    public static final int DEFAULT_HEIGHT = 250;
     public static final long ONE_MINUTE_IN_MILLIS = 1000 * 60;
     public static final long SLEEP_TIME = 1000 * 60 * 15;// 15 min
     public static final int MAX_FAIL_COUNT = 4;
@@ -16,6 +21,8 @@ public class StaticParams {
     public static final String UNKNOWN_NAME = "unknown";
     public static String sCacheDirectory = "";
     public static final int DEFAULT_AD_ID = -1;
+    public static final String HTTPS_SCHEME = "https";
+    public static String FULL_BASE_URL = HTTPS_SCHEME + "://" + BASE_URL;
 
     public static boolean DEBUG_MODE = true;
 
@@ -26,6 +33,8 @@ public class StaticParams {
     public static final String ORIENTATION_PORT = "portrait";
     public static final String ORIENTATION_LAND = "landscape";
 
+    public static final String EXTRAS_ALLOW_ORIENTATION_CHANGE = "allowOrientationChange";
+    public static final String EXTRAS_FORCE_ORIENTATION = "forceOrientation";
     public static final String EXTRAS_CUSTOM_CLOSE = "customClose";
     public static final String MRAID_NEED_CLOSE_BUTTON = "com.loopme.MRAID_NEED_CLOSE_BUTTON";
     public static final String DESTROY_INTENT = "com.loopme.DESTROY_INTENT";

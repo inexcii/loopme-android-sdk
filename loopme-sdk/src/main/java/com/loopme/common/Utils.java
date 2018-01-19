@@ -1,13 +1,18 @@
 package com.loopme.common;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
@@ -25,11 +30,15 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
 import com.loopme.AES;
 import com.loopme.BaseAd;
 import com.loopme.LoopMeBannerGeneral;
+import com.loopme.LoopMeBannerView;
 import com.loopme.constants.StretchOption;
 
 import java.io.ByteArrayInputStream;
@@ -37,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -46,6 +56,7 @@ import static com.loopme.common.StaticParams.UNKNOWN_NAME;
 
 public class Utils {
 
+    private static final int START_BODY_TAG = 173;
     private static final String CHROME = "Chrome";
     private static final String CHROME_SHORTCUT = "Chrm";
     private static final String LOG_TAG = Utils.class.getSimpleName();
@@ -456,5 +467,58 @@ public class Utils {
         }
         Log.i(LOG_TAG, formattedString);
         return formattedString;
+    }
+
+    public static String formatTime(double time) {
+        DecimalFormat formatter = new DecimalFormat("0.00");
+        return formatter.format(time);
+    }
+
+    public static void removeParent(ViewGroup view) {
+        if (view != null && view.getParent() != null) {
+            ((ViewGroup) view.getParent()).removeView(view);
+        }
+    }
+
+    public static String addMraidScript(String html) {
+        if (TextUtils.isEmpty(html)) {
+            return "";
+        }
+        String firstPart = html.substring(0, START_BODY_TAG);
+        String lastPart = html.substring(START_BODY_TAG);
+        return firstPart + StaticParams.MRAID_SCRIPT + lastPart;
+    }
+
+    public static void broadcastDestroyIntent(Context context, int adId) {
+        Intent intent = new Intent();
+        intent.putExtra(StaticParams.AD_ID_TAG, adId);
+        intent.setAction(StaticParams.DESTROY_INTENT);
+        context.sendBroadcast(intent);
+    }
+
+    @SuppressLint("NewApi")
+    public static void addBordersToView(LoopMeBannerView bannerView) {
+        ShapeDrawable drawable = new ShapeDrawable(new RectShape());
+        drawable.getPaint().setColor(Color.BLACK);
+        drawable.getPaint().setStyle(Paint.Style.FILL_AND_STROKE);
+        drawable.getPaint().setAntiAlias(true);
+
+        bannerView.setPadding(2, 2, 2, 2);
+        bannerView.setBackground(drawable);
+    }
+
+    public static void configMinimizedViewLayoutParams(LoopMeBannerView bannerView, MinimizedMode minimizedMode) {
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) bannerView.getLayoutParams();
+        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        lp.bottomMargin = minimizedMode.getMarginBottom();
+        lp.rightMargin = minimizedMode.getMarginRight();
+        bannerView.setLayoutParams(lp);
+    }
+
+    public static Animation getRemoveViewAnim(Context context, boolean toRight) {
+        Animation anim = AnimationUtils.makeOutAnimation(context, toRight);
+        anim.setDuration(200);
+        return anim;
     }
 }

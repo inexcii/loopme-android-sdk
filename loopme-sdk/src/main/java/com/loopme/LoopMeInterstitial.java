@@ -2,6 +2,7 @@ package com.loopme;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.os.CountDownTimer;
 
 import com.loopme.common.Logging;
@@ -9,6 +10,7 @@ import com.loopme.common.LoopMeError;
 import com.loopme.common.ResponseParser;
 import com.loopme.common.StaticParams;
 import com.loopme.constants.AdFormat;
+import com.loopme.debugging.ErrorLog;
 
 /**
  * The `LoopMeInterstitial` class provides the facilities to display a full-screen ad
@@ -32,6 +34,7 @@ public class LoopMeInterstitial extends Settings {
     private LoopMeInterstitialGeneral mFirstInterstitial;
     private LoopMeInterstitialGeneral mSecondInterstitial;
     private boolean mIsLoadingPaused;
+    private IntegrationType mIntegrationType = IntegrationType.NORMAL;
 
     /**
      * Creates new `LoopMeInterstitial` object with the given appKey
@@ -44,18 +47,22 @@ public class LoopMeInterstitial extends Settings {
         this.mActivity = activity;
         this.mAppKey = appKey;
         mFirstInterstitial = LoopMeInterstitialGeneral.getInstance(appKey, activity);
-        mSecondInterstitial = LoopMeInterstitialGeneral.getInstance(appKey, activity);
     }
 
     /**
      * Getting already initialized ad object or create new one with specified appKey
-     * Note: Returns null if Android version under 4.0
+     * Note: Returns null if Android version under 5.0
      *
      * @param appKey   - your app key
      * @param activity - Activity context
      * @return instance of LoopMeInterstitial
      */
     public static LoopMeInterstitial getInstance(String appKey, Activity activity) {
+        if (Build.VERSION.SDK_INT < 21) {
+            LoopMeError error = new LoopMeError("Unsupported android version. Loopme-sdk requires android API_LEVEL >= 21.");
+            ErrorLog.post(error.getMessage());
+            throw new UnsupportedClassVersionError(error.getMessage());
+        }
         return new LoopMeInterstitial(activity, appKey);
     }
 
@@ -71,6 +78,8 @@ public class LoopMeInterstitial extends Settings {
                 show(mFirstInterstitial);
             } else if (isReady(mSecondInterstitial)) {
                 show(mSecondInterstitial);
+            } else {
+                onMissShow();
             }
         } else {
             Logging.out(LOG_TAG, "Interstitial is already presented on the screen");
@@ -78,10 +87,8 @@ public class LoopMeInterstitial extends Settings {
     }
 
     public void load(IntegrationType integrationType) {
-        if (mFirstInterstitial != null && mSecondInterstitial != null) {
-            mFirstInterstitial.setIntegrationType(integrationType);
-            mSecondInterstitial.setIntegrationType(integrationType);
-        }
+        mIntegrationType = integrationType;
+        mFirstInterstitial.setIntegrationType(mIntegrationType);
         load();
     }
 
@@ -91,8 +98,17 @@ public class LoopMeInterstitial extends Settings {
             return;
         }
         load(mFirstInterstitial);
-        if (!ResponseParser.isApi19() && isAutoLoadingEnabled()) {
+        if (isAutoLoadingEnabled()) {
+            initSecondInstance();
             load(mSecondInterstitial);
+        }
+    }
+
+    private void initSecondInstance() {
+        if (isAutoLoadingEnabled() && mSecondInterstitial == null) {
+            mSecondInterstitial = LoopMeInterstitialGeneral.getInstance(mAppKey, mActivity);
+            mSecondInterstitial.setIntegrationType(mIntegrationType);
+            setListener(initInternalListener(), mSecondInterstitial);
         }
     }
 
@@ -197,6 +213,7 @@ public class LoopMeInterstitial extends Settings {
                     mMainAdListener.onLoopMeInterstitialLoadSuccess(LoopMeInterstitial.this);
                 }
                 mFailCounter = 0;
+                onLoadedSuccess();
             }
 
             @Override
@@ -205,6 +222,7 @@ public class LoopMeInterstitial extends Settings {
                     mMainAdListener.onLoopMeInterstitialLoadFail(LoopMeInterstitial.this, error);
                 }
                 increaseFailCounter();
+                onLoadFail();
             }
 
             @Override
@@ -362,6 +380,7 @@ public class LoopMeInterstitial extends Settings {
     private void load(BaseAd baseAd) {
         if (baseAd != null) {
             baseAd.load();
+            onLoad();
         }
     }
 
@@ -369,6 +388,7 @@ public class LoopMeInterstitial extends Settings {
     private void show(LoopMeInterstitialGeneral interstitial) {
         if (interstitial != null) {
             interstitial.show();
+            onShow();
         }
     }
 

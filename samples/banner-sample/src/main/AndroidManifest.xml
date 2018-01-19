@@ -1,48 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.loopme.banner_sample.app">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.loopme.banner_sample.app">
 
-    <!--   This app "minSdkVersion 9"  but library has "minSdkVersion 14".
-    Use this to test that sample correctly works on lower sdk   -->
-    <uses-sdk tools:overrideLibrary="com.loopme"/>
+    <uses-sdk tools:overrideLibrary="com.loopme" />
 
     <application
-        android:name="android.support.multidex.MultiDexApplication"
         android:icon="@drawable/launchericon"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:theme="@style/Theme.AppCompat.Light"
-            android:label="@string/app_name">
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.Light">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".listview.ListViewActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
-            android:name="com.loopme.banner_sample.app.SimpleBannerActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
-            android:name=".listview.ListViewShrinkModeActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
-            android:name=".recyclerview.RecyclerViewActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
-        <activity
-            android:name=".recyclerview.RecyclerViewShrinkActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
 
     </application>
 

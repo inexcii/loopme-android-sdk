@@ -19,6 +19,8 @@ public class HtmlParser {
     private static final String CAMP_NAME = "CAMP_NAME";
     private static final String LI_NAME = "LI_NAME";
     private static final String CREATIVEID = "CREATIVEID";
+    private static final String WIDTH = "WIDTH";
+    private static final String HEIGHT = "HEIGHT";
     private static final String APP_NAME = "APP_NAME";
     private static final String ADVERTISER = "ADVERTISER";
 
@@ -73,6 +75,28 @@ public class HtmlParser {
 
     public String getAppId() {
         return getObject(APP_NAME);
+    }
+
+    public int getAdWidth() {
+        int widthInt = StaticParams.DEFAULT_WIDTH;
+        String width = getObject(WIDTH);
+        try {
+            widthInt = Integer.parseInt(width);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return widthInt;
+    }
+
+    public int getAdHeight() {
+        int heightInt = StaticParams.DEFAULT_HEIGHT;
+        String height = getObject(HEIGHT);
+        try {
+            heightInt = Integer.parseInt(height);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return heightInt;
     }
 
     public String getPlacementId() {

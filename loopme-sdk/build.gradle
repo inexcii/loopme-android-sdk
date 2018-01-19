@@ -14,9 +14,9 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 25
-        versionCode 7
+        versionCode 8
         versionName "5.2"
         multiDexEnabled true
     }
@@ -74,7 +74,7 @@ buildscript {
 ext {
     adapterName = 'Loopme'
     fileName = 'loopme-sdk'
-    releaseVersion = '5.2.7'
+    releaseVersion = '5.2.8'
     fileName = "${fileName}-${releaseVersion}"
     sdkVersion = releaseVersion
     apiVersion = "5"
@@ -92,7 +92,7 @@ allprojects {
 }
 
 group = 'com.loopme'
-version = '5.2.7'
+version = '5.2.8'
 
 install {
     repositories.mavenInstaller {
@@ -144,14 +144,14 @@ bintray {
 
 
 task clearJar(type: Delete) {
-    delete 'build/outputs/loopme-sdk-5.2.6.jar'
+    delete 'build/outputs/loopme-sdk-5.2.7.jar'
 }
 
 task makeJar(type: Copy) {
     from('build/intermediates/bundles/release/')
     into('build/outputs/')
     include('classes.jar')
-    rename('classes.jar', 'loopme-sdk-5.2.7.jar')
+    rename('classes.jar', 'loopme-sdk-5.2.8.jar')
 }
 
 task wrapper(type: Wrapper) {

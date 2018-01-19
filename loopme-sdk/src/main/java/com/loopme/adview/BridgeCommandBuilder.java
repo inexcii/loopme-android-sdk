@@ -12,7 +12,7 @@ public class BridgeCommandBuilder {
     private static final String PREFIX_FUNCTION_BEGIN = "javascript:(function(){ ";
     private static final String PREFIX_360 = "javascript:window.L.track";
 
-    String isNativeCallFinished(boolean b) {
+    public String isNativeCallFinished(boolean b) {
         StringBuilder builder = new StringBuilder();
         builder.append(PREFIX)
                 .append("('webview', {isNativeCallFinished: ")

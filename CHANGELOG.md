@@ -1,4 +1,12 @@
-## Version 5.2.6 (12 of November, 2017)
+## Version 5.2.8 (19 of January, 2018)
+- Added Expandable banner format
+- Reduced the amount of debug events communicated between SDK and ad server
+- Ads got access to read cookies - which improved work of some on those which are depend on it
+- Reorganized events helping on integration phase
+- Increased the minimum required API level from 19 level to 21. Android 5.0 is now the minimum OS version that gets ads. Lower versions will not generate requests and be filled.
+- Updated and cleaned up Samples used for integration
+
+## Version 5.2.7 (12 of November, 2017)
 - Removed deadlock fix for android 4.4
 
 ## Version 5.2.6 (16 of October, 2017)

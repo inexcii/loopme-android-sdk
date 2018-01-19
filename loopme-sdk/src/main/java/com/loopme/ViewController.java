@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import com.loopme.adview.AdView;
 import com.loopme.common.Logging;
 import com.loopme.common.Utils;
+import com.loopme.constants.DisplayMode;
 import com.loopme.constants.StretchOption;
 
 
@@ -59,7 +60,7 @@ public class ViewController implements TextureView.SurfaceTextureListener, IView
     }
 
     @Override
-    public void rebuildView(ViewGroup bannerView, AdView adView) {
+    public void rebuildView(ViewGroup bannerView, AdView adView, int displayMode) {
         Logging.out(LOG_TAG, "rebuildView");
         if (bannerView == null || adView == null || mTextureView == null) {
             return;
@@ -73,7 +74,9 @@ public class ViewController implements TextureView.SurfaceTextureListener, IView
         }
 
         bannerView.addView(mTextureView, 0);
-        bannerView.addView(adView, 1);
+        if (displayMode == DisplayMode.NORMAL) {
+            bannerView.addView(adView, 1);
+        }
     }
 
     private void resizeVideo() {

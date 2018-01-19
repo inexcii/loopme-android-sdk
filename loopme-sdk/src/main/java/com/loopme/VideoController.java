@@ -41,6 +41,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     private boolean mWasError;
     private boolean mIsSurfaceTextureAvailable;
     private boolean mWaitForVideo;
+    private boolean mIsPlayerReleased;
 
     private Handler mHandler;
     private Runnable mRunnable;
@@ -147,14 +148,23 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
         if (mMediaPlayer != null) {
             mMediaPlayer.reset();
             mMediaPlayer.release();
+            mIsPlayerReleased = true;
         }
     }
 
     public void setSurface(Surface surface) throws IllegalStateException {
         mSurface = surface;
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setSurface(surface);
+        try {
+            if (mMediaPlayer != null && videoIsNotCompleted() && !mIsPlayerReleased) {
+                mMediaPlayer.setSurface(surface);
+            }
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
         }
+    }
+
+    private boolean videoIsNotCompleted() {
+        return mAdView != null && mAdView.getCurrentVideoState() != VideoState.COMPLETE;
     }
 
     public void waitForVideo() {
@@ -192,6 +202,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
             Logging.out(LOG_TAG, e.getMessage());
             setVideoState(VideoState.BROKEN);
         }
+        mIsPlayerReleased = false;
     }
 
     private void initPlayer(String filePath) {
@@ -209,7 +220,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     }
 
     public void muteVideo(boolean mute) {
-        if(mMediaPlayer != null){
+        if (mMediaPlayer != null) {
             if (mute) {
                 mMediaPlayer.setVolume(0f, 0f);
                 onVolumeChangedMoatTracking();
@@ -246,13 +257,13 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
 
     public void playVideo(int time, boolean is360) {
         if (isPlayerReadyForPlay()) {
-            if(mIsFirstLaunch && mFormat == AdFormat.BANNER){
+            if (mIsFirstLaunch && mFormat == AdFormat.BANNER) {
                 onStartMoatTracking(mMediaPlayer, mAdView);
                 mIsFirstLaunch = false;
             }
             if (!is360 && !mIsSurfaceTextureAvailable) {
                 Logging.out(LOG_TAG, "postpone play (surface not available)");
-                if(mCallback != null){
+                if (mCallback != null) {
                     mCallback.onPostponePlay(time);
                 }
                 return;
@@ -359,7 +370,7 @@ class VideoController implements MediaPlayer.OnPreparedListener, MediaPlayer.OnE
     private void startMediaPlayer() {
         if (mMediaPlayer != null) {
             mMediaPlayer.start();
-            if(mFormat == AdFormat.INTERSTITIAL){
+            if (mFormat == AdFormat.INTERSTITIAL) {
                 onStartMoatTracking(mMediaPlayer, mAdView);
             }
         }

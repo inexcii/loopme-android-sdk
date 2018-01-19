@@ -30,6 +30,7 @@ public class AdUtils {
             Logging.out(LOG_TAG, "Starting Mraid Activity");
             LoopMeAdHolder.putAd(ad);
             Intent intent = new Intent(ad.getContext(), MraidActivity.class);
+
             Utils.setAdIdOrAppKey(intent, ad);
             intent.putExtra(StaticParams.FORMAT_TAG, ad.getAdFormat());
             intent.putExtra(EXTRAS_CUSTOM_CLOSE, customClose);

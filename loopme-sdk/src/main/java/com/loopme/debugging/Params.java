@@ -1,6 +1,6 @@
 package com.loopme.debugging;
 
-class Params {
+public class Params {
 
     //common
     public static final String DEVICE_OS = "device_os";//const ["ios"|"android"]
@@ -11,6 +11,12 @@ class Params {
     public static final String APP_KEY = "app_key";// example: "c693a45a79"
     public static final String MSG = "msg";//const "sdk_debug" or "sdk_error"
 
+    public static final String SDK_READY = "sdk_ready";
+    public static final String SDK_SHOW = "sdk_show";
+    public static final String SDK_MISSED = "sdk_missed";
+    public static final String OS_ANDROID = "android";
+    public static final String SDK_TYPE_LOOP_ME = "loopme";
+    public static final String SDK_ERROR = "sdk_error";
     //Live Debug
     public static final String DEBUG_LOGS = "debug_logs";// example: "ui: Debug.LoopMe.BaseAd: Start fetcher timeout timer, ui: Debug.LoopMe.FileUtils: In cache 2 file(s)..."
 

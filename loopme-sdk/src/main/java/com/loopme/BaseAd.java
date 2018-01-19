@@ -16,6 +16,7 @@ import com.loopme.common.Logging;
 import com.loopme.common.LoopMeError;
 import com.loopme.common.StaticParams;
 import com.loopme.common.Utils;
+import com.loopme.constants.AdFormat;
 import com.loopme.constants.AdState;
 import com.loopme.debugging.ErrorLog;
 import com.loopme.debugging.ErrorType;
@@ -156,15 +157,6 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         }
         mIntegrationType = integrationType != null ? integrationType : IntegrationType.NORMAL;
 
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (mAdController == null) {
-                    mAdController = new AdController(BaseAd.this);
-                }
-            }
-        });
-
         mAdState = AdState.LOADING;
         mAdLoadingTimer = System.currentTimeMillis();
         mHandler.post(new Runnable() {
@@ -228,6 +220,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         if (mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
+        stopRequestTimer();
     }
 
     public abstract int getAdFormat();
@@ -277,6 +270,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
     protected void fetchAdComplete(AdParams params) {
         setAdParams(params);
         setBackendAutoLoadingValue(params.getAutoloading());
+        mAdController = new AdController(this);
         preloadHtmlContent(params.getHtml(), params.isMraid());
     }
 
@@ -300,26 +294,24 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         return new AdFetcher.Listener() {
 
             @Override
-            public void onComplete(final AdParams params,
-                                   final LoopMeError error) {
-
+            public void onComplete(final AdParams params, final LoopMeError error) {
                 stopRequestTimer();
-                if (params != null && !params.getPackageIds().isEmpty()) {
-                    if (Utils.isPackageInstalled(params.getPackageIds())) {
-                        List<String> installedPackages = Utils.getPackageInstalled(params.getPackageIds());
-                        if (installedPackages != null && installedPackages.size() > 0) {
-                            completeRequest(params, error);
-                            EventManager eventManager = new EventManager();
-                            eventManager.trackSdkEvent(params.getToken());
-                        }
-                    } else {
-                        completeRequest(params, error);
-                    }
-                } else {
-                    completeRequest(params, error);
-                }
+                trackSdkFeedBack(params);
+                completeRequest(params, error);
             }
         };
+    }
+
+    private void trackSdkFeedBack(AdParams params) {
+        if (params != null && !params.getPackageIds().isEmpty()) {
+            if (Utils.isPackageInstalled(params.getPackageIds())) {
+                List<String> installedPackages = Utils.getPackageInstalled(params.getPackageIds());
+                if (installedPackages != null && installedPackages.size() > 0) {
+                    EventManager eventManager = new EventManager();
+                    eventManager.trackSdkEvent(params.getToken());
+                }
+            }
+        }
     }
 
     private void completeRequest(final AdParams params, final LoopMeError error) {
@@ -329,16 +321,20 @@ public abstract class BaseAd extends Settings implements AdTargeting {
             @Override
             public void run() {
                 if (params == null) {
-                    if (error != null) {
-                        onAdLoadFail(error);
-                    } else {
-                        onAdLoadFail(new LoopMeError("Request timeout"));
-                    }
+                    handleError(error);
                 } else {
                     fetchAdComplete(params);
                 }
             }
         });
+    }
+
+    private void handleError(LoopMeError error) {
+        if (error != null) {
+            onAdLoadFail(error);
+        } else {
+            onAdLoadFail(new LoopMeError("Unknown error"));
+        }
     }
 
     private void proceedLoad() {
@@ -539,4 +535,7 @@ public abstract class BaseAd extends Settings implements AdTargeting {
         mIntegrationType = integrationType;
     }
 
+    public boolean isBanner() {
+        return getAdFormat() == AdFormat.BANNER;
+    }
 }
