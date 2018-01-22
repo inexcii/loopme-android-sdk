@@ -416,7 +416,7 @@ Android SDK aar will raise size of your application on 1.16Mb.<br>
 **Version 5.2.8 **
 - Added Expandable banner format
 - Reduced the amount of debug events communicated between SDK and ad server
-- Ads got access to read cookies - which improved work of some on those which are depend on it
+- Ads got access to read cookies. It improved the work of cookie dependent ads
 - Reorganized events helping on integration phase
 - Increased the minimum required API level from 19 level to 21. Android 5.0 is now the minimum OS version that gets ads. Lower versions will not generate requests and be filled.
 - Updated and cleaned up Samples used for integration
